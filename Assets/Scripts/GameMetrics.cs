@@ -12,6 +12,8 @@ public class GameMetrics : MonoBehaviour
 
     public Element this[ElementType index] { get { return Elements[(int)index]; } }
 
+    public float DefaultMeterSize = 1f;
+
     [HideInInspector]
     public Element[] Elements;
 

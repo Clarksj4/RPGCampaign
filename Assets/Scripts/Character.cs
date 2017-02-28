@@ -5,7 +5,6 @@ using System;
 
 public class Character : MonoBehaviour
 {
-
     public Range Air;
     public Range Earth;
     public Range Fire;
@@ -25,33 +24,54 @@ public class Character : MonoBehaviour
 
     }
 
+    public void Refresh()
+    {
+        OnValidate();
+    }
+
     private void Awake()
     {
         renderer = GetComponentInChildren<Renderer>();
+    }
+
+    private void Start()
+    {
         renderer.material.color = GameMetrics.Instance.Elements[(int)Element].Colour;
     }
 
     private void OnValidate()
     {
-        AirMeter.Range.Min = Air.Min;
-        AirMeter.Range.Max = Air.Max;
-        AirMeter.Range.Current = Air.Current;
-        AirMeter.Refresh();
+        if (AirMeter != null)
+        {
+            AirMeter.Min = Air.Min;
+            AirMeter.Max = Air.Max;
+            AirMeter.Current = Air.Current;
+            AirMeter.Refresh();
+        }
 
-        EarthMeter.Range.Min = Earth.Min;
-        EarthMeter.Range.Max = Earth.Max;
-        EarthMeter.Range.Current = Earth.Current;
-        EarthMeter.Refresh();
+        if (EarthMeter != null)
+        {
+            EarthMeter.Min = Earth.Min;
+            EarthMeter.Max = Earth.Max;
+            EarthMeter.Current = Earth.Current;
+            EarthMeter.Refresh();
+        }
 
-        FireMeter.Range.Min = Fire.Min;
-        FireMeter.Range.Max = Fire.Max;
-        FireMeter.Range.Current = Fire.Current;
-        FireMeter.Refresh();
+        if (FireMeter != null)
+        {
+            FireMeter.Min = Fire.Min;
+            FireMeter.Max = Fire.Max;
+            FireMeter.Current = Fire.Current;
+            FireMeter.Refresh();
+        }
 
-        WaterMeter.Range.Min = Water.Min;
-        WaterMeter.Range.Max = Water.Max;
-        WaterMeter.Range.Current = Water.Current;
-        WaterMeter.Refresh();
+        if (WaterMeter != null)
+        {
+            WaterMeter.Min = Water.Min;
+            WaterMeter.Max = Water.Max;
+            WaterMeter.Current = Water.Current;
+            WaterMeter.Refresh();
+        }
 
         if (renderer != null)
             renderer.material.color = GameMetrics.Instance.Elements[(int)Element].Colour;
