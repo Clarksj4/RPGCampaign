@@ -19,20 +19,20 @@ public class GameMetricsInspector : Editor
             EditorGUILayout.LabelField(element.Name, EditorStyles.boldLabel);
             element.Colour = EditorGUILayout.ColorField("Colour", element.Colour);
 
-            EditorGUILayout.LabelField("Strengths");
+            EditorGUILayout.LabelField("Strength Modifiers");
             EditorGUI.indentLevel = 1;
-            element.Strengths[(int)ElementType.Air] = EditorGUILayout.FloatField("Air", element.Strengths[(int)ElementType.Air]);
-            element.Strengths[(int)ElementType.Earth] = EditorGUILayout.FloatField("Earth", element.Strengths[(int)ElementType.Earth]);
-            element.Strengths[(int)ElementType.Fire] = EditorGUILayout.FloatField("Fire", element.Strengths[(int)ElementType.Fire]);
-            element.Strengths[(int)ElementType.Water] = EditorGUILayout.FloatField("Water", element.Strengths[(int)ElementType.Water]);
+            element.StrengthModifiers[(int)ElementType.Air] = EditorGUILayout.FloatField("Air", element.StrengthModifiers[(int)ElementType.Air]);
+            element.StrengthModifiers[(int)ElementType.Earth] = EditorGUILayout.FloatField("Earth", element.StrengthModifiers[(int)ElementType.Earth]);
+            element.StrengthModifiers[(int)ElementType.Fire] = EditorGUILayout.FloatField("Fire", element.StrengthModifiers[(int)ElementType.Fire]);
+            element.StrengthModifiers[(int)ElementType.Water] = EditorGUILayout.FloatField("Water", element.StrengthModifiers[(int)ElementType.Water]);
             EditorGUI.indentLevel = 0;
 
-            EditorGUILayout.LabelField("Default meter levels");
+            EditorGUILayout.LabelField("Element Capacity Modifiers");
             EditorGUI.indentLevel = 1;
-            element.DefaultMeterLevel[(int)ElementType.Air] = EditorGUILayout.FloatField("Air", element.DefaultMeterLevel[(int)ElementType.Air]);
-            element.DefaultMeterLevel[(int)ElementType.Earth] = EditorGUILayout.FloatField("Earth", element.DefaultMeterLevel[(int)ElementType.Earth]);
-            element.DefaultMeterLevel[(int)ElementType.Fire] = EditorGUILayout.FloatField("Fire", element.DefaultMeterLevel[(int)ElementType.Fire]);
-            element.DefaultMeterLevel[(int)ElementType.Water] = EditorGUILayout.FloatField("Water", element.DefaultMeterLevel[(int)ElementType.Water]);
+            element.ElementCapacityModifiers[(int)ElementType.Air] = EditorGUILayout.FloatField("Air", element.ElementCapacityModifiers[(int)ElementType.Air]);
+            element.ElementCapacityModifiers[(int)ElementType.Earth] = EditorGUILayout.FloatField("Earth", element.ElementCapacityModifiers[(int)ElementType.Earth]);
+            element.ElementCapacityModifiers[(int)ElementType.Fire] = EditorGUILayout.FloatField("Fire", element.ElementCapacityModifiers[(int)ElementType.Fire]);
+            element.ElementCapacityModifiers[(int)ElementType.Water] = EditorGUILayout.FloatField("Water", element.ElementCapacityModifiers[(int)ElementType.Water]);
             EditorGUI.indentLevel = 0;
         }
     }

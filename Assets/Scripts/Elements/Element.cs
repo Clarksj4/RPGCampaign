@@ -1,35 +1,46 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 
 [Serializable]
 public class Element
 {
+    /// <summary>
+    /// The name of this element
+    /// </summary>
     public string Name { get { return type.ToString(); } }
+
+    /// <summary>
+    /// The type of this element
+    /// </summary>
     public ElementType Type { get { return type; } }
 
     [SerializeField]
     protected ElementType type;
+
+    /// <summary>
+    /// The colour associated with this element
+    /// </summary>
     public Color Colour;
 
     /// <summary>
     /// Damage modifiers applied to attacks from this element to each of the other elements.
     /// </summary>
     [Tooltip("Damage modifiers applied to attacks from this element to each of the other elements")]
-    public float[] Strengths;
+    public float[] StrengthModifiers;
 
     /// <summary>
-    /// Default size modifiers for each elemental meter when spec'ed in this element. 
-    /// This element's largest meter will be of its own type. 
-    /// The smallest meter will be the element that this element is strong against.
-    /// The other two meters will be equal size and half that of the largest meter
+    /// The capacity modifier for each element when spec'd in this element
     /// </summary>
-    [Tooltip("Default modifiers for the size of each elemental meter")]
-    public float[] DefaultMeterLevel;
+    [Tooltip("The capacity modifier for each element when spec'd in this element")]
+    public float[] ElementCapacityModifiers;
 
+    /// <summary>
+    /// Gets the damage modifier applied to attacks from this element versus the given element
+    /// </summary>
+    /// <param name="defender">The element that is being attacked</param>
+    /// <returns>The percent damage modifier</returns>
     public float Vs(ElementType defender)
     {
-        return Strengths[(int)defender];
+        return StrengthModifiers[(int)defender];
     }
 }

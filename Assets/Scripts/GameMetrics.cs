@@ -1,6 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 using System;
 
 public enum ElementType { Air, Earth, Fire, Water }
@@ -12,7 +10,7 @@ public class GameMetrics : MonoBehaviour
 
     public Element this[ElementType index] { get { return Elements[(int)index]; } }
 
-    public float DefaultMeterSize = 1f;
+    public float ElementCapacity = 100f;
 
     [HideInInspector]
     public Element[] Elements;
