@@ -3,30 +3,62 @@ using System.Collections.Generic;
 using UnityEngine;
 using System;
 
+[ExecuteInEditMode]
 public class Character : MonoBehaviour
 {
-    public Range Air;
-    public Range Earth;
-    public Range Fire;
-    public Range Water;
+    /// <summary>
+    /// The current value of one of this character's elements has changed
+    /// </summary>
+    public event ElementMeterEventHandler ElementValueChanged;
 
-    public ElementBar AirMeter;
-    public ElementBar EarthMeter;
-    public ElementBar FireMeter;
-    public ElementBar WaterMeter;
+    /// <summary>
+    /// The capacity of one of this character's elements has changed
+    /// </summary>
+    public event ElementMeterEventHandler ElementCapacityChanged;
 
-    public ElementType Element;
+    [Tooltip("The element that this character is spec'd in. Determines the capacity this character has for each of the elements, as well " +
+        "as which elements are strong against this character.")]
+    [SerializeField]
+    private ElementType element;
+    public ElementType Element
+    {
+        get { return element; }
+        set
+        {
+            element = value;
+            UpdateModelColour();
+        }
+    }
+
+    [HideInInspector]
+    public Range[] Elements;
 
     private new Renderer renderer;
 
-    public void Attack(Character other)
+    public float GetElementCapacity(ElementType type)
     {
-
+        return Elements[(int)type].Max;
     }
 
-    public void Refresh()
+    public float GetElementValue(ElementType type)
     {
-        OnValidate();
+        return Elements[(int)type].Current;
+    }
+
+    public void SetElementCapacity(ElementType type, float capacity)
+    {
+        Elements[(int)type].Max = capacity;
+
+        if (ElementCapacityChanged != null)
+            ElementCapacityChanged(this, new ElementMeterEventArgs(type));
+    }
+
+    public void SetElementValue(ElementType type, float value)
+    {
+        Elements[(int)type].Current = value;
+
+        if (ElementValueChanged != null)
+            ElementValueChanged(this, new ElementMeterEventArgs(type));
     }
 
     private void Awake()
@@ -34,46 +66,14 @@ public class Character : MonoBehaviour
         renderer = GetComponentInChildren<Renderer>();
     }
 
-    private void Start()
-    {
-        renderer.material.color = GameMetrics.Instance.Elements[(int)Element].Colour;
-    }
-
     private void OnValidate()
     {
-        if (AirMeter != null)
-        {
-            AirMeter.Min = Air.Min;
-            AirMeter.Max = Air.Max;
-            AirMeter.Current = Air.Current;
-            AirMeter.Refresh();
-        }
+        UpdateModelColour();
+    }
 
-        if (EarthMeter != null)
-        {
-            EarthMeter.Min = Earth.Min;
-            EarthMeter.Max = Earth.Max;
-            EarthMeter.Current = Earth.Current;
-            EarthMeter.Refresh();
-        }
-
-        if (FireMeter != null)
-        {
-            FireMeter.Min = Fire.Min;
-            FireMeter.Max = Fire.Max;
-            FireMeter.Current = Fire.Current;
-            FireMeter.Refresh();
-        }
-
-        if (WaterMeter != null)
-        {
-            WaterMeter.Min = Water.Min;
-            WaterMeter.Max = Water.Max;
-            WaterMeter.Current = Water.Current;
-            WaterMeter.Refresh();
-        }
-
-        if (renderer != null)
+    private void UpdateModelColour()
+    {
+        if (renderer != null && GameMetrics.Instance != null)
             renderer.material.color = GameMetrics.Instance.Elements[(int)Element].Colour;
     }
 }

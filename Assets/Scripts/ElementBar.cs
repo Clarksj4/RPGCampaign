@@ -6,7 +6,8 @@ using UnityEngine.UI;
 public class ElementBar : MonoBehaviour
 {
     public Slider Slider;
-    public RectTransform ZeroMark;
+    public Character character;
+    public ElementType element;
 
     public float Min
     {
@@ -23,21 +24,36 @@ public class ElementBar : MonoBehaviour
     public float Max
     {
         get { return Slider.maxValue; }
-        set { Slider.maxValue = value; }
+        set
+        {
+            Slider.maxValue = value;
+            UpdateBarWidth();
+        }
     }
 
     public float UnitWidth = 1;
 
-    public void Refresh()
+    private void Awake()
     {
-        OnValidate();
+        character.ElementValueChanged += Character_ElementValueChanged;
+        character.ElementCapacityChanged += Character_ElementCapacityChanged;
     }
 
-    private void OnValidate()
+    private void Character_ElementCapacityChanged(object sender, ElementMeterEventArgs e)
+    {
+        if (e.Type == element)
+            Max = character.GetElementCapacity(e.Type) * UnitWidth;
+    }
+
+    private void Character_ElementValueChanged(object sender, ElementMeterEventArgs e)
+    {
+        if (e.Type == element)
+            Current = character.GetElementValue(e.Type) * UnitWidth;
+    }
+
+    private void UpdateBarWidth()
     {
         RectTransform sliderRect = Slider.GetComponent<RectTransform>();
         sliderRect.sizeDelta = new Vector2(10 + Range.Size(Min, Max) * UnitWidth, sliderRect.sizeDelta.y);
-
-        ZeroMark.anchoredPosition = new Vector2(-Min * UnitWidth, 0);
     }
 }
