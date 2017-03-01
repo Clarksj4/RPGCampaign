@@ -30,21 +30,32 @@ public class Character : MonoBehaviour
         }
     }
 
-    [HideInInspector]
-    public Range[] Elements;
+    /// <summary>
+    /// The capacity and current level of each of this characters elements
+    /// </summary>
+    public Range[] Elements { get; private set; }
 
     private new Renderer renderer;
 
+    /// <summary>
+    /// Get this character's capacity for the given element
+    /// </summary>
     public float GetElementCapacity(ElementType type)
     {
         return Elements[(int)type].Max;
     }
 
+    /// <summary>
+    /// Get this character's current level of the given element
+    /// </summary>
     public float GetElementValue(ElementType type)
     {
         return Elements[(int)type].Current;
     }
 
+    /// <summary>
+    /// Set this character's capacity for the given element type
+    /// </summary>
     public void SetElementCapacity(ElementType type, float capacity)
     {
         Elements[(int)type].Max = capacity;
@@ -53,6 +64,9 @@ public class Character : MonoBehaviour
             ElementCapacityChanged(this, new ElementMeterEventArgs(type));
     }
 
+    /// <summary>
+    /// Set this character's current level of the given element type
+    /// </summary>
     public void SetElementValue(ElementType type, float value)
     {
         Elements[(int)type].Current = value;
@@ -71,8 +85,12 @@ public class Character : MonoBehaviour
         UpdateModelColour();
     }
 
+    /// <summary>
+    /// Update the character model to reflect its element type
+    /// </summary>
     private void UpdateModelColour()
     {
+        // null checks for when executed in edit mode
         if (renderer != null && GameMetrics.Instance != null)
             renderer.material.color = GameMetrics.Instance.Elements[(int)Element].Colour;
     }
