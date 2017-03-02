@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using UnityEngine;
 
 public static class HexCellExtension
@@ -13,5 +11,24 @@ public static class HexCellExtension
             corners[i] = cell.Position + HexMetrics.corners[i];
 
         return corners;
+    }
+
+    public static HexCell[] GetNeighbours(this HexCell cell)
+    {
+        HexCell[] neighbours = new HexCell[6];
+
+        Array directionValues = Enum.GetValues(typeof(HexDirection));
+        for (int i = 0; i < directionValues.Length; i++)
+        {
+            HexDirection direction = (HexDirection)directionValues.GetValue(i);
+            neighbours[i] = cell.GetNeighbor(direction);
+        }
+
+        return neighbours;
+    }
+
+    public static bool IsNeighbour(this HexCell cell, HexCell other)
+    {
+        return cell.GetNeighbours().Contains(other);
     }
 }
