@@ -467,4 +467,9 @@ public class HexCell : MonoBehaviour {
 			roads[i] = (roadFlags & (1 << i)) != 0;
 		}
 	}
+
+    public override string ToString()
+    {
+        return coordinates.ToString();
+    }
 }
