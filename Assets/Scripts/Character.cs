@@ -78,6 +78,12 @@ public class Character : MonoBehaviour
     private void Awake()
     {
         renderer = GetComponentInChildren<Renderer>();
+
+        Elements = new Range[4];
+        for (int i = 0; i < Elements.Length; i++)
+        {
+            Elements[i] = new Range();
+        }
     }
 
     private void OnValidate()
