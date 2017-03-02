@@ -28,7 +28,7 @@ public class Pathfinder : MonoBehaviour
 
                 // If theres a start and end find a path between them
                 if (origin != null && destination != null)
-                    path = FindPath(origin, destination);
+                    path = FindPath(origin, destination, new WaterElementalTraversable());
             }
         }
 
@@ -102,20 +102,20 @@ public class Pathfinder : MonoBehaviour
     /// <summary>
     /// Find the (equally) shortest path between the cells at the given positions. Where no path exists null is returned.
     /// </summary>
-    public List<HexCell> FindPath(Vector3 origin, Vector3 destination)
+    public List<HexCell> FindPath(Vector3 origin, Vector3 destination, ITraverser traverser)
     {
         // Convert positions to hex cells
         HexCell originCell = hexGrid.GetCell(origin);
         HexCell destinationCell = hexGrid.GetCell(destination);
 
         // Find path between.
-        return FindPath(originCell, destinationCell);
+        return FindPath(originCell, destinationCell, traverser);
     }
 
     /// <summary>
     /// Find the (equally) shortest path between the given cells. Where no path exists null is returned.
     /// </summary>
-    public List<HexCell> FindPath(HexCell origin, HexCell destination)
+    public List<HexCell> FindPath(HexCell origin, HexCell destination, ITraverser traverser)
     {
         // You're already there..
         if (origin == destination)                      
@@ -147,7 +147,7 @@ public class Pathfinder : MonoBehaviour
                     !steps.Where(s => s.Cell == adjacent && s.Counter <= count + 1).Any()) // Check that the cell has not already be added to the queue at a lower index
                 {
                     // If a character is able to traverse from cell to adjacent
-                    if (cell.Traversable(direction))
+                    if (traverser.IsTraversable(cell, direction))
                     {
                         // Add it as a possible step, add one to count to get the number of cells crossed to get here
                         steps.Add(new Step(adjacent, count + 1));
@@ -181,7 +181,7 @@ public class Pathfinder : MonoBehaviour
             // Get the next neighbouring step that is traverable 
             if (step.Cell.IsNeighbour(pathCell) &&
                 step.Counter == counter - 1 &&
-                step.Cell.Traversable(pathCell))
+                traverser.IsTraversable(step.Cell, step.Cell.GetDirection(pathCell)))
             {
                 // Add to path, remember number of steps crossed to get there
                 path.Add(step.Cell);
