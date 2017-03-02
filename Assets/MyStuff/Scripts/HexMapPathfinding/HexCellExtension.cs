@@ -31,4 +31,38 @@ public static class HexCellExtension
     {
         return cell.GetNeighbours().Contains(other);
     }
+
+    public static bool BorderWall(this HexCell cell, HexDirection direction)
+    {
+        HexCell other = cell.GetNeighbor(direction);
+
+        return (cell.Walled && !other.Walled) ||
+                (!cell.Walled && other.Walled);
+    }
+
+    public static bool Traversable(this HexCell cell, HexCell neighbour)
+    {
+        HexDirection direction = GetDirection(cell, neighbour);
+        return Traversable(cell, direction);
+    }
+
+    public static bool Traversable(this HexCell cell, HexDirection direction)
+    {
+        bool isUnderWater = cell.IsUnderwater;
+        bool isBlockedByWall = cell.BorderWall(direction) && !cell.HasRoadThroughEdge(direction);
+        bool isCliff = cell.GetElevationDifference(direction) > 1;
+
+        return (!isUnderWater &&
+                !isBlockedByWall &&
+                !isCliff);
+    }
+
+    public static HexDirection GetDirection(this HexCell cell, HexCell neighbour)
+    {
+        int index = Array.IndexOf(cell.GetNeighbours(), neighbour);
+        if (index == -1)
+            throw new ArgumentException("Cells are not neighbours");
+
+        return (HexDirection)Enum.GetValues(typeof(HexDirection)).GetValue(index);
+    }
 }

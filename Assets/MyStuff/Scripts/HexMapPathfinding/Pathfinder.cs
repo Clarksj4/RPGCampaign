@@ -40,26 +40,39 @@ public class Pathfinder : MonoBehaviour
     {
         Gizmos.color = Color.red;
         if (origin != null)
-            DrawCell(origin);
+            DrawCell(origin, Color.red);
 
         if (destination != null)
-            DrawCell(destination);
+            DrawCell(destination, Color.red);
 
         if (path != null)
         {
+            float increment = 1f / path.Count;
+            float t = 0;
+
             foreach (HexCell cell in path)
-                DrawCell(cell);
+            {
+                Color colour = Color.Lerp(Color.green, Color.red, t);
+                DrawCell(cell, colour);
+
+                t += increment;
+            }
         }
 
         Gizmos.color = Color.white;
     }
 
-    private void DrawCell(HexCell cell)
+    private void DrawCell(HexCell cell, Color colour)
     {
+        Color oldColour = Gizmos.color;
+        Gizmos.color = colour;
+
         Vector3[] corners = cell.GetCorners();
         for (int i = 0; i < corners.Length - 1; i++)
             Gizmos.DrawLine(corners[i], corners[i + 1]);
         Gizmos.DrawLine(corners.Last(), corners.First());
+
+        Gizmos.color = oldColour;
     }
 
     private HexCell GetMousedCell()
@@ -101,6 +114,12 @@ public class Pathfinder : MonoBehaviour
             HexCell cell = steps[i].Cell;
             int count = steps[i].Counter;
 
+            if (cell.coordinates.X == 0 && cell.coordinates.Y == -9 && cell.coordinates.Z == 9)
+            {
+                bool traversable = false;
+                traversable = true;
+            }
+
             // Create a list of the adjacent cells, with a counter variable of the current element's counter variable + 1
             Array directionValues = Enum.GetValues(typeof(HexDirection));
             for (int j = 0; j < directionValues.Length; j++)
@@ -109,13 +128,20 @@ public class Pathfinder : MonoBehaviour
                 HexCell adjacent = cell.GetNeighbor(direction);
 
                 // Check all cells in each list for the following two conditions: 
-                if (adjacent != null &&
-                    cell.GetElevationDifference(direction) <= 1 &&                          // Cell is a wall
-                    !steps.Where(s => s.Cell == adjacent && s.Counter <= count + 1).Any())  // Main list contains cell with lesser or equal counter
+                if (adjacent != null && !steps.Where(s => s.Cell == adjacent && s.Counter <= count + 1).Any())
                 {
-                    steps.Add(new Step(adjacent, count + 1));
-                    if (adjacent == origin)
-                        break;                                              // Cell is origin cell, we are done here
+
+                    if (adjacent.coordinates.X == -1 && adjacent.coordinates.Y == -8 && cell.coordinates.Z == 9)
+                    {
+                        bool traversable = cell.Traversable(direction);
+                    }
+
+                    if (cell.Traversable(direction))
+                    {
+                        steps.Add(new Step(adjacent, count + 1));
+                        if (adjacent == origin)
+                            break;
+                    }
                 }
             }   
 
@@ -137,7 +163,8 @@ public class Pathfinder : MonoBehaviour
         {
             // Go to the nearby cell with the lowest number
             if (step.Cell.IsNeighbour(pathCell) &&
-                step.Counter == counter - 1)
+                step.Counter == counter - 1 &&
+                step.Cell.Traversable(pathCell))
             {
                 path.Add(step.Cell);
                 pathCell = step.Cell;
@@ -157,6 +184,11 @@ public class Pathfinder : MonoBehaviour
         {
             Cell = cell;
             Counter = counter;
+        }
+
+        public override string ToString()
+        {
+            return Cell.ToString() + " : " + Counter.ToString();
         }
     }
 }
