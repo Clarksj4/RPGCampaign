@@ -114,7 +114,8 @@ public class Pathfinder : MonoBehaviour
                     !steps.Where(s => s.Cell == adjacent && s.Counter <= count + 1).Any())  // Main list contains cell with lesser or equal counter
                 {
                     steps.Add(new Step(adjacent, count + 1));
-                    if (cell == origin) break;                                              // Cell is origin cell, we are done here
+                    if (adjacent == origin)
+                        break;                                              // Cell is origin cell, we are done here
                 }
             }   
 
