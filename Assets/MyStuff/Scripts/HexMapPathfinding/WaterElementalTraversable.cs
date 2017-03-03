@@ -13,4 +13,9 @@ public class WaterElementalTraversable : ITraverser
         return (!isBlockedByWall &&
                 !isCliff);
     }
+
+    public float TraverseCost(HexCell cell, HexDirection direction)
+    {
+        return 1f;
+    }
 }

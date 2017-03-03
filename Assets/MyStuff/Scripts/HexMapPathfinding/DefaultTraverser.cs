@@ -15,4 +15,9 @@ public class DefaultTraverser : ITraverser
                 !isBlockedByWall &&
                 !isCliff);
     }
+
+    public float TraverseCost(HexCell cell, HexDirection direction)
+    {
+        return 1f;
+    }
 }
