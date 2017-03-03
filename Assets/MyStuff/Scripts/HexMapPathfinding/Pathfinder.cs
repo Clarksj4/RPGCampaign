@@ -121,96 +121,106 @@ public class Pathfinder : MonoBehaviour
         if (origin == destination)                      
             return new List<HexCell>() { origin };
 
-        // Queue of traversed cells including the number of cells crossed in order to reach each one
-        List<Step> steps = new List<Step>();
+        // Queue of cells whose costs have been evaluated
+        List<HexCell> evaluatedCells = new List<HexCell>();
 
-        // Start from end coordinate and work backwards
-        steps.Add(new Step(destination, 0));
+        // Queue of discovered cells that have not yet been evaluated
+        SortedList<float, HexCell> toBeEvaluatedCells = new SortedList<float, HexCell>();
 
-        // Go through every element in the queue, including elements added to the end over the course of the algorithm
-        int i = 0;
-        while (i < steps.Count && steps.Last().Cell != origin)
+        // Map of which cell each cell is most easily reached from
+        Dictionary<HexCell, HexCell> cameFromDirectory = new Dictionary<HexCell, HexCell>();
+
+        // Map of costs expended to reach each cell from the origin
+        Dictionary<HexCell, float> costToCell = new Dictionary<HexCell, float>();
+
+        // Map of estimated costs to reach the destination cell from each cell
+        Dictionary<HexCell, float> costToDesinationViaCellEstimates = new Dictionary<HexCell, float>();
+
+        // Add origin cell to collections
+        float distanceEstimate = Vector3.Distance(origin.Position, destination.Position);
+        toBeEvaluatedCells.Add(distanceEstimate, origin);
+        costToCell.Add(origin, 0);
+        costToDesinationViaCellEstimates.Add(origin, distanceEstimate);
+
+        // Evaluate ever cell that has not yet been evaluated
+        while (toBeEvaluatedCells.Count > 0)
         {
             // Current cell and the number of steps to reach it
-            HexCell cell = steps[i].Cell;
-            int count = steps[i].Counter;
+            HexCell current = toBeEvaluatedCells.First().Value;
 
-            // Go through each adjacent cell (by checking for a cell in each HexDirection)
+            if (current == destination)
+                return ReconstructPath(cameFromDirectory, current);
+
+            // Remove current cell from unevaluated cells and add to evaluated cells
+            toBeEvaluatedCells.RemoveAt(0);
+            evaluatedCells.Add(current);
+
+            // For each neighbour of current cell
             Array directionValues = Enum.GetValues(typeof(HexDirection));
-            for (int j = 0; j < directionValues.Length; j++)
+            for (int i = 0; i < directionValues.Length; i++)
             {
                 // Direction of adjacent cell
-                HexDirection direction = (HexDirection)directionValues.GetValue(j);
-                HexCell adjacent = cell.GetNeighbor(direction);
+                HexDirection direction = (HexDirection)directionValues.GetValue(i);
+                HexCell adjacent = current.GetNeighbor(direction);
 
-                if (adjacent != null &&                                                    // Check that there is a cell in that direction
-                    !steps.Where(s => s.Cell == adjacent && s.Counter <= count + 1).Any()) // Check that the cell has not already be added to the queue at a lower index
+                // Check that there is a cell in that direction   
+                if (adjacent != null)                                                    
                 {
-                    // If a character is able to traverse from cell to adjacent
-                    if (traverser.IsTraversable(cell, direction))
-                    {
-                        // Add it as a possible step, add one to count to get the number of cells crossed to get here
-                        steps.Add(new Step(adjacent, count + 1));
+                    // Ignore neighbours that have already been evaluated
+                    if (evaluatedCells.Contains(adjacent))
+                        continue;
 
-                        // If the adjacent cell if the origin cell (the cell we are trying to reach) then this part of the algorithm is complete
-                        if (adjacent == origin)
-                            break;
+                    // Ignore neighbours that cannot be traversed to from the current cell
+                    if (!traverser.IsTraversable(current, direction))
+                        continue;
+
+                    // Cost to move from origin to adjacent cell with current route
+                    float costToAdjacent = costToCell[current] + traverser.TraverseCost(current, direction);
+
+                    // Estimated cost to move from origin to destination via 'adjacent'
+                    float costToDestinationViaAdjacentEstimate = costToAdjacent + Vector3.Distance(adjacent.Position, destination.Position);
+
+                    // Is adjacent a newly discovered node...?
+                    if (!toBeEvaluatedCells.ContainsValue(adjacent))
+                    {
+                        // Add to list of nodes to be examined
+                        toBeEvaluatedCells.Add(costToDestinationViaAdjacentEstimate, adjacent);
+                        cameFromDirectory.Add(adjacent, current);       // Easiest cell to reach 'adjacent' from
+                        costToCell.Add(adjacent, costToAdjacent);       // Cost to move from origin to 'adjacent'
+                        costToDesinationViaCellEstimates.Add(adjacent, costToDestinationViaAdjacentEstimate);   
+                    }
+
+
+                    // If the current path to this already discovered node a better path?
+                    else if (costToAdjacent > costToCell[adjacent])
+                        continue;           // Nope, don't update route
+
+                    else
+                    {
+                        // This path is best until now, record it.
+                        cameFromDirectory[adjacent] = current;
+                        costToCell[adjacent] = costToAdjacent;
+                        costToDesinationViaCellEstimates[adjacent] = costToDestinationViaAdjacentEstimate;
                     }
                 }
             }   
-
-            // Proceed to next cell in list
-            i++;
         }
 
-        // Path was unable to reach origin cell
-        if (steps.Last().Cell != origin)
-            return null;
-
-        // Create a new queue to contain the viable path
-        List<HexCell> path = new List<HexCell>();
-
-        // Add origin cell and remember number of steps crossed to get there
-        path.Add(steps.Last().Cell);
-        HexCell pathCell = steps.Last().Cell;
-        int counter = steps.Last().Counter;
-
-        // Iterate backwards through queue (so path goes from origin to destination)
-        foreach (Step step in steps.AsEnumerable().Reverse().Skip(1))
-        {
-            // Get the next neighbouring step that is traverable 
-            if (step.Cell.IsNeighbour(pathCell) &&
-                step.Counter == counter - 1 &&
-                traverser.IsTraversable(step.Cell, step.Cell.GetDirection(pathCell)))
-            {
-                // Add to path, remember number of steps crossed to get there
-                path.Add(step.Cell);
-                pathCell = step.Cell;
-                counter = step.Counter;
-            }
-        }
-
-        // Return the completed path
-        return path;
+        return null;
     }
 
-    /// <summary>
-    /// Container for a hex cell and the number of cells crossed to reach the cell during the course of finding a path.
-    /// </summary>
-    public class Step
+    public List<HexCell> ReconstructPath(Dictionary<HexCell, HexCell> cameFromDirectory, HexCell current)
     {
-        public HexCell Cell;
-        public int Counter;
+        List<HexCell> path = new List<HexCell>();
 
-        public Step(HexCell cell, int counter)
+        HexCell walker = current;
+        while (cameFromDirectory.ContainsKey(walker))
         {
-            Cell = cell;
-            Counter = counter;
+            path.Add(walker);
+
+            walker = cameFromDirectory[walker];
         }
 
-        public override string ToString()
-        {
-            return Cell.ToString() + " : " + Counter.ToString();
-        }
+        return path;
     }
 }
