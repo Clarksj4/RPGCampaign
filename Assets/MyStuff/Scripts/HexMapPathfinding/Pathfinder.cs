@@ -119,42 +119,30 @@ public class Pathfinder : MonoBehaviour
     public List<HexCell> FindQuickestPath(HexCell origin, HexCell destination, ITraverser traverser)
     {
         // You're already there..
-        if (origin == destination)                      
+        if (origin == destination)
             return new List<HexCell>() { origin };
 
         // Queue of cells whose costs have been evaluated
-        List<HexCell> evaluatedCells = new List<HexCell>();
+        List<Step> evaluated = new List<Step>();
 
         // Queue of discovered cells that have not yet been evaluated
-        List<HexCell> toBeEvaluatedCells = new List<HexCell>();
+        List<Step> toBeEvaluated = new List<Step>();
 
-        // Map of which cell each cell is most easily reached from
-        Dictionary<HexCell, HexCell> cameFromDirectory = new Dictionary<HexCell, HexCell>();
-
-        // Map of costs expended to reach each cell from the origin
-        Dictionary<HexCell, float> costToCell = new Dictionary<HexCell, float>();
-
-        // Map of estimated costs to reach the destination cell from each cell
-        Dictionary<HexCell, float> costToDesinationViaCellEstimates = new Dictionary<HexCell, float>();
-
-        // Add origin cell to collections
-        float distanceEstimate = Heurisitic(origin, destination);
-        toBeEvaluatedCells.Add(origin);
-        costToCell.Add(origin, 0);
-        costToDesinationViaCellEstimates.Add(origin, distanceEstimate);
+        // Add origin cell to collection
+        toBeEvaluated.Add(new Step(origin, null, 0));
 
         // Evaluate ever cell that has not yet been evaluated
-        while (toBeEvaluatedCells.Count > 0)
+        while (toBeEvaluated.Count > 0)
         {
             // Current cell and the number of steps to reach it
-            HexCell current = toBeEvaluatedCells.First();
+            Step current = toBeEvaluated.First();
 
-            if (current == destination)
-                return ReconstructPath(cameFromDirectory, current);
+            if (current.Cell == destination)
+                return ReconstructPath(current);
 
             // Remove current cell from unevaluated cells and add to evaluated cells
-            toBeEvaluatedCells.RemoveAt(0);
-            evaluatedCells.Add(current);
+            toBeEvaluated.RemoveAt(0);
+            evaluated.Add(current);
 
             // For each neighbour of current cell
             Array directionValues = Enum.GetValues(typeof(HexDirection));
@@ -162,66 +150,75 @@ public class Pathfinder : MonoBehaviour
             {
                 // Direction of adjacent cell
                 HexDirection direction = (HexDirection)directionValues.GetValue(i);
-                HexCell adjacent = current.GetNeighbor(direction);
+                HexCell adjacent = current.Cell.GetNeighbor(direction);
 
                 // Check that there is a cell in that direction   
-                if (adjacent != null &&                             // Is there an adjacent cell in the current direction?
-                    !evaluatedCells.Contains(adjacent) &&           // Has the adjacent cell already been evaluated?
-                    traverser.IsTraversable(current, direction))    // Is the adjacent cell traversable from current cell?
+                if (adjacent != null &&                                       // Is there an adjacent cell in the current direction?
+                    !evaluated.Select(s => s.Cell).Contains(adjacent) &&      // Has the adjacent cell already been evaluated?
+                    traverser.IsTraversable(current.Cell, direction))         // Is the adjacent cell traversable from current cell?
                 {
                     // Cost to move from origin to adjacent cell with current route
-                    float costToAdjacent = costToCell[current] + traverser.TraverseCost(current, direction);
-
-                    // Estimated cost to move from origin to destination via 'adjacent'
-                    float costToDestinationViaAdjacentEstimate = costToAdjacent + Heurisitic(adjacent, destination);
+                    float costToAdjacent = current.CostTo + traverser.TraverseCost(current.Cell, direction);
 
                     // Is adjacent a newly discovered node...?
-                    if (!toBeEvaluatedCells.Contains(adjacent))
+                    Step adjacentStep = toBeEvaluated.Find(s => s.Cell == adjacent);
+                    if (adjacentStep == null)
                     {
-
-                        costToDesinationViaCellEstimates.Add(adjacent, costToDestinationViaAdjacentEstimate);
-
-                        // Add to list of nodes to be examined
-                        toBeEvaluatedCells.Add(adjacent);
-                        toBeEvaluatedCells.OrderBy(c => costToDesinationViaCellEstimates[c]);
-
-                        cameFromDirectory.Add(adjacent, current);       // Easiest cell to reach 'adjacent' from
-                        costToCell.Add(adjacent, costToAdjacent);       // Cost to move from origin to 'adjacent'
+                        adjacentStep = new Step(adjacent, current, costToAdjacent);
+                        InsertStep(toBeEvaluated, adjacentStep);
                     }
 
                     // Is the current path to this already discovered node a better path?
-                    else if (costToAdjacent < costToCell[adjacent])
+                    else if (costToAdjacent < adjacentStep.CostTo)
                     {
                         // This path is best until now, record it.
-                        cameFromDirectory[adjacent] = current;
-                        costToCell[adjacent] = costToAdjacent;
-                        costToDesinationViaCellEstimates[adjacent] = costToDestinationViaAdjacentEstimate;
+                        adjacentStep.Previous = current;
+                        adjacentStep.CostTo = costToAdjacent;
                     }
                 }
-            }   
+            }
         }
 
         return null;
     }
 
-    public float Heurisitic(HexCell current, HexCell destination)
+    public void InsertStep(List<Step> steps, Step step)
     {
-        return 0;
-        //return Vector3.Distance(current.Position, destination.Position);
+        int index = 0;
+        for (index = 0; index < steps.Count; index++)
+        {
+            if (steps[index].CostTo >= step.CostTo)
+                break;
+        }
+
+        steps.Insert(index, step);
     }
 
-    public List<HexCell> ReconstructPath(Dictionary<HexCell, HexCell> cameFromDirectory, HexCell current)
+    public List<HexCell> ReconstructPath(Step current)
     {
         List<HexCell> path = new List<HexCell>();
 
-        HexCell walker = current;
-        while (cameFromDirectory.ContainsKey(walker))
+        Step walker = current;
+        while (walker != null)
         {
-            path.Add(walker);
-
-            walker = cameFromDirectory[walker];
+            path.Add(walker.Cell);
+            walker = walker.Previous;
         }
 
         return path;
+    }
+
+    public class Step
+    {
+        public HexCell Cell;
+        public Step Previous;
+        public float CostTo;
+
+        public Step(HexCell cell, Step previous, float costTo)
+        {
+            Cell = cell;
+            Previous = previous;
+            CostTo = costTo;
+        }
     }
 }
