@@ -18,6 +18,9 @@ public class DefaultTraverser : ITraverser
 
     public float TraverseCost(HexCell cell, HexDirection direction)
     {
+        if (cell.HasRoadThroughEdge(direction))
+            return 0f;
+
         return 1f;
     }
 }

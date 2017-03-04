@@ -28,7 +28,7 @@ public class Pathfinder : MonoBehaviour
 
                 // If theres a start and end find a path between them
                 if (origin != null && destination != null)
-                    path = FindPath(origin, destination, new WaterElementalTraversable());
+                    path = FindQuickestPath(origin, destination, new DefaultTraverser());
             }
         }
 
@@ -79,8 +79,8 @@ public class Pathfinder : MonoBehaviour
 
         Vector3[] corners = cell.GetCorners();
         for (int i = 0; i < corners.Length - 1; i++)
-            Gizmos.DrawLine(corners[i], corners[i + 1]);
-        Gizmos.DrawLine(corners.Last(), corners.First());
+            Gizmos.DrawLine(corners[i] + Vector3.up, corners[i + 1] + Vector3.up);
+        Gizmos.DrawLine(corners.Last() + Vector3.up, corners.First() + Vector3.up);
 
         Gizmos.color = oldColour;
     }
@@ -109,13 +109,14 @@ public class Pathfinder : MonoBehaviour
         HexCell destinationCell = hexGrid.GetCell(destination);
 
         // Find path between.
-        return FindPath(originCell, destinationCell, traverser);
+        return FindQuickestPath(originCell, destinationCell, traverser);
     }
 
     /// <summary>
-    /// Find the (equally) shortest path between the given cells. Where no path exists null is returned.
+    /// Find the quickest path from origin to destination where traverser defines the cost of moving to each different hex and which hexes
+    /// are traversable. Where no path exists null is returned.
     /// </summary>
-    public List<HexCell> FindPath(HexCell origin, HexCell destination, ITraverser traverser)
+    public List<HexCell> FindQuickestPath(HexCell origin, HexCell destination, ITraverser traverser)
     {
         // You're already there..
         if (origin == destination)                      
@@ -125,7 +126,7 @@ public class Pathfinder : MonoBehaviour
         List<HexCell> evaluatedCells = new List<HexCell>();
 
         // Queue of discovered cells that have not yet been evaluated
-        SortedList<float, HexCell> toBeEvaluatedCells = new SortedList<float, HexCell>();
+        List<HexCell> toBeEvaluatedCells = new List<HexCell>();
 
         // Map of which cell each cell is most easily reached from
         Dictionary<HexCell, HexCell> cameFromDirectory = new Dictionary<HexCell, HexCell>();
@@ -137,8 +138,8 @@ public class Pathfinder : MonoBehaviour
         Dictionary<HexCell, float> costToDesinationViaCellEstimates = new Dictionary<HexCell, float>();
 
         // Add origin cell to collections
-        float distanceEstimate = Vector3.Distance(origin.Position, destination.Position);
-        toBeEvaluatedCells.Add(distanceEstimate, origin);
+        float distanceEstimate = Heurisitic(origin, destination);
+        toBeEvaluatedCells.Add(origin);
         costToCell.Add(origin, 0);
         costToDesinationViaCellEstimates.Add(origin, distanceEstimate);
 
@@ -146,7 +147,7 @@ public class Pathfinder : MonoBehaviour
         while (toBeEvaluatedCells.Count > 0)
         {
             // Current cell and the number of steps to reach it
-            HexCell current = toBeEvaluatedCells.First().Value;
+            HexCell current = toBeEvaluatedCells.First();
 
             if (current == destination)
                 return ReconstructPath(cameFromDirectory, current);
@@ -164,38 +165,32 @@ public class Pathfinder : MonoBehaviour
                 HexCell adjacent = current.GetNeighbor(direction);
 
                 // Check that there is a cell in that direction   
-                if (adjacent != null)                                                    
+                if (adjacent != null &&                             // Is there an adjacent cell in the current direction?
+                    !evaluatedCells.Contains(adjacent) &&           // Has the adjacent cell already been evaluated?
+                    traverser.IsTraversable(current, direction))    // Is the adjacent cell traversable from current cell?
                 {
-                    // Ignore neighbours that have already been evaluated
-                    if (evaluatedCells.Contains(adjacent))
-                        continue;
-
-                    // Ignore neighbours that cannot be traversed to from the current cell
-                    if (!traverser.IsTraversable(current, direction))
-                        continue;
-
                     // Cost to move from origin to adjacent cell with current route
                     float costToAdjacent = costToCell[current] + traverser.TraverseCost(current, direction);
 
                     // Estimated cost to move from origin to destination via 'adjacent'
-                    float costToDestinationViaAdjacentEstimate = costToAdjacent + Vector3.Distance(adjacent.Position, destination.Position);
+                    float costToDestinationViaAdjacentEstimate = costToAdjacent + Heurisitic(adjacent, destination);
 
                     // Is adjacent a newly discovered node...?
-                    if (!toBeEvaluatedCells.ContainsValue(adjacent))
+                    if (!toBeEvaluatedCells.Contains(adjacent))
                     {
+
+                        costToDesinationViaCellEstimates.Add(adjacent, costToDestinationViaAdjacentEstimate);
+
                         // Add to list of nodes to be examined
-                        toBeEvaluatedCells.Add(costToDestinationViaAdjacentEstimate, adjacent);
+                        toBeEvaluatedCells.Add(adjacent);
+                        toBeEvaluatedCells.OrderBy(c => costToDesinationViaCellEstimates[c]);
+
                         cameFromDirectory.Add(adjacent, current);       // Easiest cell to reach 'adjacent' from
                         costToCell.Add(adjacent, costToAdjacent);       // Cost to move from origin to 'adjacent'
-                        costToDesinationViaCellEstimates.Add(adjacent, costToDestinationViaAdjacentEstimate);   
                     }
 
-
-                    // If the current path to this already discovered node a better path?
-                    else if (costToAdjacent > costToCell[adjacent])
-                        continue;           // Nope, don't update route
-
-                    else
+                    // Is the current path to this already discovered node a better path?
+                    else if (costToAdjacent < costToCell[adjacent])
                     {
                         // This path is best until now, record it.
                         cameFromDirectory[adjacent] = current;
@@ -207,6 +202,12 @@ public class Pathfinder : MonoBehaviour
         }
 
         return null;
+    }
+
+    public float Heurisitic(HexCell current, HexCell destination)
+    {
+        return 0;
+        //return Vector3.Distance(current.Position, destination.Position);
     }
 
     public List<HexCell> ReconstructPath(Dictionary<HexCell, HexCell> cameFromDirectory, HexCell current)
