@@ -8,6 +8,8 @@ public class Pathfinder : MonoBehaviour
 {
     [Tooltip("The HexGrid to find a path on")]
     public HexGrid hexGrid;
+    public float TimeUnits = 50f;
+
 
     private HexCell origin;
     private HexCell destination;
@@ -29,7 +31,7 @@ public class Pathfinder : MonoBehaviour
 
                 // If theres a start and end find a path between them
                 if (origin != null && destination != null)
-                    path = FindQuickestPath(origin, destination, new DefaultTraverser());
+                    path = FindQuickestPath(origin, destination, TimeUnits, new DefaultTraverser());
             }
         }
 
@@ -106,21 +108,21 @@ public class Pathfinder : MonoBehaviour
     /// <summary>
     /// Find the (equally) shortest path between the cells at the given positions. Where no path exists null is returned.
     /// </summary>
-    public List<HexCell> FindPath(Vector3 origin, Vector3 destination, ITraverser traverser)
+    public List<HexCell> FindQuickestPath(Vector3 origin, Vector3 destination, float timeUnits, ITraverser traverser)
     {
         // Convert positions to hex cells
         HexCell originCell = hexGrid.GetCell(origin);
         HexCell destinationCell = hexGrid.GetCell(destination);
 
         // Find path between.
-        return FindQuickestPath(originCell, destinationCell, traverser);
+        return FindQuickestPath(originCell, destinationCell, timeUnits, traverser);
     }
 
     /// <summary>
     /// Find the quickest path from origin to destination where traverser defines the cost of moving to each different hex and which hexes
     /// are traversable. Where no path exists null is returned.
     /// </summary>
-    public List<HexCell> FindQuickestPath(HexCell origin, HexCell destination, ITraverser traverser)
+    public List<HexCell> FindQuickestPath(HexCell origin, HexCell destination, float timeUnits, ITraverser traverser)
     {
         // You're already there..
         if (origin == destination)
@@ -138,46 +140,50 @@ public class Pathfinder : MonoBehaviour
         // Evaluate ever cell that has not yet been evaluated
         while (toBeEvaluated.Count > 0)
         {
-            // Current cell and the number of steps to reach it
+            // Current cell being evaluated
             Step current = toBeEvaluated.First();
-
-            if (current.Cell == destination)
-                return ReconstructPath(current);
 
             // Remove current cell from unevaluated cells and add to evaluated cells
             toBeEvaluated.RemoveAt(0);
             evaluated.Add(current);
 
-            // For each neighbour of current cell
-            Array directionValues = Enum.GetValues(typeof(HexDirection));
-            for (int i = 0; i < directionValues.Length; i++)
+            // Only consider cells where there is enough time units to traverse there
+            if (current.CostTo <= timeUnits)
             {
-                // Direction of adjacent cell
-                HexDirection direction = (HexDirection)directionValues.GetValue(i);
-                HexCell adjacent = current.Cell.GetNeighbor(direction);
+                if (current.Cell == destination)
+                    return ReconstructPath(current);
 
-                // Check that there is a cell in that direction   
-                if (adjacent != null &&                                       // Is there an adjacent cell in the current direction?
-                    !evaluated.Select(s => s.Cell).Contains(adjacent) &&      // Has the adjacent cell already been evaluated?
-                    traverser.IsTraversable(current.Cell, direction))         // Is the adjacent cell traversable from current cell?
+                // For each neighbour of current cell
+                Array directionValues = Enum.GetValues(typeof(HexDirection));
+                for (int i = 0; i < directionValues.Length; i++)
                 {
-                    // Cost to move from origin to adjacent cell with current route
-                    float costToAdjacent = current.CostTo + traverser.TraverseCost(current.Cell, direction);
+                    // Direction of adjacent cell
+                    HexDirection direction = (HexDirection)directionValues.GetValue(i);
+                    HexCell adjacent = current.Cell.GetNeighbor(direction);
 
-                    // Is adjacent a newly discovered node...?
-                    Step adjacentStep = toBeEvaluated.Find(s => s.Cell == adjacent);
-                    if (adjacentStep == null)
+                    // Check that there is a cell in that direction   
+                    if (adjacent != null &&                                       // Is there an adjacent cell in the current direction?
+                        !evaluated.Select(s => s.Cell).Contains(adjacent) &&      // Has the adjacent cell already been evaluated?
+                        traverser.IsTraversable(current.Cell, direction))         // Is the adjacent cell traversable from current cell?
                     {
-                        adjacentStep = new Step(adjacent, current, costToAdjacent);
-                        InsertStep(toBeEvaluated, adjacentStep);
-                    }
+                        // Cost to move from origin to adjacent cell with current route
+                        float costToAdjacent = current.CostTo + traverser.TraverseCost(current.Cell, direction);
 
-                    // Is the current path to this already discovered node a better path?
-                    else if (costToAdjacent < adjacentStep.CostTo)
-                    {
-                        // This path is best until now, record it.
-                        adjacentStep.Previous = current;
-                        adjacentStep.CostTo = costToAdjacent;
+                        // Is adjacent a newly discovered node...?
+                        Step adjacentStep = toBeEvaluated.Find(s => s.Cell == adjacent);
+                        if (adjacentStep == null)
+                        {
+                            adjacentStep = new Step(adjacent, current, costToAdjacent);
+                            InsertStep(toBeEvaluated, adjacentStep);
+                        }
+
+                        // Is the current path to this already discovered node a better path?
+                        else if (costToAdjacent < adjacentStep.CostTo)
+                        {
+                            // This path is best until now, record it.
+                            adjacentStep.Previous = current;
+                            adjacentStep.CostTo = costToAdjacent;
+                        }
                     }
                 }
             }
