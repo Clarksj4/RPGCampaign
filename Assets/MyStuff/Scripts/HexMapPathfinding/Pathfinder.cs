@@ -9,29 +9,46 @@ public class Pathfinder : MonoBehaviour
     [Tooltip("The HexGrid to find a path on")]
     public HexGrid hexGrid;
     public float TimeUnits = 50f;
-
+    public DefaultTraverser Walking = DefaultTraverser.Walking();
+    public DefaultTraverser RangedAttack = DefaultTraverser.RangedAttack();
+    public bool cellsInRange;
+    public bool walking;
 
     private HexCell origin;
     private HexCell destination;
     private List<HexCell> path;
+    private List<Step> range;
 
     private void Update()
     {
         // If left mouse clicked
         if (Input.GetMouseButtonDown(0))
         {
-            // Set origin cell
-            if (origin == null)
-                origin = GetMousedCell();
+            if (!cellsInRange)
+            {
+                // Set origin cell
+                if (origin == null)
+                    origin = GetMousedCell();
+
+                else
+                {
+                    // Set destination cell
+                    destination = GetMousedCell();
+
+                    // If theres a start and end find a path between them
+                    if (origin != null && destination != null)
+                        path = FindQuickestPath(origin, destination, TimeUnits, Walking);
+                }
+            }
 
             else
             {
-                // Set destination cell
-                destination = GetMousedCell();
+                origin = GetMousedCell();
 
-                // If theres a start and end find a path between them
-                if (origin != null && destination != null)
-                    path = FindQuickestPath(origin, destination, TimeUnits, new DefaultTraverser());
+                if (walking)
+                    range = CellsInRange(origin, TimeUnits, Walking);
+                else
+                    range = CellsInRange(origin, TimeUnits, RangedAttack);
             }
         }
 
@@ -42,6 +59,7 @@ public class Pathfinder : MonoBehaviour
             origin = null;
             destination = null;
             path = null;
+            range = null;
         }
     }
 
@@ -68,6 +86,16 @@ public class Pathfinder : MonoBehaviour
                 DrawCell(cell, colour);
 
                 t += increment;
+            }
+        }
+
+        if (range != null)
+        {
+            foreach (Step step in range)
+            {
+                Color colour = Color.Lerp(Color.green, Color.red, step.CostTo / TimeUnits);
+
+                DrawCell(step.Cell, colour);
             }
         }
     }
@@ -103,6 +131,74 @@ public class Pathfinder : MonoBehaviour
         }
 
         return null;
+    }
+
+    public List<Step> CellsInRange(HexCell origin, float timeUnits, ITraverser traverser)
+    {
+        // Collection of cells that are traversable and within 'timeUnits' range
+        List<Step> inRange = new List<Step>();
+
+        // Queue of cells whose costs have been evaluated
+        List<Step> evaluated = new List<Step>();
+
+        // Queue of discovered cells that have not yet been evaluated
+        List<Step> toBeEvaluated = new List<Step>();
+
+        // Add origin cell to collection
+        toBeEvaluated.Add(new Step(origin, null, 0));
+
+        // Evaluate ever cell that has not yet been evaluated
+        while (toBeEvaluated.Count > 0)
+        {
+            // Current cell being evaluated
+            Step current = toBeEvaluated.First();
+
+            // Remove current cell from unevaluated cells and add to evaluated cells
+            toBeEvaluated.RemoveAt(0);
+            evaluated.Add(current);
+
+            // Only consider cells where there is enough time units to traverse there
+            if (current.CostTo <= timeUnits)
+            {
+                inRange.Add(current);
+
+                // For each neighbour of current cell
+                Array directionValues = Enum.GetValues(typeof(HexDirection));
+                for (int i = 0; i < directionValues.Length; i++)
+                {
+                    // Direction of adjacent cell
+                    HexDirection direction = (HexDirection)directionValues.GetValue(i);
+                    HexCell adjacent = current.Cell.GetNeighbor(direction);
+
+                    // Check that there is a cell in that direction   
+                    if (adjacent != null &&                                       // Is there an adjacent cell in the current direction?
+                        !evaluated.Select(s => s.Cell).Contains(adjacent) &&      // Has the adjacent cell already been evaluated?
+                        traverser.IsTraversable(current.Cell, direction))         // Is the adjacent cell traversable from current cell?
+                    {
+                        // Cost to move from origin to adjacent cell with current route
+                        float costToAdjacent = current.CostTo + traverser.TraverseCost(current.Cell, direction);
+
+                        // Is adjacent a newly discovered node...?
+                        Step adjacentStep = toBeEvaluated.Find(s => s.Cell == adjacent);
+                        if (adjacentStep == null)
+                        {
+                            adjacentStep = new Step(adjacent, current, costToAdjacent);
+                            InsertStep(toBeEvaluated, adjacentStep);
+                        }
+
+                        // Is the current path to this already discovered node a better path?
+                        else if (costToAdjacent < adjacentStep.CostTo)
+                        {
+                            // This path is best until now, record it.
+                            adjacentStep.Previous = current;
+                            adjacentStep.CostTo = costToAdjacent;
+                        }
+                    }
+                }
+            }
+        }
+
+        return inRange;
     }
 
     /// <summary>

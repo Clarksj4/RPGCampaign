@@ -1,43 +1,80 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+using UnityEngine;
 
+[Serializable]
 public class DefaultTraverser : ITraverser
 {
-    public bool IsTraversable(HexCell cell, HexDirection direction)
-    {
-        bool isUnderWater = cell.IsUnderwater;
-        bool isBlockedByWall = cell.BorderWall(direction) && !cell.HasRoadThroughEdge(direction);
-        bool isCliff = cell.GetElevationDifference(direction) > 1;
+    public bool blockedByWater = true;
+    public bool blockedByWall = true;
+    public bool blockedByCliff = true;
 
-        return (!isUnderWater &&
-                !isBlockedByWall &&
-                !isCliff);
+    public float roadCost = 0.25f;
+    public float riverCrossingCost = 2f;
+    public float uphillCost = 2f;
+    public float defaultCost = 1f;
+
+    public static DefaultTraverser Walking()
+    {
+        return new DefaultTraverser();
     }
 
-    public float TraverseCost(HexCell cell, HexDirection direction)
+    public static DefaultTraverser RangedAttack()
+    {
+        DefaultTraverser traverser = new DefaultTraverser();
+        traverser.blockedByWater = false;
+        traverser.blockedByWall = false;
+        traverser.blockedByCliff = false;
+
+        traverser.roadCost = 1;
+        traverser.riverCrossingCost = 1;
+        traverser.uphillCost = 1;
+        traverser.defaultCost = 1;
+
+        return traverser;
+    }
+
+    public virtual bool IsTraversable(HexCell cell, HexDirection direction)
+    {
+        HexCell neighbour = cell.GetNeighbor(direction);
+
+        if (blockedByWater)
+        {
+            if (neighbour.IsUnderwater)
+                return false;
+        }
+
+        if (blockedByWall)
+        {
+            if (cell.BorderWall(direction) && !cell.HasRoadThroughEdge(direction))
+                return false;
+        }
+
+        if (blockedByCliff)
+        {
+            if (cell.GetElevationDifference(direction) > 1)
+                return false;
+        }
+
+        return true;
+    }
+
+    public virtual float TraverseCost(HexCell cell, HexDirection direction)
     {
         HexCell neighbour = cell.GetNeighbor(direction);
 
         if (cell.HasRoadThroughEdge(direction))
-        {
-            if (neighbour.Elevation - cell.Elevation == 1)
-                return 0.5f;
-            else
-                return 0.25f;
-        }
+            return roadCost;
 
         else if (neighbour.Elevation - cell.Elevation == 1)
-            return 2f;
+            return uphillCost;
 
         else if (CrossesRiver(cell, direction))
-            return 2f;
+            return riverCrossingCost;
 
-        else return 1f;
+        else return defaultCost;
     }
 
-    public bool CrossesRiver(HexCell cell, HexDirection direction)
+    protected virtual bool CrossesRiver(HexCell cell, HexDirection direction)
     {
         HexCell neighbour = cell.GetNeighbor(direction);
 
