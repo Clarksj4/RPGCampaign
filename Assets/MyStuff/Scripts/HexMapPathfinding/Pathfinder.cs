@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.EventSystems;
 
 public class Pathfinder : MonoBehaviour
 {
@@ -90,11 +91,14 @@ public class Pathfinder : MonoBehaviour
     /// </summary>
     private HexCell GetMousedCell()
     {
-        Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
-        RaycastHit hitInfo;
+        if (!EventSystem.current.IsPointerOverGameObject())
+        {
+            Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+            RaycastHit hitInfo;
 
-        if (Physics.Raycast(ray, out hitInfo))
-            return hexGrid.GetCell(hitInfo.point);
+            if (Physics.Raycast(ray, out hitInfo))
+                return hexGrid.GetCell(hitInfo.point);
+        }
 
         return null;
     }
