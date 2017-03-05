@@ -8,11 +8,15 @@ public class Pathfinder : MonoBehaviour
 {
     [Tooltip("The HexGrid to find a path on")]
     public HexGrid hexGrid;
+    [Tooltip("The units available for traversing")]
     public float TimeUnits = 50f;
-    public DefaultTraverser Walking = DefaultTraverser.Walking();
-    public DefaultTraverser RangedAttack = DefaultTraverser.RangedAttack();
+    [Tooltip("Whether to find all cells within TimeUnits distance?")]
     public bool cellsInRange;
+    [Tooltip("Using walking traversal ruleset / costs?")]
     public bool walking;
+    [Header("Traversal rules / costs")]
+    public Traverser Walking = Traverser.Walking();
+    public Traverser RangedAttack = Traverser.RangedAttack();
 
     private HexCell origin;
     private HexCell destination;
@@ -133,7 +137,7 @@ public class Pathfinder : MonoBehaviour
         return null;
     }
 
-    public List<Step> CellsInRange(HexCell origin, float timeUnits, ITraverser traverser)
+    public List<Step> CellsInRange(HexCell origin, float timeUnits, Traverser traverser)
     {
         // Collection of cells that are traversable and within 'timeUnits' range
         List<Step> inRange = new List<Step>();
@@ -204,7 +208,7 @@ public class Pathfinder : MonoBehaviour
     /// <summary>
     /// Find the (equally) shortest path between the cells at the given positions. Where no path exists null is returned.
     /// </summary>
-    public List<HexCell> FindQuickestPath(Vector3 origin, Vector3 destination, float timeUnits, ITraverser traverser)
+    public List<HexCell> FindQuickestPath(Vector3 origin, Vector3 destination, float timeUnits, Traverser traverser)
     {
         // Convert positions to hex cells
         HexCell originCell = hexGrid.GetCell(origin);
@@ -218,7 +222,7 @@ public class Pathfinder : MonoBehaviour
     /// Find the quickest path from origin to destination where traverser defines the cost of moving to each different hex and which hexes
     /// are traversable. Where no path exists null is returned.
     /// </summary>
-    public List<HexCell> FindQuickestPath(HexCell origin, HexCell destination, float timeUnits, ITraverser traverser)
+    public List<HexCell> FindQuickestPath(HexCell origin, HexCell destination, float timeUnits, Traverser traverser)
     {
         // You're already there..
         if (origin == destination)

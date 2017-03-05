@@ -2,28 +2,30 @@
 using UnityEngine;
 
 [Serializable]
-public class DefaultTraverser : ITraverser
+public class Traverser
 {
     public bool blockedByWater = true;
     public bool blockedByWall = true;
-    public bool blockedByCliff = true;
+    public int maximumAscendingStep = 1;
+    public int maximumDescendingStep = 1;
 
     public float roadCost = 0.25f;
     public float riverCrossingCost = 2f;
     public float uphillCost = 2f;
     public float defaultCost = 1f;
 
-    public static DefaultTraverser Walking()
+    public static Traverser Walking()
     {
-        return new DefaultTraverser();
+        return new Traverser();
     }
 
-    public static DefaultTraverser RangedAttack()
+    public static Traverser RangedAttack()
     {
-        DefaultTraverser traverser = new DefaultTraverser();
+        Traverser traverser = new Traverser();
         traverser.blockedByWater = false;
         traverser.blockedByWall = false;
-        traverser.blockedByCliff = false;
+        traverser.maximumAscendingStep = -1;
+        traverser.maximumDescendingStep = -1;
 
         traverser.roadCost = 1;
         traverser.riverCrossingCost = 1;
@@ -37,24 +39,44 @@ public class DefaultTraverser : ITraverser
     {
         HexCell neighbour = cell.GetNeighbor(direction);
 
+        // If blockable by water...
         if (blockedByWater)
         {
+            // Check if there is water in the way
             if (neighbour.IsUnderwater)
                 return false;
         }
 
+        // If blockable by walls...
         if (blockedByWall)
         {
+            // Check if there is a wall in the way
             if (cell.BorderWall(direction) && !cell.HasRoadThroughEdge(direction))
                 return false;
         }
 
-        if (blockedByCliff)
+        // Is there a cliff?
+        int elevationDifference = neighbour.Elevation - cell.Elevation;
+        if (elevationDifference > 0)                            // Ascending cliff
         {
-            if (cell.GetElevationDifference(direction) > 1)
-                return false;
+            if (maximumAscendingStep > -1)                      // If blockable by ascending cliffs...
+            {
+                if (elevationDifference > maximumAscendingStep) // Check if ascending height is traversable
+                    return false;
+            }
         }
 
+
+        else if (elevationDifference < 0)                                   // Descending cliff
+        {
+            if (maximumDescendingStep > -1)                                 // If blockable by descending cliffs...
+            {
+                if (Mathf.Abs(elevationDifference) > maximumDescendingStep) // Check if descending height is traversable
+                    return false;
+            }
+        }
+
+        // Not blocked
         return true;
     }
 
@@ -62,16 +84,21 @@ public class DefaultTraverser : ITraverser
     {
         HexCell neighbour = cell.GetNeighbor(direction);
 
+        // Moving along road
         if (cell.HasRoadThroughEdge(direction))
             return roadCost;
 
+        // Moving uphill
         else if (neighbour.Elevation - cell.Elevation == 1)
             return uphillCost;
 
+        // Crossing a river
         else if (CrossesRiver(cell, direction))
             return riverCrossingCost;
 
-        else return defaultCost;
+        // Default move cost
+        else
+            return defaultCost;
     }
 
     protected virtual bool CrossesRiver(HexCell cell, HexDirection direction)
