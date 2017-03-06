@@ -49,9 +49,9 @@ public class Pathfinder : MonoBehaviour
             {
                 origin = GetMousedCell();
 
-                if (walking)
+                if (walking)    // Use walking traversal ruleset
                     range = CellsInRange(origin, TimeUnits, Walking);
-                else
+                else            // Use ranged attack traversal ruleset
                     range = CellsInRange(origin, TimeUnits, RangedAttack);
             }
         }
@@ -93,10 +93,12 @@ public class Pathfinder : MonoBehaviour
             }
         }
 
+        // Draw all cells in range
         if (range != null)
         {
             foreach (Step step in range)
             {
+                // 'Green-er' closer to start, 'red-er' towards end
                 Color colour = Color.Lerp(Color.green, Color.red, step.CostTo / TimeUnits);
 
                 DrawCell(step.Cell, colour);
@@ -109,14 +111,17 @@ public class Pathfinder : MonoBehaviour
     /// </summary>
     private void DrawCell(HexCell cell, Color colour)
     {
+        // Set colour, remember old colour
         Color oldColour = Gizmos.color;
         Gizmos.color = colour;
 
+        // Draw line from each vert to next vert
         Vector3[] corners = cell.GetCorners();
         for (int i = 0; i < corners.Length - 1; i++)
             Gizmos.DrawLine(corners[i] + Vector3.up, corners[i + 1] + Vector3.up);
         Gizmos.DrawLine(corners.Last() + Vector3.up, corners.First() + Vector3.up);
 
+        // Reset colour
         Gizmos.color = oldColour;
     }
 
@@ -125,15 +130,19 @@ public class Pathfinder : MonoBehaviour
     /// </summary>
     private HexCell GetMousedCell()
     {
+        // If mouse not over UI
         if (!EventSystem.current.IsPointerOverGameObject())
         {
+            // Raycast onto hexmesh (because it's the only thing in the scene
             Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
             RaycastHit hitInfo;
 
+            // If there's a hit it must be the hexmesh (cause nothing else in scene)
             if (Physics.Raycast(ray, out hitInfo))
                 return hexGrid.GetCell(hitInfo.point);
         }
 
+        // No cell clicked
         return null;
     }
 
@@ -203,19 +212,6 @@ public class Pathfinder : MonoBehaviour
         }
 
         return inRange;
-    }
-
-    /// <summary>
-    /// Find the (equally) shortest path between the cells at the given positions. Where no path exists null is returned.
-    /// </summary>
-    public List<HexCell> FindQuickestPath(Vector3 origin, Vector3 destination, float timeUnits, Traverser traverser)
-    {
-        // Convert positions to hex cells
-        HexCell originCell = hexGrid.GetCell(origin);
-        HexCell destinationCell = hexGrid.GetCell(destination);
-
-        // Find path between.
-        return FindQuickestPath(originCell, destinationCell, timeUnits, traverser);
     }
 
     /// <summary>
@@ -292,25 +288,35 @@ public class Pathfinder : MonoBehaviour
         return null;
     }
 
+    /// <summary>
+    /// Insert step into steps collection in ascending order based on cost to move to each step
+    /// </summary>
     public void InsertStep(List<Step> steps, Step step)
     {
         int index = 0;
+        // Loop until end of collection or finding a larger cost step
         for (index = 0; index < steps.Count; index++)
         {
             if (steps[index].CostTo >= step.CostTo)
                 break;
         }
 
+        // Insert in front of larger step (or end of collection)
         steps.Insert(index, step);
     }
 
+    /// <summary>
+    /// Rebuild path from list of steps
+    /// </summary>
     public List<HexCell> ReconstructPath(Step current)
     {
         List<HexCell> path = new List<HexCell>();
 
+        // Iterate through steps to obtain cell reference
         Step walker = current;
         while (walker != null)
         {
+            // Add to list of cells
             path.Add(walker.Cell);
             walker = walker.Previous;
         }
