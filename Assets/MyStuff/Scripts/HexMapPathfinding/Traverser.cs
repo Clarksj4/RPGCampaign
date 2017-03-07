@@ -1,6 +1,9 @@
 ﻿using System;
 using UnityEngine;
 
+/// <summary>
+/// Defines the rules for which hexes can be traversed and the cost of doing so.
+/// </summary>
 [Serializable]
 public class Traverser
 {
@@ -12,13 +15,20 @@ public class Traverser
     public float roadCost = 0.25f;
     public float riverCrossingCost = 2f;
     public float uphillCost = 2f;
+    public float downhillCost = 1f;
     public float defaultCost = 1f;
 
+    /// <summary>
+    /// Default ruleset for a walking traverser 
+    /// </summary>
     public static Traverser Walking()
     {
         return new Traverser();
     }
 
+    /// <summary>
+    /// Default ruleset for a ranged attack
+    /// </summary>
     public static Traverser RangedAttack()
     {
         Traverser traverser = new Traverser();
@@ -30,11 +40,15 @@ public class Traverser
         traverser.roadCost = 1;
         traverser.riverCrossingCost = 1;
         traverser.uphillCost = 1;
+        traverser.downhillCost = 1;
         traverser.defaultCost = 1;
 
         return traverser;
     }
 
+    /// <summary>
+    /// Whether this traverser can move from the given cell to its neighbour in the given direction.
+    /// </summary>
     public virtual bool IsTraversable(HexCell cell, HexDirection direction)
     {
         HexCell neighbour = cell.GetNeighbor(direction);
@@ -66,7 +80,6 @@ public class Traverser
             }
         }
 
-
         else if (elevationDifference < 0)                                   // Descending cliff
         {
             if (maximumDescendingStep > -1)                                 // If blockable by descending cliffs...
@@ -80,6 +93,10 @@ public class Traverser
         return true;
     }
 
+    /// <summary>
+    /// Determines the cost of traversing from 'cell' to its neighbour in the given direction
+    /// </summary>
+    /// <returns>The traversal cost measured in time units</returns> 
     public virtual float TraverseCost(HexCell cell, HexDirection direction)
     {
         HexCell neighbour = cell.GetNeighbor(direction);
@@ -89,8 +106,12 @@ public class Traverser
             return roadCost;
 
         // Moving uphill
-        else if (neighbour.Elevation - cell.Elevation == 1)
+        else if (neighbour.Elevation - cell.Elevation > 0)
             return uphillCost;
+
+        // Moving downhill
+        else if (neighbour.Elevation - cell.Elevation < 0)
+            return downhillCost;
 
         // Crossing a river
         else if (CrossesRiver(cell, direction))
@@ -101,12 +122,12 @@ public class Traverser
             return defaultCost;
     }
 
+    // TODO: Special case: entering a river hex and leaving it by the same direction it was entered by should not count
+    // as crossing the river - need to consider third cell
     protected virtual bool CrossesRiver(HexCell cell, HexDirection direction)
     {
-        HexCell neighbour = cell.GetNeighbor(direction);
-
         // No need to cross river if there isn't one, or if can go around (in case of a river end), or there is a bridge
-        if (neighbour.HasRiver && !neighbour.HasRiverBeginOrEnd && !neighbour.HasRoadThroughEdge(direction))
+        if (cell.HasRiver && !cell.HasRiverBeginOrEnd && !cell.HasRoadThroughEdge(direction))
         {
             // For each neighbour of current cell
             Array directionValues = Enum.GetValues(typeof(HexDirection));
@@ -119,12 +140,13 @@ public class Traverser
                 if (adjacentDirection != direction || adjacentDirection != direction.Opposite())
                 {
                     // If there is a river crossing path, we must cross it
-                    if (neighbour.HasRiverThroughEdge(adjacentDirection))
+                    if (cell.HasRiverThroughEdge(adjacentDirection))
                         return true;
                 }
             }
         }
 
+        // No river crossing
         return false;   
     }
 }
