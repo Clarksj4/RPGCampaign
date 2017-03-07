@@ -125,13 +125,40 @@ public class Character : MonoBehaviour
     public void FollowPath(List<Step> path)
     {
         if (moving == null)
+        {
             moving = StartCoroutine(DoFollowPath(path));
+            //moving = StartCoroutine(DoFollowCurve(path[0].Cell.Position, path[1].Cell.Position, path[2].Cell.Position));
+        }
+            
     }
 
     IEnumerator DoFollowPath(List<Step> path)
     {
-        foreach (Step step in path)
-            yield return StartCoroutine(DoMoveTo(step.Cell.Position));
+        int i = 0;
+        if (path.Count - i >= 3)
+        {
+            HexCell start = path[i++].Cell;
+            HexCell mid = path[i++].Cell;
+            HexCell end = path[i++].Cell;
+
+            // While travelling in a straight line
+            while (i < path.Count &&
+                    start.GetDirection(mid) == mid.GetDirection(end))
+            {
+                start = mid;
+                mid = end;
+                end = path[i].Cell;
+
+                i++;
+            }
+
+            yield return StartCoroutine(DoMoveTo(start.Position));
+            yield return StartCoroutine(DoFollowCurve(start.Position, mid.Position, end.Position));
+        }
+            
+        // For remainder of cells in path, just move to them
+        for (; i < path.Count; i++)
+            yield return StartCoroutine(DoMoveTo(path[i].Cell.Position));
 
         if (moving != null)
             StopCoroutine(moving);
@@ -149,5 +176,27 @@ public class Character : MonoBehaviour
         
         // Update occupied cell when reaching a new cell
         Cell = HexGrid.GetCell(transform.position);
+    }
+
+    IEnumerator DoFollowCurve(Vector3 start, Vector3 m, Vector3 end)
+    {
+        // Approximation of the distance of curve
+        float distance = Vector3.Distance(start, m) + Vector3.Distance(m, end);
+        float eta = distance / Speed;
+        float time = 0;
+        while (transform.position != end)
+        {
+            time += Time.deltaTime;
+            float t = time / eta;
+
+            Vector3 point = Bezier.GetPoint(start, m, end, t);
+            transform.LookAt(point);
+            transform.position = point;
+
+            // Update occupied cell when reaching a new cell
+            Cell = HexGrid.GetCell(transform.position);
+
+            yield return null;
+        }
     }
 }
