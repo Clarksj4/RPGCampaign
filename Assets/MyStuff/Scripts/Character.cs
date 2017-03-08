@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System.Linq;
 using System;
 
 public class Character : MonoBehaviour
@@ -15,7 +16,12 @@ public class Character : MonoBehaviour
     /// </summary>
     public event ElementMeterEventHandler ElementCapacityChanged;
 
-        public HexCell Cell;
+    /// <summary>
+    /// The character has reached the end of its path
+    /// </summary>
+    public event EventHandler DestinationReached;
+
+    public HexCell Cell;
     public HexGrid HexGrid;
 
     [Tooltip("The amount of time units this character has available each turn")]
@@ -61,6 +67,7 @@ public class Character : MonoBehaviour
     private void Start()
     {
         Cell = HexGrid.GetCell(transform.position);
+        transform.position = Cell.Position;
     }
 
     private void OnValidate()
@@ -116,87 +123,38 @@ public class Character : MonoBehaviour
             renderer.material.color = GameMetrics.Instance.Elements[(int)Element].Colour;
     }
 
-    public void MoveTo(Vector3 position)
-    {
-        if (moving == null)
-            moving = StartCoroutine(DoMoveTo(position));
-    }
-
     public void FollowPath(List<Step> path)
     {
         if (moving == null)
-        {
             moving = StartCoroutine(DoFollowPath(path));
-            //moving = StartCoroutine(DoFollowCurve(path[0].Cell.Position, path[1].Cell.Position, path[2].Cell.Position));
-        }
-            
     }
 
     IEnumerator DoFollowPath(List<Step> path)
     {
-        int i = 0;
-        if (path.Count - i >= 3)
-        {
-            HexCell start = path[i++].Cell;
-            HexCell mid = path[i++].Cell;
-            HexCell end = path[i++].Cell;
+        Vector3[] positionPath = path.Select(s => s.Cell.Position).ToArray();
 
-            // While travelling in a straight line
-            while (i < path.Count &&
-                    start.GetDirection(mid) == mid.GetDirection(end))
-            {
-                start = mid;
-                mid = end;
-                end = path[i].Cell;
-
-                i++;
-            }
-
-            yield return StartCoroutine(DoMoveTo(start.Position));
-            yield return StartCoroutine(DoFollowCurve(start.Position, mid.Position, end.Position));
-        }
-            
-        // For remainder of cells in path, just move to them
-        for (; i < path.Count; i++)
-            yield return StartCoroutine(DoMoveTo(path[i].Cell.Position));
-
-        if (moving != null)
-            StopCoroutine(moving);
-        moving = null;
-    }
-
-    IEnumerator DoMoveTo(Vector3 position)
-    {
-        transform.LookAt(position);
-        while (transform.position != position)
-        {
-            transform.position = Vector3.MoveTowards(transform.position, position, Speed * Time.deltaTime);
-            yield return null;
-        }
-        
-        // Update occupied cell when reaching a new cell
-        Cell = HexGrid.GetCell(transform.position);
-    }
-
-    IEnumerator DoFollowCurve(Vector3 start, Vector3 m, Vector3 end)
-    {
-        // Approximation of the distance of curve
-        float distance = Vector3.Distance(start, m) + Vector3.Distance(m, end);
+        float distance = iTween.PathLength(positionPath);
         float eta = distance / Speed;
         float time = 0;
-        while (transform.position != end)
+
+        float t = 0;
+        while (t <= 1f)
         {
             time += Time.deltaTime;
-            float t = time / eta;
+            t = time / eta;
 
-            Vector3 point = Bezier.GetPoint(start, m, end, t);
-            transform.LookAt(point);
-            transform.position = point;
-
-            // Update occupied cell when reaching a new cell
+            transform.LookAt(iTween.PointOnPath(positionPath, t));
+            iTween.PutOnPath(gameObject, positionPath, t);
             Cell = HexGrid.GetCell(transform.position);
 
             yield return null;
         }
+
+        if (moving != null)
+            StopCoroutine(moving);
+        moving = null;
+
+        if (DestinationReached != null)
+            DestinationReached(this, new EventArgs());
     }
 }

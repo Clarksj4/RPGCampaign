@@ -8,7 +8,6 @@ public class CharacterInput : MonoBehaviour
 {
     [Tooltip("The character being controlled by this input")]
     public Character Character;
-
     [Tooltip("The hex grid the character exists on")]
     public HexGrid HexGrid;
     [Tooltip("The layer the hex grid is on. Used for raycasting")]
@@ -17,6 +16,7 @@ public class CharacterInput : MonoBehaviour
     private HexCell target;
     private List<Step> movementRange;
     private List<Step> movementPath;
+    private bool detectInput = true;
 
     private void Start()
     {
@@ -30,47 +30,61 @@ public class CharacterInput : MonoBehaviour
         // If mouse over another cell - show path to cell
         // If mouse clicked on cell - move to cell
 
-        // The cell the mouse pointer is over during this frame
-        target = GetMousedCell();
-
-        if (Character.Cell != null)
+        if (detectInput)
         {
-            // If the left mouse button is clicked
-            if (Input.GetMouseButtonDown(0) && 
-                target != Character.Cell &&
-                movementPath != null)
-            {
-                Character.FollowPath(movementPath);     // Follow path
+            // The cell the mouse pointer is over during this frame
+            target = GetMousedCell();
 
-                // Get rid of path and range because they are not valid anymore
-                movementPath = null;                    
-                movementRange = null;
-            }
-
-            else
+            if (Character.Cell != null)
             {
-                // If there is a cell under the cursor
-                if (target != null)
+                // If the left mouse button is clicked
+                if (Input.GetMouseButtonDown(0) &&
+                    target != Character.Cell &&
+                    movementPath != null)
                 {
-                    // If the targeted cell is the character's cell...
-                    if (target == Character.Cell)
+                    Character.FollowPath(movementPath);     // Follow path
+
+                    // Get rid of path and range because they are not valid anymore
+                    movementPath = null;
+                    movementRange = null;
+
+                    // Pause responding to user input until character has walked the path
+                    detectInput = false;
+                    Character.DestinationReached += Character_DestinationReached;
+                }
+
+                else
+                {
+                    // If there is a cell under the cursor
+                    if (target != null)
                     {
-                        // Get the character's movement range
-                        movementRange = Pathfind.CellsInRange(target, Character.TimeUnits.Current, Character.Traverser);
-                        movementPath = null;    // Get rid of path so it is not drawn
-                    }
+                        // If the targeted cell is the character's cell...
+                        if (target == Character.Cell)
+                        {
+                            // Get the character's movement range
+                            movementRange = Pathfind.CellsInRange(target, Character.TimeUnits.Current, Character.Traverser);
+                            movementPath = null;    // Get rid of path so it is not drawn
+                        }
 
 
-                    // If the targeted cell is not the character's cell...
-                    else
-                    {
-                        // Get the character's movement path to the targeted cell
-                        movementPath = Pathfind.QuickestPath(Character.Cell, target, Character.TimeUnits.Current, Character.Traverser);
-                        movementRange = null;   // Get rid of range so it is not drawn
+                        // If the targeted cell is not the character's cell...
+                        else
+                        {
+                            // Get the character's movement path to the targeted cell
+                            movementPath = Pathfind.QuickestPath(Character.Cell, target, Character.TimeUnits.Current, Character.Traverser);
+                            movementRange = null;   // Get rid of range so it is not drawn
+                        }
                     }
                 }
             }
         }
+    }
+
+    private void Character_DestinationReached(object sender, System.EventArgs e)
+    {
+        // Allow user input now that character has reached desination
+        detectInput = true;
+        Character.DestinationReached -= Character_DestinationReached;
     }
 
     private void OnDrawGizmos()
@@ -88,6 +102,9 @@ public class CharacterInput : MonoBehaviour
                 Color colour = Color.Lerp(Color.green, Color.red, step.CostTo / Character.TimeUnits.Current);
                 DrawCell(step.Cell, colour);
             }
+
+            Gizmos.color = Color.red;
+            iTween.DrawPath(movementPath.Select(s => s.Cell.Position + Vector3.up).ToArray());
         }
 
         // Draw all cells in range
