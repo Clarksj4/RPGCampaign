@@ -22,14 +22,12 @@ public class Character : MonoBehaviour
     public event EventHandler DestinationReached;
 
     public HexCell Cell;
+    [Tooltip("The hex grid this character exists upon")]
     public HexGrid HexGrid;
-
     [Tooltip("The amount of time units this character has available each turn")]
     public Range TimeUnits;
-
     [Tooltip("The speed at which this character moves")]
     public float Speed;
-
     [Tooltip("Which cells can be crossed by this character and the cost of doing so")]
     public Traverser Traverser;
 
@@ -39,12 +37,16 @@ public class Character : MonoBehaviour
     private ElementType element;
     private new Renderer renderer;
     private Coroutine moving;
+    private Animator animator;
 
     /// <summary>
     /// The capacity and current level of each of this characters elements
     /// </summary>
     public Range[] Elements { get; private set; }
 
+    /// <summary>
+    /// The element type of this character
+    /// </summary>
     public ElementType Element
     {
         get { return element; }
@@ -57,6 +59,7 @@ public class Character : MonoBehaviour
 
     private void Awake()
     {
+        animator = GetComponentInChildren<Animator>();
         renderer = GetComponentInChildren<Renderer>();
 
         Elements = new Range[4];
@@ -131,9 +134,10 @@ public class Character : MonoBehaviour
 
     IEnumerator DoFollowPath(List<Step> path)
     {
-        Vector3[] positionPath = path.Select(s => s.Cell.Position).ToArray();
+        Vector3[] pathPoints = path.Select(s => s.Cell.Position).ToArray();
 
-        float distance = iTween.PathLength(positionPath);
+        animator.SetFloat("Speed", 1f);
+        float distance = iTween.PathLength(pathPoints);
         float eta = distance / Speed;
         float time = 0;
 
@@ -143,12 +147,25 @@ public class Character : MonoBehaviour
             time += Time.deltaTime;
             t = time / eta;
 
-            transform.LookAt(iTween.PointOnPath(positionPath, t));
-            iTween.PutOnPath(gameObject, positionPath, t);
+            Vector3 look = iTween.PointOnPath(pathPoints, (time + 4 * Time.smoothDeltaTime) / eta);
+            Vector3 lookDir = (look - transform.position).normalized;
+            float lookAngle = Vector3.Angle(transform.forward, lookDir);
+            float leftOrRight = MathExtension.AngleDir(transform.forward, lookDir.normalized, transform.up);
+
+            animator.SetFloat("Direction", (lookAngle / 20f) * leftOrRight);
+
+            // Face along path, move along path
+            transform.LookAt(iTween.PointOnPath(pathPoints, t));
+            iTween.PutOnPath(gameObject, pathPoints, t);
+
+            // Update ref to which cell is occupied
             Cell = HexGrid.GetCell(transform.position);
 
             yield return null;
         }
+
+        animator.SetFloat("Direction", 0);
+        animator.SetFloat("Speed", 0);
 
         if (moving != null)
             StopCoroutine(moving);
