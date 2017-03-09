@@ -1,8 +1,6 @@
 ﻿using UnityEngine;
 using System;
 
-public enum ElementType { Air, Earth, Fire, Water }
-
 [ExecuteInEditMode]
 public class GameMetrics : MonoBehaviour
 {
