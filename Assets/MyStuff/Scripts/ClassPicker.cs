@@ -13,11 +13,11 @@ public class ClassPicker : MonoBehaviour
 
         Element element = GameMetrics.Instance[type];
 
-        character.Element = type;
-        character.SetElementCapacity(ElementType.Air, GameMetrics.Instance.ElementCapacity * element.ElementCapacityModifiers[(int)ElementType.Air]);
-        character.SetElementCapacity(ElementType.Earth, GameMetrics.Instance.ElementCapacity * element.ElementCapacityModifiers[(int)ElementType.Earth]);
-        character.SetElementCapacity(ElementType.Fire, GameMetrics.Instance.ElementCapacity * element.ElementCapacityModifiers[(int)ElementType.Fire]);
-        character.SetElementCapacity(ElementType.Water, GameMetrics.Instance.ElementCapacity * element.ElementCapacityModifiers[(int)ElementType.Water]);
+        character.Stats.Element = type;
+        character.Stats.SetElementCapacity(ElementType.Air, GameMetrics.Instance.ElementCapacity * element.ElementCapacityModifiers[(int)ElementType.Air]);
+        character.Stats.SetElementCapacity(ElementType.Earth, GameMetrics.Instance.ElementCapacity * element.ElementCapacityModifiers[(int)ElementType.Earth]);
+        character.Stats.SetElementCapacity(ElementType.Fire, GameMetrics.Instance.ElementCapacity * element.ElementCapacityModifiers[(int)ElementType.Fire]);
+        character.Stats.SetElementCapacity(ElementType.Water, GameMetrics.Instance.ElementCapacity * element.ElementCapacityModifiers[(int)ElementType.Water]);
 
         gameObject.SetActive(false);
     }

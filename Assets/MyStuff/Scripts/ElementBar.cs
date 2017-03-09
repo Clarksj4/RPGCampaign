@@ -6,7 +6,7 @@ using UnityEngine.UI;
 public class ElementBar : MonoBehaviour
 {
     public Slider Slider;
-    public Character character;
+    public Stats Stats;
     public ElementType element;
 
     public float Min
@@ -35,20 +35,20 @@ public class ElementBar : MonoBehaviour
 
     private void Awake()
     {
-        character.ElementValueChanged += Character_ElementValueChanged;
-        character.ElementCapacityChanged += Character_ElementCapacityChanged;
+        Stats.ElementValueChanged += Character_ElementValueChanged;
+        Stats.ElementCapacityChanged += Character_ElementCapacityChanged;
     }
 
     private void Character_ElementCapacityChanged(object sender, ElementMeterEventArgs e)
     {
         if (e.Type == element)
-            Max = character.GetElementCapacity(e.Type) * UnitWidth;
+            Max = Stats.GetElementCapacity(e.Type) * UnitWidth;
     }
 
     private void Character_ElementValueChanged(object sender, ElementMeterEventArgs e)
     {
         if (e.Type == element)
-            Current = character.GetElementValue(e.Type) * UnitWidth;
+            Current = Stats.GetElementValue(e.Type) * UnitWidth;
     }
 
     private void UpdateBarWidth()
