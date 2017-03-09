@@ -14,6 +14,12 @@ public class Stats : MonoBehaviour
     /// </summary>
     public event ElementMeterEventHandler ElementCapacityChanged;
 
+    [Tooltip("The amount of time units this character has available each turn")]
+    public Range TimeUnits;
+    [Tooltip("The speed at which this character moves")]
+    public float Speed;
+    [Tooltip("Which cells can be crossed by this character and the cost of doing so")]
+    public Traverser Traverser;
     [Tooltip("The element that this character is spec'd in. Determines the capacity this character has for each of the elements, as well " +
     "as which elements are strong against this character.")]
     public ElementType Element;

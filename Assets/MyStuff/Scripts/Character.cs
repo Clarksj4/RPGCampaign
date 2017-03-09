@@ -15,12 +15,6 @@ public class Character : MonoBehaviour
     public HexCell Cell;
     [Tooltip("The hex grid this character exists upon")]
     public HexGrid HexGrid;
-    [Tooltip("The amount of time units this character has available each turn")]
-    public Range TimeUnits;
-    [Tooltip("The speed at which this character moves")]
-    public float Speed;
-    [Tooltip("Which cells can be crossed by this character and the cost of doing so")]
-    public Traverser Traverser;
 
     private Coroutine moving;
     private Animator animator;
@@ -36,8 +30,12 @@ public class Character : MonoBehaviour
 
     private void Start()
     {
-        Cell = HexGrid.GetCell(transform.position);
-        transform.position = Cell.Position;
+        if (HexGrid != null)
+        {
+            Cell = HexGrid.GetCell(transform.position);
+            transform.position = Cell.Position;
+            transform.Rotate(transform.up, 30);
+        }
     }
 
     public void FollowPath(List<Step> path)
@@ -52,7 +50,7 @@ public class Character : MonoBehaviour
 
         animator.SetFloat("Speed", 1f);
         float distance = iTween.PathLength(pathPoints);
-        float eta = distance / Speed;
+        float eta = distance / stats.Speed;
         float time = 0;
 
         float t = 0;

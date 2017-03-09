@@ -13,6 +13,7 @@ public class CharacterInput : MonoBehaviour
     [Tooltip("The layer the hex grid is on. Used for raycasting")]
     public string HexGridLayer = "HexGrid";
 
+    private Stats stats;
     private HexCell target;
     private List<Step> movementRange;
     private List<Step> movementPath;
@@ -20,6 +21,8 @@ public class CharacterInput : MonoBehaviour
 
     private void Start()
     {
+        stats = Character.Stats;
+
         foreach (Transform child in HexGrid.GetComponentsInChildren<Transform>())
             child.gameObject.layer = LayerMask.NameToLayer(HexGridLayer);
     }
@@ -62,7 +65,7 @@ public class CharacterInput : MonoBehaviour
                         if (target == Character.Cell)
                         {
                             // Get the character's movement range
-                            movementRange = Pathfind.CellsInRange(target, Character.TimeUnits.Current, Character.Traverser);
+                            movementRange = Pathfind.CellsInRange(target, stats.TimeUnits.Current, stats.Traverser);
                             movementPath = null;    // Get rid of path so it is not drawn
                         }
 
@@ -71,7 +74,7 @@ public class CharacterInput : MonoBehaviour
                         else
                         {
                             // Get the character's movement path to the targeted cell
-                            movementPath = Pathfind.QuickestPath(Character.Cell, target, Character.TimeUnits.Current, Character.Traverser);
+                            movementPath = Pathfind.QuickestPath(Character.Cell, target, stats.TimeUnits.Current, stats.Traverser);
                             movementRange = null;   // Get rid of range so it is not drawn
                         }
                     }
@@ -99,7 +102,7 @@ public class CharacterInput : MonoBehaviour
             foreach (Step step in movementPath)
             {
                 // Colour changes from green to red during the path
-                Color colour = Color.Lerp(Color.green, Color.red, step.CostTo / Character.TimeUnits.Current);
+                Color colour = Color.Lerp(Color.green, Color.red, step.CostTo / stats.TimeUnits.Current);
                 DrawCell(step.Cell, colour);
             }
 
@@ -113,7 +116,7 @@ public class CharacterInput : MonoBehaviour
             foreach (Step step in movementRange)
             {
                 // 'Green-er' closer to start, 'red-er' towards end
-                Color colour = Color.Lerp(Color.green, Color.red, step.CostTo / Character.TimeUnits.Current);
+                Color colour = Color.Lerp(Color.green, Color.red, step.CostTo / stats.TimeUnits.Current);
 
                 DrawCell(step.Cell, colour);
             }
