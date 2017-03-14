@@ -24,6 +24,15 @@ public class ElementalShield : MonoBehaviour
             Set(Target, Direction, Element);
     }
 
+    private void LateUpdate()
+    {
+        if (Target != null)
+        {
+            transform.rotation = Quaternion.AngleAxis(30 + (int)Direction * 60, Vector3.up);
+            transform.position = Target.position + (transform.forward * HexMetrics.innerRadius) + (Vector3.up * HoverDistance);
+        }
+    }
+
     public void Set(Transform target, HexDirection direction, ElementType element)
     {
         if (activeModel == null || element != Element)
