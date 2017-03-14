@@ -1,5 +1,4 @@
 ﻿using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class RockBob : MonoBehaviour
@@ -13,10 +12,9 @@ public class RockBob : MonoBehaviour
     void Start()
     {
         StartCoroutine(DoBob(Rock, -1, MaxBob, BobTime));
+
         foreach (Transform pebble in Pebbles)
-        {
             StartCoroutine(DoBob(pebble, OneOrMinusOne(), Random.Range(MaxBob / 2, MaxBob), Random.Range(BobTime / 2, BobTime)));
-        }
     }
 
     IEnumerator DoBob(Transform rock, float startDirection, float distance, float time)
@@ -38,8 +36,6 @@ public class RockBob : MonoBehaviour
 
             yield return null;
         }
-
-        transform.localPosition = start;
     }
 
     float OneOrMinusOne()

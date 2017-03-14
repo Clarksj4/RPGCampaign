@@ -1,6 +1,8 @@
 using System;
 using UnityEngine;
 
+namespace UnityStandardAssets.Water
+{
     public enum WaterQuality
     {
         High = 2,
@@ -73,3 +75,4 @@ using UnityEngine;
             }
         }
     }
+}

@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class FireSwirl : MonoBehaviour
+public class Swirl : MonoBehaviour
 {
     public float AngularVelocity = 360;
 
