@@ -53,7 +53,7 @@ public class CharacterInput : MonoBehaviour
 
                     // Pause responding to user input until character has walked the path
                     detectInput = false;
-                    Character.DestinationReached += Character_DestinationReached;
+                    Character.FinishedMovement += Character_FinishedMovement; ;
                 }
 
                 else
@@ -83,11 +83,11 @@ public class CharacterInput : MonoBehaviour
         }
     }
 
-    private void Character_DestinationReached(object sender, System.EventArgs e)
+    private void Character_FinishedMovement(object sender, CharacterMovementEventArgs e)
     {
         // Allow user input now that character has reached desination
         detectInput = true;
-        Character.DestinationReached -= Character_DestinationReached;
+        Character.FinishedMovement -= Character_FinishedMovement;
     }
 
     private void OnDrawGizmos()

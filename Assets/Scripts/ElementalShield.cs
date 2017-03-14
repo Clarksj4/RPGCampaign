@@ -9,7 +9,7 @@ public class ElementalShield : MonoBehaviour
     public HexCell Cell;
     public HexDirection Direction;
     public ElementType Element;
-    public Transform Target;
+    public Character Target;
     public float HoverDistance;
     public Vector3 Scale;
 
@@ -24,7 +24,16 @@ public class ElementalShield : MonoBehaviour
             Set(Target, Direction, Element);
     }
 
-    public void Set(Transform target, HexDirection direction, ElementType element)
+    private void LateUpdate()
+    {
+        if (Target != null)
+        {
+            transform.rotation = Quaternion.AngleAxis(30 + (int)Direction * 60, Vector3.up);
+            transform.position = Target.transform.position + (transform.forward * HexMetrics.innerRadius) + (Vector3.up * HoverDistance);
+        }
+    }
+
+    public void Set(Character target, HexDirection direction, ElementType element)
     {
         if (activeModel == null || element != Element)
         {
@@ -34,10 +43,12 @@ public class ElementalShield : MonoBehaviour
             activeModel = Instantiate(Prefabs[(int)element], transform) as GameObject;
         }
 
-        transform.parent = target;
+        transform.parent = target.transform;
         transform.localScale = Scale;
         transform.rotation = Quaternion.AngleAxis(30 + (int)direction * 60, Vector3.up);
-        transform.position = target.position + (transform.forward * HexMetrics.innerRadius) + (transform.up * HoverDistance);
+        transform.position = target.transform.position + (transform.forward * HexMetrics.innerRadius) + (Vector3.up * HoverDistance);
+        target.BeginMovement += Target_BeginMovement;
+        target.FinishedMovement += Target_FinishedMovement;
     }
 
     public void Set(HexCell target, HexDirection direction, ElementType element)
@@ -53,6 +64,26 @@ public class ElementalShield : MonoBehaviour
         transform.parent = null;
         transform.localScale = Scale;
         transform.rotation = Quaternion.AngleAxis(30 + (int)direction * 60, Vector3.up);
-        transform.position = target.Position + (transform.forward * HexMetrics.innerRadius) + (transform.up * HoverDistance);
+        transform.position = target.Position + (transform.forward * HexMetrics.innerRadius) + (Vector3.up * HoverDistance);
+    }
+
+    public void Show()
+    {
+        gameObject.SetActive(true);
+    }
+
+    public void Hide()
+    {
+        gameObject.SetActive(false);
+    }
+
+    private void Target_FinishedMovement(object sender, CharacterMovementEventArgs e)
+    {
+        Show();
+    }
+
+    private void Target_BeginMovement(object sender, CharacterMovementEventArgs e)
+    {
+        Hide();
     }
 }
