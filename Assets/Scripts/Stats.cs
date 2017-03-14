@@ -14,6 +14,8 @@ public class Stats : MonoBehaviour
     /// </summary>
     public event ElementMeterEventHandler ElementCapacityChanged;
 
+    [Tooltip("Determines how quickly this character acts in combat")]
+    public float Initiative = 25;
     [Tooltip("The amount of time units this character has available each turn")]
     public Range TimeUnits;
     [Tooltip("The speed at which this character moves")]

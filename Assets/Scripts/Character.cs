@@ -14,6 +14,8 @@ public class Character : MonoBehaviour
     public HexCell Cell;
     [Tooltip("The hex grid this character exists upon")]
     public HexGrid HexGrid;
+    [Tooltip("The player that controls this character")]
+    public Player Controller;
 
     private Coroutine moving;
     private Animator animator;
