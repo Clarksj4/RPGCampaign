@@ -15,12 +15,17 @@ public class Hover : MonoBehaviour
     public float PeripheralPingPongDistance = 0.1f;
     public float PeripheralInitialDirection = -1f;
 
-    void Start()
+    private void OnEnable()
     {
         StartCoroutine(DoHover(Main, InitialDirection, PingPongDistance, PingPongTime));
 
         foreach (Transform peripheral in Peripherals)
             StartCoroutine(DoHover(peripheral, PeripheralInitialDirection, PeripheralPingPongDistance, PeripheralPingPongTime));
+    }
+
+    private void OnDisable()
+    {
+        StopAllCoroutines();
     }
 
     IEnumerator DoHover(Transform hoverer, float startDirection, float distance, float time)
