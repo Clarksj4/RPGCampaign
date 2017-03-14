@@ -7,10 +7,9 @@ using System;
 [RequireComponent(typeof(Stats))]
 public class Character : MonoBehaviour
 {
-    /// <summary>
-    /// The character has reached the end of its path
-    /// </summary>
-    public event EventHandler DestinationReached;
+    public event CharacterMovementEventHandler BeginMovement;
+    public event CharacterMovementEventHandler ContinuedMovement;
+    public event CharacterMovementEventHandler FinishedMovement;
 
     public HexCell Cell;
     [Tooltip("The hex grid this character exists upon")]
@@ -46,6 +45,9 @@ public class Character : MonoBehaviour
 
     IEnumerator DoFollowPath(List<Step> path)
     {
+        if (BeginMovement != null)
+            BeginMovement(this, new CharacterMovementEventArgs(path));
+
         Vector3[] pathPoints = path.Select(s => s.Cell.Position).ToArray();
 
         animator.SetFloat("Speed", 1f);
@@ -73,6 +75,9 @@ public class Character : MonoBehaviour
             // Update ref to which cell is occupied
             Cell = HexGrid.GetCell(transform.position);
 
+            if (ContinuedMovement != null)
+                ContinuedMovement(this, new CharacterMovementEventArgs(path));
+
             yield return null;
         }
 
@@ -83,7 +88,7 @@ public class Character : MonoBehaviour
             StopCoroutine(moving);
         moving = null;
 
-        if (DestinationReached != null)
-            DestinationReached(this, new EventArgs());
+        if (FinishedMovement != null)
+            FinishedMovement(this, new CharacterMovementEventArgs(path));
     }
 }
