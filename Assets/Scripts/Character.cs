@@ -45,6 +45,8 @@ public class Character : MonoBehaviour
             moving = StartCoroutine(DoFollowPath(path));
     }
 
+
+
     IEnumerator DoFollowPath(List<Step> path)
     {
         if (BeginMovement != null)
@@ -52,7 +54,9 @@ public class Character : MonoBehaviour
 
         Vector3[] pathPoints = path.Select(s => s.Cell.Position).ToArray();
 
-        animator.SetFloat("Speed", 1f);
+        if (animator != null)
+            animator.SetFloat("Speed", 1f);
+        
         float distance = iTween.PathLength(pathPoints);
         float eta = distance / stats.Speed;
         float time = 0;
@@ -68,7 +72,9 @@ public class Character : MonoBehaviour
             float lookAngle = Vector3.Angle(transform.forward, lookDir);
             float leftOrRight = MathExtension.AngleDir(transform.forward, lookDir.normalized, transform.up);
 
-            animator.SetFloat("Direction", (lookAngle / 20f) * leftOrRight);
+            if (animator != null)
+                animator.SetFloat("Direction", (lookAngle / 20f) * leftOrRight);
+            
 
             // Face along path, move along path
             transform.LookAt(iTween.PointOnPath(pathPoints, t));
@@ -83,8 +89,11 @@ public class Character : MonoBehaviour
             yield return null;
         }
 
-        animator.SetFloat("Direction", 0);
-        animator.SetFloat("Speed", 0);
+        if (animator != null)
+        {
+            animator.SetFloat("Direction", 0);
+            animator.SetFloat("Speed", 0);
+        }
 
         if (moving != null)
             StopCoroutine(moving);

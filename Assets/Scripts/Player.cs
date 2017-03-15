@@ -1,18 +1,38 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System.Linq;
 
-public class Player : MonoBehaviour
+public abstract class Player : MonoBehaviour
 {
+    public TurnSystem TurnSystem;
+
     private List<Character> Actors;
 
-    public void Activate(Character actor)
+    private void Awake()
     {
-
+        // Get list of all characters this player controls
+        Actors = GetComponentsInChildren<Character>().ToList();
     }
 
-    public void EndTurn()
+    private void Start()
     {
-
+        // Tell each character that this player is its controller
+        foreach (Character actor in Actors)
+            actor.Controller = this;
     }
+
+    public void Add(Character actor)
+    {
+        Actors.Add(actor);
+    }
+
+    public void Remove(Character actor)
+    {
+        Actors.Remove(actor);
+    }
+
+    public abstract void Activate(Character actor);
+
+    public abstract void EndTurn(Character actor);
 }
