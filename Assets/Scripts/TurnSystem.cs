@@ -8,16 +8,13 @@ public class TurnSystem : MonoBehaviour
 
     public Character Current { get { return Actors.First(); } }
 
-    private void Awake()
-    {
-        Actors = FindObjectsOfType<Character>().ToList();
-        Order();
-    }
-
     private void Start()
     {
+        Order();
+
         // Tell next character to activate!
         Actors.First().Controller.Activate(Actors.First());
+        print(Actors.First().name + "'s turn - controlled by " + Actors.First().Controller.name);
     }
 
     /// <summary>
@@ -85,7 +82,7 @@ public class TurnSystem : MonoBehaviour
     /// </summary>
     public void Order()
     {
-        Actors.OrderBy(c => c.Stats.Initiative);
+        Actors = Actors.OrderByDescending(c => c.Stats.Initiative).ToList();
     }
 
     /// <summary>
@@ -103,5 +100,7 @@ public class TurnSystem : MonoBehaviour
 
         // Tell next character to activate!
         Actors.First().Controller.Activate(Actors.First());
+
+        print(Actors.First().name + "'s turn - controlled by " + Actors.First().Controller.name);
     }
 }

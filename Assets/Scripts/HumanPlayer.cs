@@ -8,13 +8,12 @@ public class HumanPlayer : Player
 
     public override void Activate(Character actor)
     {
-        InputSystem.Character = actor;
+        InputSystem.Selected = actor;
         actor.FinishedMovement += Actor_FinishedMovement;
     }
 
     public override void EndTurn(Character actor)
     {
-        InputSystem.Character = null;
         TurnSystem.Cycle();
         actor.FinishedMovement -= Actor_FinishedMovement;
     }

@@ -23,6 +23,8 @@ public class Character : MonoBehaviour
     private Stats stats;
 
     public Stats Stats { get { return stats; } }
+    public bool IsMoving { get { return moving != null; } }
+
 
     private void Awake()
     {
@@ -35,6 +37,7 @@ public class Character : MonoBehaviour
         if (HexGrid != null)
         {
             Cell = HexGrid.GetCell(transform.position);
+            Cell.Occupant = this;
             transform.position = Cell.Position;
             transform.LookAt(Facing);
         }
@@ -80,7 +83,9 @@ public class Character : MonoBehaviour
             iTween.PutOnPath(gameObject, pathPoints, t);
 
             // Update ref to which cell is occupied
+            Cell.Occupant = null;
             Cell = HexGrid.GetCell(transform.position);
+            Cell.Occupant = this;
 
             if (ContinuedMovement != null)
                 ContinuedMovement(this, new CharacterMovementEventArgs(path));
