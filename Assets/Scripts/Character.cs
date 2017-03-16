@@ -11,6 +11,7 @@ public class Character : MonoBehaviour
     public event CharacterMovementEventHandler ContinuedMovement;
     public event CharacterMovementEventHandler FinishedMovement;
 
+    public HexDirection Facing;
     public HexCell Cell;
     [Tooltip("The hex grid this character exists upon")]
     public HexGrid HexGrid;
@@ -35,7 +36,7 @@ public class Character : MonoBehaviour
         {
             Cell = HexGrid.GetCell(transform.position);
             transform.position = Cell.Position;
-            transform.Rotate(transform.up, 30);
+            transform.LookAt(Facing);
         }
     }
 
@@ -44,8 +45,6 @@ public class Character : MonoBehaviour
         if (moving == null)
             moving = StartCoroutine(DoFollowPath(path));
     }
-
-
 
     IEnumerator DoFollowPath(List<Step> path)
     {
