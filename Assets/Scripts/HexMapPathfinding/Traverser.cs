@@ -9,6 +9,7 @@ public class Traverser
 {
     public bool blockedByWater = true;
     public bool blockedByWall = true;
+    public bool blockedByCharacters = true;
     public int maximumAscendingStep = 1;
     public int maximumDescendingStep = 1;
 
@@ -52,6 +53,16 @@ public class Traverser
     public virtual bool IsTraversable(HexCell cell, HexDirection direction)
     {
         HexCell neighbour = cell.GetNeighbor(direction);
+
+        // If blockable by other characters
+        if (blockedByCharacters)
+        {
+            // Check if there is a character in the next cell
+            if (neighbour.Occupant != null)
+                return false;
+        }
+
+        else throw new NotImplementedException("Cannot currently traverse cells that contain a character");
 
         // If blockable by water...
         if (blockedByWater)

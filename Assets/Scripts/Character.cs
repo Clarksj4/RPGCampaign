@@ -43,18 +43,18 @@ public class Character : MonoBehaviour
         }
     }
 
-    public void FollowPath(List<Step> path)
+    public void FollowPath(HexPath path)
     {
-        if (moving == null)
+        if (moving == null && path != null && path.Cells > 0)
             moving = StartCoroutine(DoFollowPath(path));
     }
 
-    IEnumerator DoFollowPath(List<Step> path)
+    IEnumerator DoFollowPath(HexPath path)
     {
         if (BeginMovement != null)
             BeginMovement(this, new CharacterMovementEventArgs(path));
 
-        Vector3[] pathPoints = path.Select(s => s.Cell.Position).ToArray();
+        Vector3[] pathPoints = path.Points;
 
         if (animator != null)
             animator.SetFloat("Speed", 1f);

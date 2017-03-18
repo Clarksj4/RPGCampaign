@@ -2,7 +2,7 @@
 using UnityEngine.UI;
 using System.IO;
 
-public class HexGrid : MonoBehaviour {
+public partial class HexGrid : MonoBehaviour {
 
 	public int cellCountX = 20, cellCountZ = 15;
 

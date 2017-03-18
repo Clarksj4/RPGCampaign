@@ -1,20 +1,21 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class TurnSystem : MonoBehaviour
+[Serializable]
+public class InitiativeOrder
 {
-    public List<Character> Actors;
+    public List<Character> Actors { get { return actors; } }
 
     public Character Current { get { return Actors.First(); } }
 
-    private void Start()
-    {
-        Order();
+    [HideInInspector][SerializeField]
+    private List<Character> actors;
 
-        // Tell next character to activate!
-        Actors.First().Controller.Activate(Actors.First());
-        print(Actors.First().name + "'s turn - controlled by " + Actors.First().Controller.name);
+    public InitiativeOrder()
+    {
+        actors = new List<Character>();
     }
 
     /// <summary>
@@ -26,12 +27,12 @@ public class TurnSystem : MonoBehaviour
         int i = 0;
         for (i = 0; i < Actors.Count; i++)
         {
-            if (Actors[i].Stats.Initiative > actor.Stats.Initiative)
+            if (actors[i].Stats.Initiative > actor.Stats.Initiative)
                 break;
         }
 
         // Insert in front of actor with greater initiative
-        Actors.Insert(i, actor);
+        actors.Insert(i, actor);
     }
 
     /// <summary>
@@ -40,7 +41,7 @@ public class TurnSystem : MonoBehaviour
     public void AddNext(Character actor)
     {
         // Add after first character in list
-        Actors.AddNext(actor);
+        actors.AddNext(actor);
     }
 
     /// <summary>
@@ -50,7 +51,7 @@ public class TurnSystem : MonoBehaviour
     /// </summary>
     public void Push(Character actor, int places)
     {
-        Actors.Move(actor, places);
+        actors.Move(actor, places);
     }
 
     /// <summary>
@@ -58,7 +59,7 @@ public class TurnSystem : MonoBehaviour
     /// </summary>
     public void MoveAfter(Character actor, Character referenceCharacter)
     {
-        Actors.MoveAfter(actor, referenceCharacter);
+        actors.MoveAfter(actor, referenceCharacter);
     }
 
     /// <summary>
@@ -66,7 +67,7 @@ public class TurnSystem : MonoBehaviour
     /// </summary>
     public void MoveBefore(Character actor, Character referenceCharacter)
     {
-        Actors.MoveBefore(actor, referenceCharacter);
+        actors.MoveBefore(actor, referenceCharacter);
     }
 
     /// <summary>
@@ -74,7 +75,7 @@ public class TurnSystem : MonoBehaviour
     /// </summary>
     public void Shuffle()
     {
-        Actors.Shuffle();
+        actors.Shuffle();
     }
 
     /// <summary>
@@ -82,7 +83,7 @@ public class TurnSystem : MonoBehaviour
     /// </summary>
     public void Order()
     {
-        Actors = Actors.OrderByDescending(c => c.Stats.Initiative).ToList();
+        actors = actors.OrderByDescending(c => c.Stats.Initiative).ToList();
     }
 
     /// <summary>
@@ -92,15 +93,10 @@ public class TurnSystem : MonoBehaviour
     public void Cycle()
     {
         // Save temp reference to character that has just finished turn
-        Character finished = Actors.First();
+        Character finished = actors.First();
 
         // Remove character from list and add to end
-        Actors.RemoveAt(0);
-        Actors.Add(finished);
-
-        // Tell next character to activate!
-        Actors.First().Controller.Activate(Actors.First());
-
-        print(Actors.First().name + "'s turn - controlled by " + Actors.First().Controller.name);
+        actors.RemoveAt(0);
+        actors.Add(finished);
     }
 }

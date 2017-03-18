@@ -15,7 +15,7 @@ public class CharacterInput : MonoBehaviour
 
     private HexCell target;
     private List<Step> movementRange;
-    private List<Step> movementPath;
+    private HexPath movementPath;
 
     private void Start()
     {

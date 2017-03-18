@@ -83,11 +83,11 @@ public static class Pathfind
     /// </summary>
     /// <param name="origin">The beginning cell of the path</param>
     /// <param name="destination">The end cell of the path</param>
-    /// <param name="maximumCost">The maximum cost allowed in order to find a path</param>
+    /// <param name="maximumCost">The maximum cost allowed in order to find a path. -1 for no cost limit</param>
     /// <param name="traverser">The ruleset for which cells can be crossed and the cost for doing so</param>
     /// <returns>A collection of each step of the path from origin to destination OR null if no path could be found 
     /// within the given parameters</returns>
-    public static List<Step> QuickestPath(HexCell origin, HexCell destination, float maximumCost, Traverser traverser)
+    public static HexPath QuickestPath(HexCell origin, HexCell destination, float maximumCost, Traverser traverser)
     {
         // Queue of cells whose costs have been evaluated
         List<Step> evaluated = new List<Step>();
@@ -171,7 +171,7 @@ public static class Pathfind
     /// <summary>
     /// Recreate the path from origin to destination by following the given step's previous steps
     /// </summary>
-    private static List<Step> ReconstructPath(Step current)
+    private static HexPath ReconstructPath(Step current)
     {
         List<Step> path = new List<Step>();
 
@@ -185,7 +185,7 @@ public static class Pathfind
         }
 
         path.Reverse();
-        return path;
+        return new HexPath(path);
     }
 
     /// <summary>

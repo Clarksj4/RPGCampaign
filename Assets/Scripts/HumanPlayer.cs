@@ -14,7 +14,8 @@ public class HumanPlayer : Player
 
     public override void EndTurn(Character actor)
     {
-        TurnSystem.Cycle();
+        GameManager.EndTurn(actor);
+
         actor.FinishedMovement -= Actor_FinishedMovement;
     }
 
