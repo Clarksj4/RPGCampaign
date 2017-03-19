@@ -17,13 +17,11 @@ public class AIPlayer : Player
 
     IEnumerator DoChaseTarget(Character target)
     {
-        // TODO: calculate path to each adjacent cell, follow the quickest
-
-        HexCell closestAdjacent = target.Cell.GetNeighbours().Where(c => c != null).OrderBy(c => Vector3.Distance(current.Cell.Position, c.Position)).First();
-        while (current.Cell != closestAdjacent)
+        // Calculate path quickest to reach cell that is adjacent to target
+        HexPath path;
+        do
         {
-            // Path from ai to target
-            HexPath path = PathToClosestAdjacent(target);
+            path = PathToClosestAdjacent(target);
             if (path == null)
             {
                 EndTurn(current);
@@ -45,13 +43,12 @@ public class AIPlayer : Player
                 // Wait until next turn
                 yield return new WaitUntil(() => GameManager.CurrentCharacter == current);
             }
-            
-            // Recalculate the closest cell
-            closestAdjacent = target.Cell.GetNeighbours().Where(c => c != null).OrderBy(c => Vector3.Distance(current.Cell.Position, c.Position)).First();
-        }
+        } while (path == null || path.Destination != current.Cell);
 
         chasing = null;
-        EndTurn(current);
+
+        if (path.Destination == current.Cell)
+            EndTurn(current);
     }
 
     /// <summary>
