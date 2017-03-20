@@ -43,9 +43,16 @@ public class Character : MonoBehaviour
         }
     }
 
+    public void MoveTo(HexCell cell)
+    {
+        // Pathfind.QuickestPath()
+        // StartCoroutine(DoFollowPath())
+    }
+
     public void MoveAdjacentTo(Character target)
     {
-
+        // Pathfind.ClosestPath()
+        // StartCoroutine(DoFollowPath())
     }
 
     public void FollowPath(HexPath path)
@@ -82,7 +89,6 @@ public class Character : MonoBehaviour
             if (animator != null)
                 animator.SetFloat("Direction", (lookAngle / 20f) * leftOrRight);
             
-
             // Face along path, move along path
             transform.LookAt(iTween.PointOnPath(pathPoints, t));
             iTween.PutOnPath(gameObject, pathPoints, t);
