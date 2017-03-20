@@ -62,8 +62,6 @@ public class Traverser
                 return false;
         }
 
-        else throw new NotImplementedException("Cannot currently traverse cells that contain a character");
-
         // If blockable by water...
         if (blockedByWater)
         {

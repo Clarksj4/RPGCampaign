@@ -29,6 +29,41 @@ public class HexPath : IEnumerable<Step>
         Steps = steps;
     }
 
+    /// <summary>
+    /// Creates a new path by walking backwards from the given step
+    /// </summary>
+    public HexPath(Step final)
+        : this()
+    {
+        // Iterate through steps to obtain cell reference
+        Step walker = final;
+        while (walker != null)
+        {
+            // Add to list of cells
+            Steps.Add(walker);
+            walker = walker.Previous;
+        }
+
+        Steps.Reverse();
+    }
+
+    public HexPath(Step final, float maximumCost)
+    : this()
+    {
+        // Iterate through steps to obtain cell reference
+        Step walker = final;
+        while (walker != null)
+        {
+            // Add to list of cells if within cost
+            if (walker.CostTo <= maximumCost)
+                Steps.Add(walker);
+
+            walker = walker.Previous;
+        }
+
+        Steps.Reverse();
+    }
+
     public void AddStep(Step step)
     {
         Steps.Add(step);

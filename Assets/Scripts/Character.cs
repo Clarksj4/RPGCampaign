@@ -43,6 +43,11 @@ public class Character : MonoBehaviour
         }
     }
 
+    public void MoveAdjacentTo(Character target)
+    {
+
+    }
+
     public void FollowPath(HexPath path)
     {
         if (moving == null && path != null && path.Cells > 0)
@@ -85,6 +90,11 @@ public class Character : MonoBehaviour
             // Update ref to which cell is occupied
             Cell.Occupant = null;
             Cell = HexGrid.GetCell(transform.position);
+
+            // Can't move through an occupied cell
+            if (Cell.Occupant != null)
+                throw new NotImplementedException("Cannot currently traverse cells that are already occupied");
+
             Cell.Occupant = this;
 
             if (ContinuedMovement != null)

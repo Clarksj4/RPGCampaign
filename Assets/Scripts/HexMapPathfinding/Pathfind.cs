@@ -14,14 +14,9 @@ public static class Pathfind
     /// <returns>A collection of each step from origin towards the maximum distance</returns>
     public static List<Step> CellsInRange(HexCell origin, float maximumCost, Traverser traverser)
     {
-        // Collection of cells that are traversable and within 'timeUnits' range
-        List<Step> inRange = new List<Step>();
-
-        // Queue of cells whose costs have been evaluated
-        List<Step> evaluated = new List<Step>();
-
-        // Queue of discovered cells that have not yet been evaluated
-        List<Step> toBeEvaluated = new List<Step>();
+        List<Step> inRange = new List<Step>();       // Collection of cells that are traversable and within 'timeUnits' range
+        List<Step> evaluated = new List<Step>();     // Queue of cells whose costs have been evaluated
+        List<Step> toBeEvaluated = new List<Step>(); // Queue of discovered cells that have not yet been evaluated
 
         // Add origin cell to collection
         toBeEvaluated.Add(new Step(origin, null, 0));
@@ -89,11 +84,8 @@ public static class Pathfind
     /// within the given parameters</returns>
     public static HexPath QuickestPath(HexCell origin, HexCell destination, float maximumCost, Traverser traverser)
     {
-        // Queue of cells whose costs have been evaluated
-        List<Step> evaluated = new List<Step>();
-
-        // Queue of discovered cells that have not yet been evaluated
-        List<Step> toBeEvaluated = new List<Step>();
+        List<Step> evaluated = new List<Step>();        // Queue of cells whose costs have been evaluated
+        List<Step> toBeEvaluated = new List<Step>();    // Queue of discovered cells that have not yet been evaluated
 
         // Add origin cell to collection
         toBeEvaluated.Add(new Step(origin, null, 0));
@@ -151,6 +143,63 @@ public static class Pathfind
         return null;
     }
 
+    public static HexPath ClosestPath(HexCell origin, HexCell destination, float maximumCost, Traverser traverser)
+    {
+        List<Step> evaluated = new List<Step>();        // Queue of cells whose costs have been evaluated
+        List<Step> toBeEvaluated = new List<Step>();    // Queue of discovered cells that have not yet been evaluated
+
+        // Add origin cell to collection
+        toBeEvaluated.Add(new Step(origin, null, 0));
+
+        // Evaluate every cell that has not yet been evaluated
+        while (toBeEvaluated.Count > 0)
+        {
+            // Current cell being evaluated
+            Step current = toBeEvaluated.First();
+
+            // Remove current cell from unevaluated cells and add to evaluated cells
+            toBeEvaluated.RemoveAt(0);
+            evaluated.Add(current);
+
+            if (current.Cell == destination)
+                return ReconstructPath(current);
+
+            // For each neighbour of current cell
+            foreach (HexDirection direction in Directions())
+            {
+                HexCell adjacent = current.Cell.GetNeighbor(direction);
+
+                // Check that there is a cell in that direction   
+                if (adjacent != null &&                                       // Is there an adjacent cell in the current direction?
+                    !evaluated.Select(s => s.Cell).Contains(adjacent) &&      // Has the adjacent cell already been evaluated?
+                    traverser.IsTraversable(current.Cell, direction))         // Is the adjacent cell traversable from current cell?
+                {
+                    // Cost to move from origin to adjacent cell with current route
+                    float costToAdjacent = current.CostTo + traverser.TraverseCost(current.Cell, direction);
+
+                    // Is adjacent a newly discovered node...?
+                    Step adjacentStep = toBeEvaluated.Find(s => s.Cell == adjacent);
+                    if (adjacentStep == null)
+                    {
+                        adjacentStep = new Step(adjacent, current, costToAdjacent);
+                        InsertStep(toBeEvaluated, adjacentStep);
+                    }
+
+                    // Is the current path to this already discovered node a better path?
+                    else if (costToAdjacent < adjacentStep.CostTo)
+                    {
+                        // This path is best until now, record it.
+                        adjacentStep.Previous = current;
+                        adjacentStep.CostTo = costToAdjacent;
+                    }
+                }
+            }
+        }
+
+        // No path
+        return null;
+    }
+
     /// <summary>
     /// Inserts the given step into the step list ordered based upon the cost to move to each step
     /// </summary>
@@ -173,19 +222,18 @@ public static class Pathfind
     /// </summary>
     private static HexPath ReconstructPath(Step current)
     {
-        List<Step> path = new List<Step>();
+        return new HexPath(current);
+    }
 
-        // Iterate through steps to obtain cell reference
-        Step walker = current;
-        while (walker != null)
-        {
-            // Add to list of cells
-            path.Add(walker);
-            walker = walker.Previous;
-        }
-
-        path.Reverse();
-        return new HexPath(path);
+    /// <summary>
+    /// Recreate as much of the path as is affordable from origin to destination by following the given step's previous steps
+    /// </summary>
+    /// <param name="current"></param>
+    /// <param name="maximumCost"></param>
+    /// <returns></returns>
+    public static HexPath ReconstructPath(Step current, float maximumCost)
+    {
+        return new HexPath(current, maximumCost);
     }
 
     /// <summary>
