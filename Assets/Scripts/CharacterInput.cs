@@ -49,7 +49,7 @@ public class CharacterInput : MonoBehaviour
             {
                 if (Input.GetMouseButton(0))
                 {
-                    Selected.FollowPath(movementPath);     // Follow path
+                    Selected.Move(movementPath);     // Follow path
 
                     // Get rid of path and range because they are not valid anymore
                     movementPath = null;

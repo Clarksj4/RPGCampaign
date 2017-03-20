@@ -36,7 +36,7 @@ public class AIPlayer : Player
                 HexPath inRangePath = path.Truncate(current.Stats.TimeUnits.Current);
 
                 // Follow the path, wait until ai has stopped moving, then end turn
-                current.FollowPath(inRangePath);
+                current.Move(inRangePath);
                 yield return new WaitUntil(() => !current.IsMoving);
                 EndTurn(current);
 
