@@ -6,6 +6,14 @@ public class HumanPlayer : Player
 {
     public CharacterInput InputSystem;
 
+    public void Update()
+    {
+        if (true)
+        {
+
+        }
+    }
+
     public override void Activate(Character actor)
     {
         InputSystem.Selected = actor;

@@ -26,20 +26,19 @@ public class MoveBehaviour : CharacterBehaviour
 
         time += Time.deltaTime;
         t = time / eta;
-        if (t <= 1.0f)
-        {
-            // Face along path, move along path
-            character.transform.LookAt(iTween.PointOnPath(path.Points, t));
-            iTween.PutOnPath(character.gameObject, path.Points, t);
 
-            // Update the character's animation
-            UpdateAnimator();
+        // Face along path, move along path
+        character.transform.LookAt(iTween.PointOnPath(path.Points, t));
+        iTween.PutOnPath(character.gameObject, path.Points, t);
 
-            // Update reference to the currently occupied cell
-            UpdateOccupiedCell();
-        }
+        // Update the character's animation
+        UpdateAnimator();
 
-        SetState(new IdleBehaviour(character));
+        // Update reference to the currently occupied cell
+        UpdateOccupiedCell();
+
+        if (t >= 1.0f)
+            SetState(new IdleBehaviour(character));
     }
 
     private void UpdateOccupiedCell()

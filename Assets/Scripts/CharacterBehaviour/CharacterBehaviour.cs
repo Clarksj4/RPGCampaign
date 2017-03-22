@@ -24,6 +24,7 @@ public class CharacterBehaviour
 
     public virtual void Init() { }
     public virtual void Update() { }
+    public virtual void Activate() { } 
     public virtual void Closing() { }
 
     protected void SetState(CharacterBehaviour newState)
