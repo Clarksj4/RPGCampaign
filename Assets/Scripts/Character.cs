@@ -137,7 +137,8 @@ public class Character : MonoBehaviour
     {
         if (animator != null)
         {
-            if (time >= 1f)
+            float t = time / eta;
+            if (t >= 1f)
             {
                 animator.SetFloat("Speed", 0f);
                 animator.SetFloat("Direction", 0f);
