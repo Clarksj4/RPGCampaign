@@ -21,7 +21,9 @@ public class Character : MonoBehaviour
     private Coroutine moving;
     private Animator animator;
     private Stats stats;
+    private CharacterBehaviour state;
 
+    public Animator Animator { get { return animator; } }
     public Stats Stats { get { return stats; } }
     public bool IsMoving { get { return moving != null; } }
 
@@ -41,6 +43,17 @@ public class Character : MonoBehaviour
             transform.position = Cell.Position;
             transform.LookAt(Facing);
         }
+
+        SetState(new IdleBehaviour(this));
+    }
+
+    public void SetState(CharacterBehaviour newState)
+    {
+        if (state != null)
+            state.Closing();
+
+        state = newState;
+        newState.Init();
     }
 
     // Push character in given direction the given number of cells

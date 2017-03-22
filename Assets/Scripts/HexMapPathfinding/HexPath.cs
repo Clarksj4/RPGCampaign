@@ -12,12 +12,23 @@ public class HexPath : IEnumerable<Step>
         set { Steps[index] = value; }
     }
 
-    public Vector3[] Points { get { return Steps.Select(s => s.Cell.Position).ToArray(); } }
     public List<Step> Steps { get; private set; }
     public HexCell Origin { get { return Steps.First().Cell; } }
     public HexCell Destination { get { return Steps.Last().Cell; } }
     public float Cost { get { return Steps.Select(s => s.CostTo).Sum(); } }
     public int Cells { get { return Steps.Count; } }
+
+    public Vector3[] Points
+    {
+        get
+        {
+            if (points == null)
+                points = Steps.Select(s => s.Cell.Position).ToArray();
+            return points;
+        }
+    }
+
+    private Vector3[] points;
 
     public HexPath()
     {
