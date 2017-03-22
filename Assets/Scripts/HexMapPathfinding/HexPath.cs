@@ -69,19 +69,40 @@ public class HexPath : IEnumerable<Step>
         Steps.Add(step);
     }
 
-    /// <summary>
-    /// Returns all the steps from this path that are within the given timeUnits range of the origin cell
-    /// </summary>
-    public HexPath Truncate(float timeUnits)
+    public HexPath To(HexCell cell)
     {
-        HexPath inRangePath = new HexPath();
-        foreach (Step step in Steps)
+        int index = IndexOf(cell);
+
+        List<Step> subSteps = Steps.GetRange(0, index);
+
+        return new HexPath(subSteps);
+    }
+
+    public HexPath To(float timeUnits)
+    {
+        List<Step> subSteps = Steps.Where(s => s.CostTo <= timeUnits).ToList();
+        return new HexPath(subSteps);
+    }
+
+    public HexPath From(HexCell cell)
+    {
+        int index = IndexOf(cell);
+        int remaining = Steps.Count - index;
+
+        List<Step> subSteps = Steps.GetRange(index, remaining);
+
+        return new HexPath(subSteps);
+    }
+
+    public int IndexOf(HexCell cell)
+    {
+        for (int i = 0; i < Steps.Count; i++)
         {
-            if (step.CostTo <= timeUnits)
-                inRangePath.AddStep(step);
+            if (Steps[i].Cell == cell)
+                return i;
         }
 
-        return inRangePath;
+        return -1;
     }
 
     public IEnumerator<Step> GetEnumerator()

@@ -33,7 +33,7 @@ public class AIPlayer : Player
             else
             {
                 // The section of the path that is within the movement range of the ai
-                HexPath inRangePath = path.Truncate(current.Stats.TimeUnits.Current);
+                HexPath inRangePath = path.To(current.Stats.TimeUnits.Current);
 
                 // Follow the path, wait until ai has stopped moving, then end turn
                 current.Move(inRangePath);
