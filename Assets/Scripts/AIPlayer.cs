@@ -33,7 +33,7 @@ public class AIPlayer : Player
         HexPath path;
         do
         {
-            path = PathToClosestAdjacent(target);
+            path = PathToWithinRange(target);
             if (path == null)
             {
                 EndTurn(current);
@@ -57,9 +57,8 @@ public class AIPlayer : Player
             }
         } while (path == null || path.Destination != current.Cell);
 
-        chasing = null;
-
-        if (path.Destination == current.Cell)
+        // End turn if no path
+        //if (path.Destination == current.Cell)
             EndTurn(current);
     }
 
@@ -88,6 +87,21 @@ public class AIPlayer : Player
         }
 
         return shortestPath;
+    }
+
+    /// <summary>
+    /// Find the shortest path to a cell adjacent to the given target
+    /// </summary>
+    private HexPath PathToWithinRange(Character target)
+    {
+        List<Step> cellsInRange = Pathfind.CellsInRange(target.Cell, current.Attack.range, Traverser.RangedAttack());
+        List<HexCell> cells = cellsInRange.Select(s => s.Cell).ToList();
+
+        if (cells.Contains(current.Cell))
+            return null;
+
+        HexPath path = Pathfind.PathToAny(current.Cell, cells, current.Stats.Traverser);
+        return path;
     }
 
     public override void Activate(Character actor)

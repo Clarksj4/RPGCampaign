@@ -34,7 +34,7 @@ public class CharacterInput : MonoBehaviour
                 !occupant.IsMoving)                 // AND the occupant is not currently moving
             {
                 // Get the character's movement range
-                movementRange = Pathfind.CellsInRange(target, Selected.Stats.TimeUnits.Current, Selected.Stats.Traverser);
+                movementRange = Pathfind.CellsInRange(target, occupant.Stats.TimeUnits.Current, occupant.Stats.Traverser);
                 movementPath = null;    // Get rid of path so it is not drawn
             }
 

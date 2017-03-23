@@ -16,6 +16,8 @@ public class Character : MonoBehaviour
     public HexGrid HexGrid;
     [Tooltip("The player that controls this character")]
     public Player Controller;
+    public Attack Attack;
+
 
     private Animator animator;
     private Stats stats;

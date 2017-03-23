@@ -32,7 +32,7 @@ public class GameManager : MonoBehaviour
         foreach (Character character in characters)
             initiativeOrder.Add(character);
 
-        print(CurrentCharacter + "'s turn, controlled by " + CurrentPlayer);
+        //print(CurrentCharacter + "'s turn, controlled by " + CurrentPlayer);
 
         // Tell next character to activate!
         CurrentPlayer.Activate(CurrentCharacter);
@@ -42,7 +42,7 @@ public class GameManager : MonoBehaviour
     {
         initiativeOrder.Cycle();
 
-        print(CurrentCharacter + "'s turn, controlled by " + CurrentPlayer);
+        //print(CurrentCharacter + "'s turn, controlled by " + CurrentPlayer);
 
         // Tell next character to activate!
         CurrentPlayer.Activate(CurrentCharacter);

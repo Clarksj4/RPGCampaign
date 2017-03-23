@@ -35,6 +35,7 @@ public class Traverser
         Traverser traverser = new Traverser();
         traverser.blockedByWater = false;
         traverser.blockedByWall = false;
+        traverser.blockedByCharacters = false;
         traverser.maximumAscendingStep = -1;
         traverser.maximumDescendingStep = -1;
 

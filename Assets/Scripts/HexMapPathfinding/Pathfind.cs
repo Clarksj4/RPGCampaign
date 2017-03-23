@@ -200,6 +200,71 @@ public static class Pathfind
         return null;
     }
 
+    public static HexPath ToWithinRange(HexCell origin, HexCell target, int range, Traverser traverser)
+    {
+        // Get list of steps in range
+        List<Step> cellsInRange = CellsInRange(origin, )
+
+        // Pathfind to any of the steps
+    }
+
+    private static HexPath ToClosest(HexCell origin, List<Step> cells, Traverser traverser)
+    {
+        List<Step> evaluated = new List<Step>();        // Queue of cells whose costs have been evaluated
+        List<Step> toBeEvaluated = new List<Step>();    // Queue of discovered cells that have not yet been evaluated
+
+        // Add origin cell to collection
+        toBeEvaluated.Add(new Step(origin, null, 0));
+
+        // Evaluate every cell that has not yet been evaluated
+        while (toBeEvaluated.Count > 0)
+        {
+            // Current cell being evaluated
+            Step current = toBeEvaluated.First();
+
+            // Remove current cell from unevaluated cells and add to evaluated cells
+            toBeEvaluated.RemoveAt(0);
+            evaluated.Add(current);
+
+            if (cells.Contains(current.Cell))
+                return ReconstructPath(current);
+
+            // For each neighbour of current cell
+            foreach (HexDirection direction in Directions())
+            {
+                HexCell adjacent = current.Cell.GetNeighbor(direction);
+
+                // Check that there is a cell in that direction   
+                if (adjacent != null &&                                       // Is there an adjacent cell in the current direction?
+                    !evaluated.Select(s => s.Cell).Contains(adjacent) &&      // Has the adjacent cell already been evaluated?
+                    traverser.IsTraversable(current.Cell, direction))         // Is the adjacent cell traversable from current cell?
+                {
+                    // Cost to move from origin to adjacent cell with current route
+                    float costToAdjacent = current.CostTo + traverser.TraverseCost(current.Cell, direction);
+
+                    // Is adjacent a newly discovered node...?
+                    Step adjacentStep = toBeEvaluated.Find(s => s.Cell == adjacent);
+                    if (adjacentStep == null)
+                    {
+                        adjacentStep = new Step(adjacent, current, costToAdjacent);
+                        InsertStep(toBeEvaluated, adjacentStep);
+                    }
+
+                    // Is the current path to this already discovered node a better path?
+                    else if (costToAdjacent < adjacentStep.CostTo)
+                    {
+                        // This path is best until now, record it.
+                        adjacentStep.Previous = current;
+                        adjacentStep.CostTo = costToAdjacent;
+                    }
+                }
+            }
+        }
+
+        // No path
+        return null;
+    }
+
     /// <summary>
     /// Inserts the given step into the step list ordered based upon the cost to move to each step
     /// </summary>
