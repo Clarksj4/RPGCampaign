@@ -1,11 +1,14 @@
 ﻿using System;
+using UnityEngine;
 
-
-[Serializable]
-public class Attack
+public class Attack : MonoBehaviour
 {
-    public string name = "Basic Attack";
-    public int range = 3;
-    public float cost = 0;
-    public Traverser traverser = Traverser.RangedAttack();
+    public int Range = 3;
+    public float Cost = 0;
+    public Traverser Traverser = Traverser.RangedAttack();
+
+    public bool InRange(HexCell target)
+    {
+        return Pathfind.IsInRange(GetComponent<Character>().Cell, target, Range, Traverser);
+    }
 }

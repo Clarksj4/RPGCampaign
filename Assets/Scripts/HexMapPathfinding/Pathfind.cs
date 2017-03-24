@@ -143,7 +143,7 @@ public static class Pathfind
         return null;
     }
 
-    public static HexPath NearestPath(HexCell origin, HexCell destination, Traverser traverser)
+    public static HexPath QuickestPath(HexCell origin, HexCell destination, Traverser traverser)
     {
         List<Step> evaluated = new List<Step>();        // Queue of cells whose costs have been evaluated
         List<Step> toBeEvaluated = new List<Step>();    // Queue of discovered cells that have not yet been evaluated
@@ -270,7 +270,7 @@ public static class Pathfind
 
     public static bool IsInRange(HexCell origin, HexCell target, int range, Traverser traverser)
     {
-        HexPath path = NearestPath(origin, target, traverser);
+        HexPath path = QuickestPath(origin, target, traverser);
         return path.Count <= range;
     }
 

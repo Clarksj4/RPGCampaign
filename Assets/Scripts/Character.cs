@@ -16,12 +16,12 @@ public class Character : MonoBehaviour
     public HexGrid HexGrid;
     [Tooltip("The player that controls this character")]
     public Player Controller;
-    public Attack Attack;
 
     private Animator animator;
     private Stats stats;
     private CharacterBehaviour state;
 
+    public Attack[] Attacks { get { return GetComponents<Attack>(); } }
     public Animator Animator { get { return animator; } }
     public Stats Stats { get { return stats; } }
     public bool IsMoving { get { return state.GetType() == typeof(MoveBehaviour); } }
@@ -75,11 +75,6 @@ public class Character : MonoBehaviour
 
         // Return true because nothing can prevent the character from acting
         return true;
-    }
-
-    public bool InAttackRange(HexCell target)
-    {
-        return Pathfind.IsInRange(Cell, target, Attack.range, Attack.traverser);
     }
 
     // Push character in given direction the given number of cells

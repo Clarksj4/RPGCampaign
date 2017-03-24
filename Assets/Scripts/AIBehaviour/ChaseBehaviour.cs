@@ -20,12 +20,13 @@ public class ChaseBehaviour : AIBehaviour
 
         // Listen for when character has finished moving
         Current.FinishedMovement += Current_FinishedMovement;
+        Attack attack = Current.Attacks[0];
 
         // If not in range of target...
-        if (!Current.InAttackRange(target.Cell))
+        if (!attack.InRange(target.Cell))
         {
             // Get quickest path to a cell within range of target
-            path = Pathfind.ToWithinRange(Current.Cell, target.Cell, Current.Attack.range, Current.Stats.Traverser, Current.Attack.traverser);
+            path = Pathfind.ToWithinRange(Current.Cell, target.Cell, attack.Range, Current.Stats.Traverser, attack.Traverser);
 
             // If there is no path...
             if (path == null)
