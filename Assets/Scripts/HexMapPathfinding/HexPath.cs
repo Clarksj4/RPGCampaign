@@ -16,7 +16,7 @@ public class HexPath : IEnumerable<Step>
     public HexCell Origin { get { return Steps.First().Cell; } }
     public HexCell Destination { get { return Steps.Last().Cell; } }
     public float Cost { get { return Steps.Select(s => s.CostTo).Sum(); } }
-    public int Cells { get { return Steps.Count; } }
+    public int Count { get { return Steps.Count; } }
 
     public Vector3[] Points
     {
@@ -91,8 +91,15 @@ public class HexPath : IEnumerable<Step>
 
     public HexPath To(float timeUnits)
     {
-        List<Step> subSteps = Steps.Where(s => s.CostTo <= timeUnits).ToList();
-        return new HexPath(subSteps);
+        HexPath subPath = new HexPath();
+        foreach (Step step in Steps)
+        {
+            if (step.CostTo <= timeUnits)
+                subPath.AddStep(step);
+            else
+                break;
+        }
+        return subPath;
     }
 
     public HexPath From(HexCell cell)

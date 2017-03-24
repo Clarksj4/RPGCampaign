@@ -104,7 +104,7 @@ public static class Pathfind
             if (maximumCost < 0 || current.CostTo <= maximumCost)
             {
                 if (current.Cell == destination)
-                    return ReconstructPath(current);
+                    return new HexPath(current);
 
                 // For each neighbour of current cell
                 foreach (HexDirection direction in Directions())
@@ -143,7 +143,7 @@ public static class Pathfind
         return null;
     }
 
-    public static HexPath ClosestPath(HexCell origin, HexCell destination, float maximumCost, Traverser traverser)
+    public static HexPath NearestPath(HexCell origin, HexCell destination, Traverser traverser)
     {
         List<Step> evaluated = new List<Step>();        // Queue of cells whose costs have been evaluated
         List<Step> toBeEvaluated = new List<Step>();    // Queue of discovered cells that have not yet been evaluated
@@ -162,7 +162,7 @@ public static class Pathfind
             evaluated.Add(current);
 
             if (current.Cell == destination)
-                return ReconstructPath(current);
+                return new HexPath(current);
 
             // For each neighbour of current cell
             foreach (HexDirection direction in Directions())
@@ -200,15 +200,18 @@ public static class Pathfind
         return null;
     }
 
-    public static HexPath ToWithinRange(HexCell origin, HexCell target, int range, Traverser traverser)
+    public static HexPath ToWithinRange(HexCell origin, HexCell target, int range, Traverser traverser, Traverser inRangeTraverser)
     {
         // Get list of steps in range
-        List<Step> cellsInRange = CellsInRange(origin, )
+        List<Step> cellsInRange = CellsInRange(target, range, inRangeTraverser);
 
         // Pathfind to any of the steps
+        HexPath path = ToQuickest(origin, cellsInRange, traverser);
+        return path;
+
     }
 
-    private static HexPath ToClosest(HexCell origin, List<Step> cells, Traverser traverser)
+    public static HexPath ToQuickest(HexCell origin, List<Step> steps, Traverser traverser)
     {
         List<Step> evaluated = new List<Step>();        // Queue of cells whose costs have been evaluated
         List<Step> toBeEvaluated = new List<Step>();    // Queue of discovered cells that have not yet been evaluated
@@ -226,8 +229,8 @@ public static class Pathfind
             toBeEvaluated.RemoveAt(0);
             evaluated.Add(current);
 
-            if (cells.Contains(current.Cell))
-                return ReconstructPath(current);
+            if (steps.Select(s => s.Cell).Contains(current.Cell))
+                return new HexPath(current);
 
             // For each neighbour of current cell
             foreach (HexDirection direction in Directions())
@@ -265,6 +268,12 @@ public static class Pathfind
         return null;
     }
 
+    public static bool IsInRange(HexCell origin, HexCell target, int range, Traverser traverser)
+    {
+        HexPath path = NearestPath(origin, target, traverser);
+        return path.Count <= range;
+    }
+
     /// <summary>
     /// Inserts the given step into the step list ordered based upon the cost to move to each step
     /// </summary>
@@ -280,25 +289,6 @@ public static class Pathfind
 
         // Insert in front of larger step (or end of collection)
         steps.Insert(index, step);
-    }
-
-    /// <summary>
-    /// Recreate the path from origin to destination by following the given step's previous steps
-    /// </summary>
-    private static HexPath ReconstructPath(Step current)
-    {
-        return new HexPath(current);
-    }
-
-    /// <summary>
-    /// Recreate as much of the path as is affordable from origin to destination by following the given step's previous steps
-    /// </summary>
-    /// <param name="current"></param>
-    /// <param name="maximumCost"></param>
-    /// <returns></returns>
-    public static HexPath ReconstructPath(Step current, float maximumCost)
-    {
-        return new HexPath(current, maximumCost);
     }
 
     /// <summary>

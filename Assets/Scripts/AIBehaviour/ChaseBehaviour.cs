@@ -8,62 +8,53 @@ public class ChaseBehaviour : AIBehaviour
     private Character target;
     private HexPath path;
 
-    public ChaseBehaviour(AIPlayer ai, Character target) 
+    public ChaseBehaviour(AIPlayer ai) 
         : base(ai)
     {
-        this.target = target;
+        target = GameManager.Characters.Where(c => !Characters.Contains(c)).Single();
     }
 
     public override void Activate()
     {
         base.Activate();
 
-        // Get path to target
-        // tell character to move
+        // Listen for when character has finished moving
+        Current.FinishedMovement += Current_FinishedMovement;
 
-        path = PathToWithinRange(target);
-        //// Calculate path quickest to reach cell that is adjacent to target
-        //HexPath path;
-        //do
-        //{
-        //    path = PathToWithinRange(target);
-        //    if (path == null)
-        //    {
-        //        EndTurn(current);
+        // If not in range of target...
+        if (!Current.InAttackRange(target.Cell))
+        {
+            // Get quickest path to a cell within range of target
+            path = Pathfind.ToWithinRange(Current.Cell, target.Cell, Current.Attack.range, Current.Stats.Traverser, Current.Attack.traverser);
 
-        //        // Wait until next turn
-        //        yield return new WaitUntil(() => GameManager.CurrentCharacter == current);
-        //    }
+            // If there is no path...
+            if (path == null)
+                EndTurn();   // End turn
 
-        //    else
-        //    {
-        //        // The section of the path that is within the movement range of the ai
-        //        HexPath inRangePath = path.To(current.Stats.TimeUnits.Current);
+            else
+            {
+                // Move along the amount of path that can be traversed this turn
+                HexPath inRangePath = path.To(Current.Stats.TimeUnits.Current);
+                Current.Move(inRangePath);
+            }
+        }
 
-        //        // Follow the path, wait until ai has stopped moving, then end turn
-        //        current.Move(inRangePath);
-        //        yield return new WaitUntil(() => !current.IsMoving);
-        //        EndTurn(current);
-
-        //        // Wait until next turn
-        //        yield return new WaitUntil(() => GameManager.CurrentCharacter == current);
-        //    }
-        //} while (path == null || path.Destination != current.Cell);
-
-        //// End turn if no path
-        ////if (path.Destination == current.Cell)
-        //EndTurn(current);
+        // Already in range, end turn.
+        else
+            EndTurn();
     }
 
-    private HexPath PathToWithinRange(Character target)
+    public override void EndTurn()
     {
-        List<Step> cellsInRange = Pathfind.CellsInRange(target.Cell, Current.Attack.range, Traverser.RangedAttack());
-        List<HexCell> cells = cellsInRange.Select(s => s.Cell).ToList();
+        // Stop listening for when character has finished moving
+        Current.FinishedMovement -= Current_FinishedMovement;
 
-        if (cells.Contains(Current.Cell))
-            return null;
+        base.EndTurn();
+    }
 
-        HexPath path = Pathfind.PathToAny(Current.Cell, cells, Current.Stats.Traverser);
-        return path;
+    private void Current_FinishedMovement(object sender, CharacterMovementEventArgs e)
+    {
+        // End turn when character has finished moving
+        EndTurn();
     }
 }

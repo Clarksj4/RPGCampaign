@@ -13,11 +13,22 @@ public class MoveBehaviour : CharacterBehaviour
         : base(character)
     {
         this.path = path;
+    }
 
-        distance = iTween.PathLength(path.Points);
-        eta = distance / character.Stats.Speed;
-        time = 0;
-        t = 0;
+    public override void Init()
+    {
+        base.Init();
+
+        if (path.Count <= 1)
+            SetState(new IdleBehaviour(character));
+
+        else
+        {
+            distance = iTween.PathLength(path.Points);
+            eta = distance / character.Stats.Speed;
+            time = 0;
+            t = 0;
+        }
     }
 
     public override void Update()

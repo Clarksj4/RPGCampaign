@@ -6,29 +6,17 @@ public class HumanPlayer : Player
 {
     public CharacterInput InputSystem;
 
-    public void Update()
-    {
-        if (true)
-        {
-
-        }
-    }
-
     public override void Activate(Character actor)
     {
+        base.Activate(actor);
+
         InputSystem.Selected = actor;
         actor.FinishedMovement += Actor_FinishedMovement;
     }
 
-    public override void EndTurn(Character actor)
-    {
-        GameManager.EndTurn(actor);
-
-        actor.FinishedMovement -= Actor_FinishedMovement;
-    }
-
     private void Actor_FinishedMovement(object sender, CharacterMovementEventArgs e)
     {
-        EndTurn(sender as Character);
+        current.FinishedMovement -= Actor_FinishedMovement;
+        EndTurn();
     }
 }

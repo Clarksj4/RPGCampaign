@@ -41,5 +41,8 @@ public abstract class Player : MonoBehaviour
         current = actor;
     }
 
-    public abstract void EndTurn(Character actor);
+    public virtual void EndTurn()
+    {
+        GameManager.EndTurn(current);
+    }
 }
