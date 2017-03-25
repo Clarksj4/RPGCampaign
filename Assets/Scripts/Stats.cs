@@ -40,6 +40,13 @@ public class Stats : MonoBehaviour
             Elements[i] = new Range();
     }
 
+    public void RefreshTimeUnits()
+    {
+        CurrentTimeUnits += TimeUnitsPerTurn;
+        if (CurrentTimeUnits > MaxTimeUnits)
+            CurrentTimeUnits = MaxTimeUnits;
+    }
+
     /// <summary>
     /// Get this character's capacity for the given element
     /// </summary>

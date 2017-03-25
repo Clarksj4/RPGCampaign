@@ -73,6 +73,8 @@ public class Character : MonoBehaviour
     {
         state.Activate();
 
+        Stats.RefreshTimeUnits();
+
         // Return true because nothing can prevent the character from acting
         return true;
     }
