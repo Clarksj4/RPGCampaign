@@ -35,7 +35,7 @@ public class ChaseBehaviour : AIBehaviour
             else
             {
                 // Move along the amount of path that can be traversed this turn
-                HexPath inRangePath = path.To(Current.Stats.TimeUnits.Current);
+                HexPath inRangePath = path.To(Current.Stats.CurrentTimeUnits);
                 Current.Move(inRangePath);
             }
         }

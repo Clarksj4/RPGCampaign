@@ -34,7 +34,7 @@ public class CharacterInput : MonoBehaviour
                 !occupant.IsMoving)                 // AND the occupant is not currently moving
             {
                 // Get the character's movement range
-                movementRange = Pathfind.CellsInRange(target, occupant.Stats.TimeUnits.Current, occupant.Stats.Traverser);
+                movementRange = Pathfind.CellsInRange(target, occupant.Stats.CurrentTimeUnits, occupant.Stats.Traverser);
                 movementPath = null;    // Get rid of path so it is not drawn
             }
 
@@ -59,7 +59,7 @@ public class CharacterInput : MonoBehaviour
                 else
                 {
                     // Get the character's movement path to the targeted cell
-                    movementPath = Pathfind.QuickestPath(Selected.Cell, target, Selected.Stats.TimeUnits.Current, Selected.Stats.Traverser);
+                    movementPath = Pathfind.QuickestPath(Selected.Cell, target, Selected.Stats.CurrentTimeUnits, Selected.Stats.Traverser);
                     movementRange = null;   // Get rid of range so it is not drawn
                 }
             }
@@ -78,7 +78,7 @@ public class CharacterInput : MonoBehaviour
             foreach (Step step in movementPath)
             {
                 // Colour changes from green to red during the path
-                Color colour = Color.Lerp(Color.green, Color.red, step.CostTo / Selected.Stats.TimeUnits.Current);
+                Color colour = Color.Lerp(Color.green, Color.red, step.CostTo / Selected.Stats.CurrentTimeUnits);
                 DrawCell(step.Cell, colour);
             }
 
@@ -92,7 +92,7 @@ public class CharacterInput : MonoBehaviour
             foreach (Step step in movementRange)
             {
                 // 'Green-er' closer to start, 'red-er' towards end
-                Color colour = Color.Lerp(Color.green, Color.red, step.CostTo / Selected.Stats.TimeUnits.Current);
+                Color colour = Color.Lerp(Color.green, Color.red, step.CostTo / Selected.Stats.CurrentTimeUnits);
 
                 DrawCell(step.Cell, colour);
             }
