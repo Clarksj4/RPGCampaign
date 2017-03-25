@@ -7,12 +7,14 @@ using UnityEngine;
 [Serializable]
 public class Traverser
 {
+    [Header("Obstacles")]
     public bool blockedByWater = true;
     public bool blockedByWall = true;
     public bool blockedByCharacters = true;
     public int maximumAscendingStep = 1;
     public int maximumDescendingStep = 1;
 
+    [Header("Cost")]
     public float roadCost = 0.25f;
     public float riverCrossingCost = 2f;
     public float uphillCost = 2f;
