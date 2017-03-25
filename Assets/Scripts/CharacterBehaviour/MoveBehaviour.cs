@@ -54,15 +54,25 @@ public class MoveBehaviour : CharacterBehaviour
 
     private void UpdateOccupiedCell()
     {
-        // Update ref to which cell is occupied
-        Cell.Occupant = null;
-        Cell = HexGrid.GetCell(Transform.position);
+        // Has the character entered a new cell?
+        HexCell newCell = HexGrid.GetCell(Transform.position);
+        if (newCell != Cell)
+        {
+            // Calculate direction moved and cost to do so, subtract from time units
+            HexDirection directionMoved = Cell.GetDirection(newCell);
+            float moveCost = character.TraverseCost(directionMoved);
+            character.Stats.CurrentTimeUnits -= moveCost;
 
-        // Can't move through an occupied cell
-        if (Cell.Occupant != null && Cell.Occupant != character)
-            throw new NotImplementedException("Cannot currently traverse cells that are already occupied");
+            // Update ref to which cell is occupied
+            Cell.Occupant = null;
+            Cell = newCell;
 
-        Cell.Occupant = character;
+            // Can't move through an occupied cell
+            if (Cell.Occupant != null && Cell.Occupant != character)
+                throw new NotImplementedException("Cannot currently traverse cells that are already occupied");
+
+            Cell.Occupant = character;
+        }
     }
 
     private void UpdateAnimator()

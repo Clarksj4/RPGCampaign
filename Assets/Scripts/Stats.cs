@@ -15,7 +15,7 @@ public class Stats : MonoBehaviour
     public event ElementMeterEventHandler ElementCapacityChanged;
 
     [Tooltip("The element that this character is spec'd in. Determines the capacity this character has for each of the elements, as well " +
-"as which elements are strong against this character.")]
+             "as which elements are strong against this character.")]
     public ElementType Element;
     [Tooltip("Determines how quickly this character acts in combat")]
     public float Initiative = 25;

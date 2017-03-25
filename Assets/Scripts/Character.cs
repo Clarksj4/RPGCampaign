@@ -79,6 +79,11 @@ public class Character : MonoBehaviour
         return true;
     }
 
+    public float TraverseCost(HexDirection direction)
+    {
+        return Stats.Traverser.TraverseCost(Cell, direction);
+    }
+
     // Push character in given direction the given number of cells
     // Return the number of cells pushed, or -1 if not pushed (due to terrain etc)
     public int Move(HexDirection direction, int distance)
