@@ -271,7 +271,9 @@ public static class Pathfind
     public static bool IsInRange(HexCell origin, HexCell target, int range, Traverser traverser)
     {
         HexPath path = QuickestPath(origin, target, traverser);
-        return path.Count <= range;
+
+        // Path.Count - 1 is the number of cells to traverses (path includes origin cell)
+        return path.Count - 1 <= range;
     }
 
     /// <summary>
