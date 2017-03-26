@@ -3,6 +3,7 @@ using UnityEngine;
 
 public class Attack : MonoBehaviour
 {
+    public string Name;
     public int Range = 3;
     public float Cost = 0;
     public Traverser Traverser = Traverser.RangedAttack();
