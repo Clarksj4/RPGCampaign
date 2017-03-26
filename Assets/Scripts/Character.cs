@@ -9,6 +9,8 @@ public class Character : MonoBehaviour
 {
     public event CharacterMovementEventHandler BeginMovement;
     public event CharacterMovementEventHandler FinishedMovement;
+    public event EventHandler BeginAttack;
+    public event EventHandler FinishedAttack;
 
     public HexDirection Facing;
     public HexCell Cell;
@@ -56,8 +58,12 @@ public class Character : MonoBehaviour
         if (state != null)
         {
             state.Closing();
+
             if (state is MoveBehaviour && FinishedMovement != null)
                 FinishedMovement(this, new CharacterMovementEventArgs(null));
+
+            else if (state is AttackBehaviour && FinishedAttack != null)
+                FinishedAttack(this, new EventArgs());
         }
 
         state = newState;
@@ -65,6 +71,9 @@ public class Character : MonoBehaviour
 
         if (state is MoveBehaviour && BeginMovement != null)
             BeginMovement(this, new CharacterMovementEventArgs(null));
+
+        else if (state is AttackBehaviour && BeginAttack != null)
+            BeginAttack(this, new EventArgs());
     }
 
     /// <summary>
@@ -154,6 +163,17 @@ public class Character : MonoBehaviour
 
         // Move along affordable portion of path
         SetState(new MoveBehaviour(this, affordablePath));
+        return true;
+    }
+
+    public bool Attack(Character target, Attack attack)
+    {
+        // If not in range, can't attack
+        if (!attack.InRange(target.Cell))
+            return false;
+
+        // Attack target with given attack
+        SetState(new AttackBehaviour(this, target, attack));
         return true;
     }
 

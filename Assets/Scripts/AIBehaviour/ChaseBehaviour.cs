@@ -37,10 +37,16 @@ public class ChaseBehaviour : AIBehaviour
         // Already in range...
         else
         {
-            // Do attack!
-            // Wait for attack to complete
-            // End turn
-            EndTurn();
+            // Attack target
+            bool attacking = Current.Attack(target, attack);
+
+            // If able to attack target, wait for attack to finish
+            if (attacking)
+                Current.FinishedAttack += Current_FinishedAttack;
+
+            // Otherwise, end turn
+            else
+                EndTurn();
         }
     }
 
@@ -50,6 +56,11 @@ public class ChaseBehaviour : AIBehaviour
         Current.FinishedMovement -= Current_FinishedMovement;
 
         base.EndTurn();
+    }
+
+    private void Current_FinishedAttack(object sender, EventArgs e)
+    {
+        EndTurn();
     }
 
     private void Current_FinishedMovement(object sender, CharacterMovementEventArgs e)
