@@ -55,19 +55,21 @@ public class Character : MonoBehaviour
 
     public void SetState(CharacterBehaviour newState)
     {
-        if (state != null)
-        {
-            state.Closing();
-
-            if (state is MoveBehaviour && FinishedMovement != null)
-                FinishedMovement(this, new CharacterMovementEventArgs(null));
-
-            else if (state is AttackBehaviour && FinishedAttack != null)
-                FinishedAttack(this, new EventArgs());
-        }
+        CharacterBehaviour oldState = state;
 
         state = newState;
         newState.Init();
+
+        if (oldState != null)
+        {
+            oldState.Closing();
+
+            if (oldState is MoveBehaviour && FinishedMovement != null)
+                FinishedMovement(this, new CharacterMovementEventArgs(null));
+
+            else if (oldState is AttackBehaviour && FinishedAttack != null)
+                FinishedAttack(this, new EventArgs());
+        }
 
         if (state is MoveBehaviour && BeginMovement != null)
             BeginMovement(this, new CharacterMovementEventArgs(null));
