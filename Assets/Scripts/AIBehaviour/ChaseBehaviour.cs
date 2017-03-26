@@ -18,31 +18,30 @@ public class ChaseBehaviour : AIBehaviour
     {
         base.Activate();
 
-        // Listen for when character has finished moving
-        Current.FinishedMovement += Current_FinishedMovement;
-        Attack attack = Current.Attacks[0];
-
         // If not in range of target...
+        Attack attack = Current.Attacks[0];
         if (!attack.InRange(target.Cell))
         {
-            // Get quickest path to a cell within range of target
-            path = Pathfind.ToWithinRange(Current.Cell, target.Cell, attack.Range, Current.Stats.Traverser, attack.Traverser);
+            // Move to attack range...
+            bool moving = Current.MoveToAttackRange(target, attack);
 
-            // If there is no path...
-            if (path == null)
-                EndTurn();   // End turn
-
+            // If character is able to move, wait for them to finish moving
+            if (moving)
+                Current.FinishedMovement += Current_FinishedMovement;
+            
+            // Otherwise, end turn.
             else
-            {
-                // Move along the amount of path that can be traversed this turn
-                HexPath inRangePath = path.To(Current.Stats.CurrentTimeUnits);
-                Current.Move(inRangePath);
-            }
+                EndTurn();
         }
 
-        // Already in range, end turn.
+        // Already in range...
         else
+        {
+            // Do attack!
+            // Wait for attack to complete
+            // End turn
             EndTurn();
+        }
     }
 
     public override void EndTurn()
@@ -55,6 +54,12 @@ public class ChaseBehaviour : AIBehaviour
 
     private void Current_FinishedMovement(object sender, CharacterMovementEventArgs e)
     {
+        Attack attack = Current.Attacks[0];
+        if (Current.Stats.CurrentTimeUnits >= attack.Cost)
+        {
+            
+        }
+
         // End turn when character has finished moving
         EndTurn();
     }
