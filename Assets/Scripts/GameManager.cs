@@ -35,6 +35,7 @@ public class GameManager : MonoBehaviour
         //print(CurrentCharacter + "'s turn, controlled by " + CurrentPlayer);
 
         // Tell next character to activate!
+        CurrentCharacter.Activate();
         CurrentPlayer.Activate(CurrentCharacter);
     }
 
