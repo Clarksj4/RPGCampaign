@@ -1,7 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.Collections;
 using System.Linq;
 using System.Text;
+using UnityEngine;
 
 public class AttackBehaviour : CharacterBehaviour
 {
@@ -11,11 +12,14 @@ public class AttackBehaviour : CharacterBehaviour
         : base(character)
     {
         this.target = target;
+
+        Debug.Log("ATTACK!");
+        StartCoroutine(DoIdleAfterDelay());
     }
 
-    public override void Init()
+    IEnumerator DoIdleAfterDelay()
     {
-        base.Init();
+        yield return new WaitForSeconds(1);
 
         // TODO: 
         SetState(new IdleBehaviour(character));
