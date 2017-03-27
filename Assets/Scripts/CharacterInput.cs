@@ -7,87 +7,63 @@ using UnityEngine.EventSystems;
 public class CharacterInput : MonoBehaviour
 {
     [Tooltip("The character being controlled by this input")]
-    public Character Character;
+    public Character Selected;
     [Tooltip("The hex grid the character exists on")]
     public HexGrid HexGrid;
     [Tooltip("The layer the hex grid is on. Used for raycasting")]
     public string HexGridLayer = "HexGrid";
 
-    private Stats stats;
     private HexCell target;
     private List<Step> movementRange;
-    private List<Step> movementPath;
-    private bool detectInput = true;
+    private HexPath movementPath;
 
     private void Start()
     {
-        stats = Character.Stats;
-
+        // Set all cell to hex grid layer
         foreach (Transform child in HexGrid.GetComponentsInChildren<Transform>())
             child.gameObject.layer = LayerMask.NameToLayer(HexGridLayer);
     }
 
     private void Update()
     {
-        // If mouse over character cell - show movement range
-        // If mouse over another cell - show path to cell
-        // If mouse clicked on cell - move to cell
-
-        if (detectInput)
+        target = GetMousedCell();
+        if (target != null)                         // IF the mouse is over a cell
         {
-            // The cell the mouse pointer is over during this frame
-            target = GetMousedCell();
-
-            if (Character.Cell != null)
+            Character occupant = target.Occupant;
+            if (occupant != null &&                 // IF the targeted cell is occupied
+                !occupant.IsMoving)                 // AND the occupant is not currently moving
             {
-                // If the left mouse button is clicked
-                if (Input.GetMouseButtonDown(0) &&
-                    target != Character.Cell &&
-                    movementPath != null)
+                // Get the character's movement range
+                movementRange = Pathfind.CellsInRange(target, occupant.Stats.CurrentTimeUnits, occupant.Stats.Traverser);
+                movementPath = null;    // Get rid of path so it is not drawn
+            }
+
+            else if (!Selected.Controller.IsTurn)   // IF its not the selected characters turn
+            {
+                // Get rid of range and path so they are not drawn
+                movementRange = null;       
+                movementPath = null;
+            }
+            
+            else if (!Selected.IsMoving)            // IF its the selected character's turn AND the character is not moving    
+            {
+                if (Input.GetMouseButton(0))
                 {
-                    Character.FollowPath(movementPath);     // Follow path
+                    Selected.Move(movementPath);     // Follow path
 
                     // Get rid of path and range because they are not valid anymore
                     movementPath = null;
                     movementRange = null;
-
-                    // Pause responding to user input until character has walked the path
-                    detectInput = false;
-                    Character.FinishedMovement += Character_FinishedMovement; ;
                 }
 
                 else
                 {
-                    // If there is a cell under the cursor
-                    if (target != null)
-                    {
-                        // If the targeted cell is the character's cell...
-                        if (target == Character.Cell)
-                        {
-                            // Get the character's movement range
-                            movementRange = Pathfind.CellsInRange(target, stats.TimeUnits.Current, stats.Traverser);
-                            movementPath = null;    // Get rid of path so it is not drawn
-                        }
-
-
-                        // If the targeted cell is not the character's cell...
-                        else
-                        {
-                            // Get the character's movement path to the targeted cell
-                            movementPath = Pathfind.QuickestPath(Character.Cell, target, stats.TimeUnits.Current, stats.Traverser);
-                            movementRange = null;   // Get rid of range so it is not drawn
-                        }
-                    }
+                    // Get the character's movement path to the targeted cell
+                    movementPath = Pathfind.QuickestPath(Selected.Cell, target, Selected.Stats.CurrentTimeUnits, Selected.Stats.Traverser);
+                    movementRange = null;   // Get rid of range so it is not drawn
                 }
             }
         }
-    }
-
-    private void Character_FinishedMovement(object sender, CharacterMovementEventArgs e)
-    {
-        // Allow user input now that character has reached desination
-        detectInput = true;
-        Character.FinishedMovement -= Character_FinishedMovement;
     }
 
     private void OnDrawGizmos()
@@ -102,7 +78,7 @@ public class CharacterInput : MonoBehaviour
             foreach (Step step in movementPath)
             {
                 // Colour changes from green to red during the path
-                Color colour = Color.Lerp(Color.green, Color.red, step.CostTo / stats.TimeUnits.Current);
+                Color colour = Color.Lerp(Color.green, Color.red, step.CostTo / Selected.Stats.CurrentTimeUnits);
                 DrawCell(step.Cell, colour);
             }
 
@@ -116,7 +92,7 @@ public class CharacterInput : MonoBehaviour
             foreach (Step step in movementRange)
             {
                 // 'Green-er' closer to start, 'red-er' towards end
-                Color colour = Color.Lerp(Color.green, Color.red, step.CostTo / stats.TimeUnits.Current);
+                Color colour = Color.Lerp(Color.green, Color.red, step.CostTo / Selected.Stats.CurrentTimeUnits);
 
                 DrawCell(step.Cell, colour);
             }
@@ -156,7 +132,7 @@ public class CharacterInput : MonoBehaviour
 
             int layer = 1 << LayerMask.NameToLayer(HexGridLayer);
 
-            // If there's a hit it must be the hexmesh (cause nothing else in scene)
+            // If there's a hit it must be the hexmesh
             if (Physics.Raycast(ray, out hitInfo, layer))
                 return HexGrid.GetCell(hitInfo.point);
         }

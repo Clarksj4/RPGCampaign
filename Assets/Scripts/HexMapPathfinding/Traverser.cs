@@ -7,11 +7,14 @@ using UnityEngine;
 [Serializable]
 public class Traverser
 {
+    [Header("Obstacles")]
     public bool blockedByWater = true;
     public bool blockedByWall = true;
+    public bool blockedByCharacters = true;
     public int maximumAscendingStep = 1;
     public int maximumDescendingStep = 1;
 
+    [Header("Cost")]
     public float roadCost = 0.25f;
     public float riverCrossingCost = 2f;
     public float uphillCost = 2f;
@@ -34,6 +37,7 @@ public class Traverser
         Traverser traverser = new Traverser();
         traverser.blockedByWater = false;
         traverser.blockedByWall = false;
+        traverser.blockedByCharacters = false;
         traverser.maximumAscendingStep = -1;
         traverser.maximumDescendingStep = -1;
 
@@ -52,6 +56,14 @@ public class Traverser
     public virtual bool IsTraversable(HexCell cell, HexDirection direction)
     {
         HexCell neighbour = cell.GetNeighbor(direction);
+
+        // If blockable by other characters
+        if (blockedByCharacters)
+        {
+            // Check if there is a character in the next cell
+            if (neighbour.Occupant != null)
+                return false;
+        }
 
         // If blockable by water...
         if (blockedByWater)

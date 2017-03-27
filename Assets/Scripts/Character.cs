@@ -8,18 +8,26 @@ using System;
 public class Character : MonoBehaviour
 {
     public event CharacterMovementEventHandler BeginMovement;
-    public event CharacterMovementEventHandler ContinuedMovement;
     public event CharacterMovementEventHandler FinishedMovement;
+    public event EventHandler BeginAttack;
+    public event EventHandler FinishedAttack;
 
+    public HexDirection Facing;
     public HexCell Cell;
     [Tooltip("The hex grid this character exists upon")]
     public HexGrid HexGrid;
+    [Tooltip("The player that controls this character")]
+    public Player Controller;
 
-    private Coroutine moving;
     private Animator animator;
     private Stats stats;
+    private CharacterBehaviour state;
 
+    public Attack[] Attacks { get { return GetComponents<Attack>(); } }
+    public Animator Animator { get { return animator; } }
     public Stats Stats { get { return stats; } }
+    public bool IsMoving { get { return state.GetType() == typeof(MoveBehaviour); } }
+    public bool CanMove { get { return !IsMoving; } }
 
     private void Awake()
     {
@@ -32,63 +40,155 @@ public class Character : MonoBehaviour
         if (HexGrid != null)
         {
             Cell = HexGrid.GetCell(transform.position);
+            Cell.Occupant = this;
             transform.position = Cell.Position;
-            transform.Rotate(transform.up, 30);
+            transform.LookAt(Facing);
         }
+
+        SetState(new IdleBehaviour(this));
     }
 
-    public void FollowPath(List<Step> path)
+    private void Update()
     {
-        if (moving == null)
-            moving = StartCoroutine(DoFollowPath(path));
+        state.Update();
     }
 
-    IEnumerator DoFollowPath(List<Step> path)
+    public void SetState(CharacterBehaviour newState)
     {
-        if (BeginMovement != null)
-            BeginMovement(this, new CharacterMovementEventArgs(path));
+        CharacterBehaviour oldState = state;
 
-        Vector3[] pathPoints = path.Select(s => s.Cell.Position).ToArray();
+        state = newState;
+        newState.Init();
 
-        animator.SetFloat("Speed", 1f);
-        float distance = iTween.PathLength(pathPoints);
-        float eta = distance / stats.Speed;
-        float time = 0;
-
-        float t = 0;
-        while (t <= 1f)
+        if (oldState != null)
         {
-            time += Time.deltaTime;
-            t = time / eta;
+            oldState.Closing();
 
-            Vector3 look = iTween.PointOnPath(pathPoints, (time + 4 * Time.smoothDeltaTime) / eta);
-            Vector3 lookDir = (look - transform.position).normalized;
-            float lookAngle = Vector3.Angle(transform.forward, lookDir);
-            float leftOrRight = MathExtension.AngleDir(transform.forward, lookDir.normalized, transform.up);
+            if (oldState is MoveBehaviour && FinishedMovement != null)
+                FinishedMovement(this, new CharacterMovementEventArgs(null));
 
-            animator.SetFloat("Direction", (lookAngle / 20f) * leftOrRight);
-
-            // Face along path, move along path
-            transform.LookAt(iTween.PointOnPath(pathPoints, t));
-            iTween.PutOnPath(gameObject, pathPoints, t);
-
-            // Update ref to which cell is occupied
-            Cell = HexGrid.GetCell(transform.position);
-
-            if (ContinuedMovement != null)
-                ContinuedMovement(this, new CharacterMovementEventArgs(path));
-
-            yield return null;
+            else if (oldState is AttackBehaviour && FinishedAttack != null)
+                FinishedAttack(this, new EventArgs());
         }
 
-        animator.SetFloat("Direction", 0);
-        animator.SetFloat("Speed", 0);
+        if (state is MoveBehaviour && BeginMovement != null)
+            BeginMovement(this, new CharacterMovementEventArgs(null));
 
-        if (moving != null)
-            StopCoroutine(moving);
-        moving = null;
+        else if (state is AttackBehaviour && BeginAttack != null)
+            BeginAttack(this, new EventArgs());
+    }
 
-        if (FinishedMovement != null)
-            FinishedMovement(this, new CharacterMovementEventArgs(path));
+    /// <summary>
+    /// Activate this character so it can have its turn. Returns true if this character is able to act.
+    /// </summary>
+    public bool Activate()
+    {
+        state.Activate();
+
+        Stats.RefreshTimeUnits();
+
+        // Return true because nothing can prevent the character from acting
+        return true;
+    }
+
+    public float TraverseCost(HexDirection direction)
+    {
+        return Stats.Traverser.TraverseCost(Cell, direction);
+    }
+
+    // Push character in given direction the given number of cells
+    // Return the number of cells pushed, or -1 if not pushed (due to terrain etc)
+    public int Push(HexDirection direction, int distance)
+    {
+        throw new NotImplementedException();
+    }
+
+    /// <summary>
+    /// Finds a path to the given cell if one exists within this character's current time units, moves the character to the destination.
+    /// Returns true if a path was found within current time units
+    /// </summary>
+    public bool MoveTo(HexCell destination)
+    {
+        // If character is already moving, or is already at the destination
+        if (!CanMove || destination == Cell)
+            return false;
+
+        // Find a path
+        HexPath path = Pathfind.QuickestPath(Cell, destination, Stats.CurrentTimeUnits, Stats.Traverser);
+        if (path == null)   // No path to destination within current time units
+            return false;
+
+        // Move to destination
+        SetState(new MoveBehaviour(this, path));
+        return true;
+    }
+
+    /// <summary>
+    /// Fins a path to the given cell and moves as far along the path as possible with this character's current time units. Returns true if
+    /// a path to the destination was found and the character was able to move atleast one cell.
+    /// </summary>
+    public bool MoveTowards(HexCell destination)
+    {
+        // If character is already moving, or is already at the destination
+        if (!CanMove || destination == Cell)
+            return false;
+
+        // Find a path
+        HexPath path = Pathfind.QuickestPath(Cell, destination, Stats.Traverser);
+        if (path == null)   // No path to destination within current time units
+            return false;
+
+        // Get the portion of the path that the character can move along with its current time units
+        HexPath inRangePath = path.To(Stats.CurrentTimeUnits);
+        if (path.Count < 2)
+            return false;
+
+        // Move along in range portion of path
+        SetState(new MoveBehaviour(this, inRangePath));
+        return true;
+    }
+
+    public bool MoveToAttackRange(Character target, Attack attack)
+    {
+        if (!CanMove)                           // If unable to move...
+            return false;
+
+        // Get quickest path to a cell within range of target
+        HexPath path = Pathfind.ToWithinRange(Cell, target.Cell, attack.Range, Stats.Traverser, attack.Traverser);
+        if (path == null || path.Count < 2)     // If there is no path or already at destination...
+            return false;
+
+        // Get the portion of path that this character can afford with its current time units
+        HexPath affordablePath = path.To(Stats.CurrentTimeUnits);
+        if (affordablePath.Count < 2)           // If can't afford to move...
+            return false;
+
+        // Move along affordable portion of path
+        SetState(new MoveBehaviour(this, affordablePath));
+        return true;
+    }
+
+    public bool Attack(Character target, Attack attack)
+    {
+        // If not in range, can't attack
+        if (!attack.InRange(target.Cell))
+            return false;
+
+        // Attack target with given attack
+        SetState(new AttackBehaviour(this, target, attack));
+        return true;
+    }
+
+    /// <summary>
+    /// Moves the character along the given path regardless of its time units. Returns true if the character moves atleast one cell along
+    /// the path
+    /// </summary>
+    public bool Move(HexPath path)
+    {
+        if (path == null || path.Count < 2)
+            return false;
+
+        SetState(new MoveBehaviour(this, path));
+        return true;
     }
 }

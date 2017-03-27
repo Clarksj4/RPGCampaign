@@ -14,15 +14,19 @@ public class Stats : MonoBehaviour
     /// </summary>
     public event ElementMeterEventHandler ElementCapacityChanged;
 
-    [Tooltip("The amount of time units this character has available each turn")]
-    public Range TimeUnits;
+    [Tooltip("The element that this character is spec'd in. Determines the capacity this character has for each of the elements, as well " +
+             "as which elements are strong against this character.")]
+    public ElementType Element;
+    [Tooltip("Determines how quickly this character acts in combat")]
+    public float Initiative = 25;
     [Tooltip("The speed at which this character moves")]
     public float Speed;
     [Tooltip("Which cells can be crossed by this character and the cost of doing so")]
     public Traverser Traverser;
-    [Tooltip("The element that this character is spec'd in. Determines the capacity this character has for each of the elements, as well " +
-    "as which elements are strong against this character.")]
-    public ElementType Element;
+    [Header("Time Units")]
+    public float CurrentTimeUnits;
+    public float MaxTimeUnits;
+    public float TimeUnitsPerTurn;
 
     /// <summary>
     /// The capacity and current level of each of this characters elements
@@ -34,6 +38,13 @@ public class Stats : MonoBehaviour
         Elements = new Range[4];
         for (int i = 0; i < Elements.Length; i++)
             Elements[i] = new Range();
+    }
+
+    public void RefreshTimeUnits()
+    {
+        CurrentTimeUnits += TimeUnitsPerTurn;
+        if (CurrentTimeUnits > MaxTimeUnits)
+            CurrentTimeUnits = MaxTimeUnits;
     }
 
     /// <summary>
