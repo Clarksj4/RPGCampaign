@@ -5,9 +5,9 @@ public delegate void CharacterMovementEventHandler(object sender, CharacterMovem
 
 public class CharacterMovementEventArgs
 {
-    public List<Step> Path { get; private set; }
+    public HexPath Path { get; private set; }
 
-    public CharacterMovementEventArgs(List<Step> path)
+    public CharacterMovementEventArgs(HexPath path)
     {
         Path = path;
     }

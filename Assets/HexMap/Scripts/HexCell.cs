@@ -3,6 +3,8 @@ using System.IO;
 
 public class HexCell : MonoBehaviour {
 
+    public Character Occupant;
+
 	public HexCoordinates coordinates;
 
 	public RectTransform uiRect;
