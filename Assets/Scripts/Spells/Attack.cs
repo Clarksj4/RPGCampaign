@@ -12,4 +12,9 @@ public class Attack : MonoBehaviour
     {
         return Pathfind.IsInRange(GetComponent<Character>().Cell, target, Range, Traverser);
     }
+
+    public void Create(HexCell origin, HexCell target)
+    {
+
+    }
 }

@@ -8,13 +8,19 @@ public class AttackBehaviour : CharacterBehaviour
 {
     private Character target;
 
-    public AttackBehaviour(Character character, Character target, Attack attack)
+    public AttackBehaviour(Character character, Character target, Attack spell)
         : base(character)
     {
         this.target = target;
 
         Debug.Log("ATTACK!");
         StartCoroutine(DoIdleAfterDelay());
+
+        // Create attack
+        spell.Create(character.Cell, target.Cell);
+
+        // Wait for attack to resolve
+        // Go to idle state
     }
 
     IEnumerator DoIdleAfterDelay()

@@ -2,13 +2,11 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Moving : MonoBehaviour
+public class FireBall : MonoBehaviour
 {
-   public float speed = 3;
+    public float speed = 3;
+    public GameObject target;
 
-   public GameObject target;
-
-	
 	// Update is called once per frame
 	void Update () {
 

@@ -18,6 +18,7 @@ public class Character : MonoBehaviour
     public HexGrid HexGrid;
     [Tooltip("The player that controls this character")]
     public Player Controller;
+    public List<string> Spells;
 
     private Animator animator;
     private Stats stats;
@@ -167,6 +168,14 @@ public class Character : MonoBehaviour
         SetState(new MoveBehaviour(this, affordablePath));
         return true;
     }
+
+    //public bool doSpell(Character target, GameObject prefab)
+    //{
+    //    GameObject instance = Instantiate(prefab, Cell.Position, Quaternion.identity);
+    //    Spell spell = instance.GetComponent<Spell>();
+    //    spell.go(orgin, target);
+    //}
+
 
     public bool Attack(Character target, Attack attack)
     {

@@ -6,6 +6,8 @@ using UnityEngine.EventSystems;
 
 public class CharacterInput : MonoBehaviour
 {
+    // TODO: Check is character has range / time units when casting spell
+
     [Tooltip("The character being controlled by this input")]
     public Character Selected;
     [Tooltip("The hex grid the character exists on")]
