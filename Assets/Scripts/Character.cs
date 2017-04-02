@@ -18,11 +18,11 @@ public class Character : MonoBehaviour
     public HexGrid HexGrid;
     [Tooltip("The player that controls this character")]
     public Player Controller;
-    public List<string> Spells;
 
     private Animator animator;
     private Stats stats;
     private CharacterBehaviour state;
+    private GameManager gameManger;
 
     public Attack[] Attacks { get { return GetComponents<Attack>(); } }
     public Animator Animator { get { return animator; } }
@@ -34,6 +34,7 @@ public class Character : MonoBehaviour
     {
         animator = GetComponentInChildren<Animator>();
         stats = GetComponent<Stats>();
+        gameManger = GameObject.FindGameObjectWithTag("GameController").GetComponent<GameManager>();
     }
 
     private void Start()
@@ -46,6 +47,7 @@ public class Character : MonoBehaviour
             transform.LookAt(Facing);
         }
 
+        Cast("AirShield");
         SetState(new IdleBehaviour(this));
     }
 
@@ -94,7 +96,7 @@ public class Character : MonoBehaviour
 
     public float TraverseCost(HexDirection direction)
     {
-        return Stats.Traverser.TraverseCost(Cell, direction);
+        return Stats.Traverser.Cost(Cell, direction);
     }
 
     // Push character in given direction the given number of cells
@@ -169,13 +171,10 @@ public class Character : MonoBehaviour
         return true;
     }
 
-    //public bool doSpell(Character target, GameObject prefab)
-    //{
-    //    GameObject instance = Instantiate(prefab, Cell.Position, Quaternion.identity);
-    //    Spell spell = instance.GetComponent<Spell>();
-    //    spell.go(orgin, target);
-    //}
-
+    public void Cast(string spell)
+    {
+        gameManger.SpellBook[spell].Cast(Cell, Cell.GetNeighbor(HexDirection.NE));
+    }
 
     public bool Attack(Character target, Attack attack)
     {
