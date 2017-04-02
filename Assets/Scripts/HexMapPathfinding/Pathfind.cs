@@ -12,7 +12,7 @@ public static class Pathfind
     /// <param name="maximumCost">The maximum cost of traversing to any cell in range</param>
     /// <param name="traverser">The ruleset for which tiles can be traversed and the cost of doing so</param>
     /// <returns>A collection of each step from origin towards the maximum distance</returns>
-    public static List<Step> CellsInRange(HexCell origin, float maximumCost, Traverser traverser)
+    public static List<Step> CellsInRange(HexCell origin, float maximumCost, ITraverser traverser)
     {
         List<Step> inRange = new List<Step>();       // Collection of cells that are traversable and within 'timeUnits' range
         List<Step> evaluated = new List<Step>();     // Queue of cells whose costs have been evaluated
@@ -47,7 +47,7 @@ public static class Pathfind
                         traverser.IsTraversable(current.Cell, direction))         // Is the adjacent cell traversable from current cell?
                     {
                         // Cost to move from origin to adjacent cell with current route
-                        float costToAdjacent = current.CostTo + traverser.TraverseCost(current.Cell, direction);
+                        float costToAdjacent = current.CostTo + traverser.Cost(current.Cell, direction);
 
                         // Is adjacent a newly discovered node...?
                         Step adjacentStep = toBeEvaluated.Find(s => s.Cell == adjacent);
@@ -82,7 +82,7 @@ public static class Pathfind
     /// <param name="traverser">The ruleset for which cells can be crossed and the cost for doing so</param>
     /// <returns>A collection of each step of the path from origin to destination OR null if no path could be found 
     /// within the given parameters</returns>
-    public static HexPath QuickestPath(HexCell origin, HexCell destination, float maximumCost, Traverser traverser)
+    public static HexPath QuickestPath(HexCell origin, HexCell destination, float maximumCost, ITraverser traverser)
     {
         List<Step> evaluated = new List<Step>();        // Queue of cells whose costs have been evaluated
         List<Step> toBeEvaluated = new List<Step>();    // Queue of discovered cells that have not yet been evaluated
@@ -117,7 +117,7 @@ public static class Pathfind
                         traverser.IsTraversable(current.Cell, direction))         // Is the adjacent cell traversable from current cell?
                     {
                         // Cost to move from origin to adjacent cell with current route
-                        float costToAdjacent = current.CostTo + traverser.TraverseCost(current.Cell, direction);
+                        float costToAdjacent = current.CostTo + traverser.Cost(current.Cell, direction);
 
                         // Is adjacent a newly discovered node...?
                         Step adjacentStep = toBeEvaluated.Find(s => s.Cell == adjacent);
@@ -143,7 +143,7 @@ public static class Pathfind
         return null;
     }
 
-    public static HexPath QuickestPath(HexCell origin, HexCell destination, Traverser traverser)
+    public static HexPath QuickestPath(HexCell origin, HexCell destination, ITraverser traverser)
     {
         List<Step> evaluated = new List<Step>();        // Queue of cells whose costs have been evaluated
         List<Step> toBeEvaluated = new List<Step>();    // Queue of discovered cells that have not yet been evaluated
@@ -175,7 +175,7 @@ public static class Pathfind
                     traverser.IsTraversable(current.Cell, direction))         // Is the adjacent cell traversable from current cell?
                 {
                     // Cost to move from origin to adjacent cell with current route
-                    float costToAdjacent = current.CostTo + traverser.TraverseCost(current.Cell, direction);
+                    float costToAdjacent = current.CostTo + traverser.Cost(current.Cell, direction);
 
                     // Is adjacent a newly discovered node...?
                     Step adjacentStep = toBeEvaluated.Find(s => s.Cell == adjacent);
@@ -200,7 +200,7 @@ public static class Pathfind
         return null;
     }
 
-    public static HexPath ToWithinRange(HexCell origin, HexCell target, int range, Traverser traverser, Traverser inRangeTraverser)
+    public static HexPath ToWithinRange(HexCell origin, HexCell target, int range, ITraverser traverser, ITraverser inRangeTraverser)
     {
         // Get list of steps in range
         List<Step> cellsInRange = CellsInRange(target, range, inRangeTraverser);
@@ -211,7 +211,7 @@ public static class Pathfind
 
     }
 
-    public static HexPath ToQuickest(HexCell origin, List<Step> steps, Traverser traverser)
+    public static HexPath ToQuickest(HexCell origin, List<Step> steps, ITraverser traverser)
     {
         List<Step> evaluated = new List<Step>();        // Queue of cells whose costs have been evaluated
         List<Step> toBeEvaluated = new List<Step>();    // Queue of discovered cells that have not yet been evaluated
@@ -243,7 +243,7 @@ public static class Pathfind
                     traverser.IsTraversable(current.Cell, direction))         // Is the adjacent cell traversable from current cell?
                 {
                     // Cost to move from origin to adjacent cell with current route
-                    float costToAdjacent = current.CostTo + traverser.TraverseCost(current.Cell, direction);
+                    float costToAdjacent = current.CostTo + traverser.Cost(current.Cell, direction);
 
                     // Is adjacent a newly discovered node...?
                     Step adjacentStep = toBeEvaluated.Find(s => s.Cell == adjacent);
@@ -268,7 +268,7 @@ public static class Pathfind
         return null;
     }
 
-    public static bool IsInRange(HexCell origin, HexCell target, int range, Traverser traverser)
+    public static bool IsInRange(HexCell origin, HexCell target, int range, ITraverser traverser)
     {
         HexPath path = QuickestPath(origin, target, traverser);
 

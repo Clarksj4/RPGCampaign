@@ -5,7 +5,7 @@ using UnityEngine;
 /// Defines the rules for which hexes can be traversed and the cost of doing so.
 /// </summary>
 [Serializable]
-public class Traverser
+public class Traverser : ITraverser
 {
     [Header("Obstacles")]
     public bool blockedByWater = true;
@@ -105,11 +105,7 @@ public class Traverser
         return true;
     }
 
-    /// <summary>
-    /// Determines the cost of traversing from 'cell' to its neighbour in the given direction
-    /// </summary>
-    /// <returns>The traversal cost measured in time units</returns> 
-    public virtual float TraverseCost(HexCell cell, HexDirection direction)
+    public float Cost(HexCell cell, HexDirection direction)
     {
         HexCell neighbour = cell.GetNeighbor(direction);
 
@@ -161,4 +157,6 @@ public class Traverser
         // No river crossing
         return false;   
     }
+
+
 }
