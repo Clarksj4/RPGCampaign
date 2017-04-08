@@ -27,6 +27,7 @@ public class Character : MonoBehaviour
     public Attack[] Attacks { get { return GetComponents<Attack>(); } }
     public Animator Animator { get { return animator; } }
     public Stats Stats { get { return stats; } }
+    public bool IsAttacking { get { return state.GetType() == typeof(AttackBehaviour); } }
     public bool IsMoving { get { return state.GetType() == typeof(MoveBehaviour); } }
     public bool CanMove { get { return !IsMoving; } }
 
