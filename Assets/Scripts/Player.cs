@@ -14,13 +14,13 @@ public abstract class Player : MonoBehaviour
     public Character Current { get { return current; } }
     public bool IsTurn { get { return GameManager.CurrentPlayer == this; } }
 
-    private void Awake()
+    protected virtual void Awake()
     {
         // Get list of all characters this player controls
         characters = GetComponentsInChildren<Character>().ToList();
     }
 
-    private void Start()
+    protected virtual void Start()
     {
         foreach (Character actor in characters)
             actor.Controller = this;
