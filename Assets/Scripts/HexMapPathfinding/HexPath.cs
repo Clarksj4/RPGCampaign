@@ -33,7 +33,7 @@ public class HexPath : IEnumerable<Step>
     /// <summary>
     /// The total cost of moving along this path
     /// </summary>
-    public float Cost { get { return Steps.Select(s => s.CostTo).Sum(); } }
+    public float Cost { get { return Steps.Last().CostTo; } }
 
     /// <summary>
     /// The number of steps in this path
