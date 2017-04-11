@@ -7,7 +7,7 @@ public class AirShield : Spell
 {
     private HexDirection direction;
 
-    public override bool Cast(HexCell origin, HexCell target)
+    public override void Cast(HexCell origin, HexCell target)
     {
         GameObject instance = Instantiate(gameObject, origin.Position, Quaternion.identity) as GameObject;
 
@@ -16,6 +16,5 @@ public class AirShield : Spell
         spell.target = target;
 
         spell.transform.LookAt(target.Position);
-        return true;
     }
 }

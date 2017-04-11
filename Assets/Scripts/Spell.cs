@@ -16,12 +16,12 @@ public abstract class Spell : MonoBehaviour
     [HideInInspector]
     public HexCell target;
 
-    //private bool InRange(HexCell origin, HexCell target)
-    //{
-    //    // Target is NOT within minimum range, and is within maximum range
-    //    return !Pathfind.IsInRange(origin, target, MinimumRange, Traverser) &&
-    //            Pathfind.IsInRange(origin, target, MaximumRange, Traverser);
-    //}
+    public virtual bool InRange(HexCell origin, HexCell target)
+    {
+        // Target is NOT within minimum range, and is within maximum range
+        return !Pathfind.IsInRange(origin, target, MinimumRange, Traverser) &&
+                Pathfind.IsInRange(origin, target, MaximumRange, Traverser);
+    }
 
-    public abstract bool Cast(HexCell origin, HexCell target);
+    public abstract void Cast(HexCell origin, HexCell target);
 }

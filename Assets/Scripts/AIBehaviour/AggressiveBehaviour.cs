@@ -10,7 +10,7 @@ public class AggressiveBehaviour : IBehaviourStrategy
 
     private Character current;
     private Character target;
-    private Attack attack;
+    private Spell spell;
     private HexPath path;
     private bool setAlongPath = false;
     private bool toldToAttack = false;
@@ -49,7 +49,7 @@ public class AggressiveBehaviour : IBehaviourStrategy
 
                         // Cast the chosen spell / attack if enough TU
                         .Sequence("Cast spell")
-                            .Condition("Enough TU for attack?", t => current.Stats.CurrentTimeUnits >= attack.Cost)
+                            .Condition("Enough TU for attack?", t => current.Stats.CurrentTimeUnits >= spell.Cost)
                             .Do("Attack!", t => Attack())
                         .End()
                     .End()
@@ -64,7 +64,7 @@ public class AggressiveBehaviour : IBehaviourStrategy
 
         // Reset behaviour tree variables
         target = null;
-        attack = null;
+        spell = null;
         path = null;
         setAlongPath = false;
         toldToAttack = false;
@@ -84,9 +84,9 @@ public class AggressiveBehaviour : IBehaviourStrategy
         BehaviourTreeStatus result = BehaviourTreeStatus.Failure;
 
         // If the current character has atleast one attack, use the first one
-        if (current.Attacks.Length > 0)
+        if (current.Spells.Length > 0)
         {
-            attack = current.Attacks[0];
+            spell = current.Spells[0];
             result = BehaviourTreeStatus.Success;
         }
 
@@ -120,7 +120,7 @@ public class AggressiveBehaviour : IBehaviourStrategy
     /// <returns>True if the attack is currently in range</returns>
     private bool InRange()
     {
-        bool inRange = attack.InRange(target.Cell);
+        bool inRange = spell.InRange(current.Cell, target.Cell);
         return inRange;
     }
 
@@ -134,7 +134,7 @@ public class AggressiveBehaviour : IBehaviourStrategy
         BehaviourTreeStatus result = BehaviourTreeStatus.Failure;
 
         // Find a path from the current characters cell quickest to reach cell that is in range of the target for the given attack
-        path = Pathfind.ToWithinRange(current.Cell, target.Cell, attack.Range, current.Stats.Traverser, attack.Traverser);
+        path = Pathfind.ToWithinRange(current.Cell, target.Cell, spell.MaximumRange, current.Stats.Traverser, spell.Traverser);
 
         // Is the path legit?
         if (path != null && path.Count >= 2)
@@ -149,7 +149,7 @@ public class AggressiveBehaviour : IBehaviourStrategy
     /// <returns>True if the current character has enough time units to move and attack</returns>
     private bool WithinCost()
     {
-        bool withinCost = current.Stats.CurrentTimeUnits >= path.Cost + attack.Cost;
+        bool withinCost = current.Stats.CurrentTimeUnits >= path.Cost + spell.Cost;
         return withinCost;
     }
 
@@ -191,7 +191,7 @@ public class AggressiveBehaviour : IBehaviourStrategy
 
         if (!toldToAttack)
         {
-            current.Attack(target, attack);
+            current.Cast(spell, target.Cell);
             toldToAttack = true;
         }
 

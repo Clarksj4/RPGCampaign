@@ -18,13 +18,15 @@ public class Character : MonoBehaviour
     public HexGrid HexGrid;
     [Tooltip("The player that controls this character")]
     public Player Controller;
+    [Tooltip("The spells this character can cast")]
+    public Spell[] Spells;
 
     private Animator animator;
     private Stats stats;
     private CharacterBehaviour state;
     private GameManager gameManger;
 
-    public Attack[] Attacks { get { return GetComponents<Attack>(); } }
+    //public Attack[] Attacks { get { return GetComponents<Attack>(); } }
     public Animator Animator { get { return animator; } }
     public Stats Stats { get { return stats; } }
     public bool IsAttacking { get { return state.GetType() == typeof(AttackBehaviour); } }
@@ -48,7 +50,6 @@ public class Character : MonoBehaviour
             transform.LookAt(Facing);
         }
 
-        Cast("AirShield");
         SetState(new IdleBehaviour(this));
     }
 
@@ -172,9 +173,12 @@ public class Character : MonoBehaviour
         return true;
     }
 
-    public void Cast(string spell)
+    public void Cast(Spell spell, HexCell target)
     {
-        gameManger.SpellBook[spell].Cast(Cell, Cell.GetNeighbor(HexDirection.NE));
+        if (spell == null || target == null)
+           throw new ArgumentException("Invalid spell and / or target");
+
+        SetState(new CastBehaviour(this, target, spell));
     }
 
     public bool Attack(Character target, Attack attack)
