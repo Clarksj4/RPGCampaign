@@ -6,8 +6,6 @@ using UnityEngine.EventSystems;
 
 public class CharacterInput : MonoBehaviour
 {
-    // TODO: Check is character has range / time units when casting spell
-
     [Tooltip("The character being controlled by this input")]
     public Character Selected;
     [Tooltip("The hex grid the character exists on")]
@@ -83,9 +81,6 @@ public class CharacterInput : MonoBehaviour
                 Color colour = Color.Lerp(Color.green, Color.red, step.CostTo / Selected.Stats.CurrentTimeUnits);
                 DrawCell(step.Cell, colour);
             }
-
-            Gizmos.color = Color.red;
-            iTween.DrawPath(movementPath.Select(s => s.Cell.Position + Vector3.up).ToArray());
         }
 
         // Draw all cells in range
