@@ -4,6 +4,14 @@ using System.Linq;
 
 public static class Pathfind
 {
+    // TODO: separate cell traversal cost from cell allowed to traverse interface
+    // TODO: Three flavours of pathfind: - Use default arguments
+        // Vanilla: can move in every cell, every cell costs one to move on
+        // ITraverseCost
+        // ITraverseable
+        // TODO: QuickestPath(origin, destination)
+
+
     /// <summary>
     /// Finds all cells within 'timeUnits' range of the given cell. The 'traverser' defines the ruleset for which tiles can
     /// be crossed and the cost of doing so.
