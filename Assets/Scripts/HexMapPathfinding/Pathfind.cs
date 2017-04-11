@@ -22,9 +22,22 @@ public static class Pathfind
         return inRange;
     }
 
+    // TODO: Only needs ITraversable NOT ITraverseCost
+    
     /// <summary>
-    /// Finds the quickest path from origin to destination within the given timeUnits. The 'traverser' defines the ruleset
-    /// for which cells can be crossed and the cost for doing so.
+    /// Finds the quickest, traversable path from origin to destination.
+    /// </summary>
+    /// <param name="origin">The beginning cell of the path</param>
+    /// <param name="destination">The end cell of the path</param>
+    /// <param name="traverser">The ruleset for which cells can be crossed and the cost for doing so</param>
+    /// <returns>The quickest, traversable path from origin to destination. Null if no traversable path exists</returns>
+    public static HexPath To(HexCell origin, HexCell destination, ITraversable traverser)
+    {
+        return To(origin, destination, -1, traverser);
+    }
+
+    /// <summary>
+    /// Finds the quickest, traversable path from origin to destination within the given timeUnits.
     /// </summary>
     /// <param name="origin">The beginning cell of the path</param>
     /// <param name="destination">The end cell of the path</param>
