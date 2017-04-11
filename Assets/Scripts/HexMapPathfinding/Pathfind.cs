@@ -147,6 +147,14 @@ public static class Pathfind
         }
     }
 
+    /// <summary>
+    /// Finds each of the given cells neighbours, adding them to the queue of cells to be evaluated OR updating their
+    /// cost and path to information should they already exist in the queue.
+    /// </summary>
+    /// <param name="current">The cell whose neighbous are to be checked</param>
+    /// <param name="toBeEvaluated">Queue of cells that are due to be evaluated</param>
+    /// <param name="evaluated">Set of cells that have already been evaluated</param>
+    /// <param name="traverser">The ruleset that defines which cells can be crossed and the cost for doing so</param>
     private static void EvaluateAdjacent(Step current, LinkedList<Step> toBeEvaluated, HashSet<Step> evaluated, ITraversable traverser)
     {
         // For each neighbour of current cell
@@ -170,6 +178,10 @@ public static class Pathfind
         }
     }
 
+    /// <summary>
+    /// Adds the adjacent cell to the queue of cells to be evaluated OR updates its
+    /// cost and path to information should it already exist in the queue.
+    /// </summary>
     private static void InsertOrUpdate(Step current, HexCell adjacent, LinkedList<Step> toBeEvaluated, float costToAdjacent)
     {
         // Is adjacent a newly discovered node...?
