@@ -5,7 +5,7 @@ using UnityEngine;
 /// Defines the rules for which hexes can be traversed and the cost of doing so.
 /// </summary>
 [Serializable]
-public class Traverser : ITraverser
+public class Traverser : ITraversable
 {
     [Header("Obstacles")]
     public bool blockedByWater = true;

@@ -6,7 +6,7 @@ using System.Text;
 /// <summary>
 /// Encapsulates the rules for which cell can be crossed and the cost for doing so
 /// </summary>
-public interface ITraverser
+public interface ITraversable
 {
     /// <summary>
     /// Calculates whether a traverser can move in the given direction from the given cell

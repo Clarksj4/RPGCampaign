@@ -14,7 +14,7 @@ public class CharacterInput : MonoBehaviour
     public string HexGridLayer = "HexGrid";
 
     private HexCell target;
-    private List<Step> movementRange;
+    private ICollection<Step> movementRange;
     private HexPath movementPath;
 
     private void Start()
@@ -34,7 +34,7 @@ public class CharacterInput : MonoBehaviour
                 !occupant.IsMoving)                 // AND the occupant is not currently moving
             {
                 // Get the character's movement range
-                movementRange = Pathfind.CellsInRange(target, occupant.Stats.CurrentTimeUnits, occupant.Stats.Traverser);
+                movementRange = Pathfind.Area(target, occupant.Stats.CurrentTimeUnits, occupant.Stats.Traverser);
                 movementPath = null;    // Get rid of path so it is not drawn
             }
 
@@ -59,7 +59,7 @@ public class CharacterInput : MonoBehaviour
                 else
                 {
                     // Get the character's movement path to the targeted cell
-                    movementPath = Pathfind.QuickestPath(Selected.Cell, target, Selected.Stats.CurrentTimeUnits, Selected.Stats.Traverser);
+                    movementPath = Pathfind.To(Selected.Cell, target, Selected.Stats.CurrentTimeUnits, Selected.Stats.Traverser);
                     movementRange = null;   // Get rid of range so it is not drawn
                 }
             }

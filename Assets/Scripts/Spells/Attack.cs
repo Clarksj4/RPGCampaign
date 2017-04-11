@@ -10,7 +10,7 @@ public class Attack : MonoBehaviour
 
     public bool InRange(HexCell target)
     {
-        return Pathfind.IsInRange(GetComponent<Character>().Cell, target, Range, Traverser);
+        return Pathfind.InRange(GetComponent<Character>().Cell, target, Range, Traverser);
     }
 
     public void Create(HexCell origin, HexCell target)

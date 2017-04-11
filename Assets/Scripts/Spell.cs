@@ -19,8 +19,8 @@ public abstract class Spell : MonoBehaviour
     public virtual bool InRange(HexCell origin, HexCell target)
     {
         // Target is NOT within minimum range, and is within maximum range
-        return !Pathfind.IsInRange(origin, target, MinimumRange, Traverser) &&
-                Pathfind.IsInRange(origin, target, MaximumRange, Traverser);
+        return !Pathfind.InRange(origin, target, MinimumRange, Traverser) &&
+                Pathfind.InRange(origin, target, MaximumRange, Traverser);
     }
 
     public abstract void Cast(HexCell origin, HexCell target);

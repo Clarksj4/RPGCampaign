@@ -4,78 +4,20 @@ using System.Linq;
 
 public static class Pathfind
 {
-    // TODO: separate cell traversal cost from cell allowed to traverse interface
-    // TODO: Three flavours of pathfind: - Use default arguments
-        // Vanilla: can move in every cell, every cell costs one to move on
-        // ITraverseCost
-        // ITraverseable
-        // TODO: QuickestPath(origin, destination)
-
-
     /// <summary>
-    /// Finds all cells within 'timeUnits' range of the given cell. The 'traverser' defines the ruleset for which tiles can
-    /// be crossed and the cost of doing so.
+    /// Finds all traversable cells within cost of the given cell.
     /// </summary>
-    /// <param name="origin">The cell to find cells within range of.</param>
+    /// <param name="target">The cell to find cells within range of.</param>
     /// <param name="maximumCost">The maximum cost of traversing to any cell in range</param>
     /// <param name="traverser">The ruleset for which tiles can be traversed and the cost of doing so</param>
-    /// <returns>A collection of each step from origin towards the maximum distance</returns>
-    public static List<Step> CellsInRange(HexCell origin, float maximumCost, ITraverser traverser)
+    /// <returns> Steps that are traversable and within range of origin</returns>
+    public static ICollection<Step> Area(HexCell target, float maximumCost, ITraversable traverser)
     {
-        List<Step> inRange = new List<Step>();       // Collection of cells that are traversable and within 'timeUnits' range
-        List<Step> evaluated = new List<Step>();     // Queue of cells whose costs have been evaluated
-        List<Step> toBeEvaluated = new List<Step>(); // Queue of discovered cells that have not yet been evaluated
+        List<Step> inRange = new List<Step>();                    
 
-        // Add origin cell to collection
-        toBeEvaluated.Add(new Step(origin, null, 0));
-
-        // Evaluate ever cell that has not yet been evaluated
-        while (toBeEvaluated.Count > 0)
-        {
-            // Current cell being evaluated
-            Step current = toBeEvaluated.First();
-
-            // Remove current cell from unevaluated cells and add to evaluated cells
-            toBeEvaluated.RemoveAt(0);
-            evaluated.Add(current);
-
-            // Only consider cells where there is enough time units to traverse there
-            if (current.CostTo <= maximumCost)
-            {
-                inRange.Add(current);
-
-                // For each neighbour of current cell
-                foreach (HexDirection direction in Directions())
-                {
-                    HexCell adjacent = current.Cell.GetNeighbor(direction);
-
-                    // Check that there is a cell in that direction   
-                    if (adjacent != null &&                                       // Is there an adjacent cell in the current direction?
-                        !evaluated.Select(s => s.Cell).Contains(adjacent) &&      // Has the adjacent cell already been evaluated?
-                        traverser.IsTraversable(current.Cell, direction))         // Is the adjacent cell traversable from current cell?
-                    {
-                        // Cost to move from origin to adjacent cell with current route
-                        float costToAdjacent = current.CostTo + traverser.Cost(current.Cell, direction);
-
-                        // Is adjacent a newly discovered node...?
-                        Step adjacentStep = toBeEvaluated.Find(s => s.Cell == adjacent);
-                        if (adjacentStep == null)
-                        {
-                            adjacentStep = new Step(adjacent, current, costToAdjacent);
-                            InsertStep(toBeEvaluated, adjacentStep);
-                        }
-
-                        // Is the current path to this already discovered node a better path?
-                        else if (costToAdjacent < adjacentStep.CostTo)
-                        {
-                            // This path is best until now, record it.
-                            adjacentStep.Previous = current;
-                            adjacentStep.CostTo = costToAdjacent;
-                        }
-                    }
-                }
-            }
-        }
+        // Enumerate over each step that is in range, add it to the collection
+        foreach (Step step in Enumerate(target, traverser, s => s.CostTo < maximumCost))
+            inRange.Add(step);
 
         return inRange;
     }
@@ -90,215 +32,167 @@ public static class Pathfind
     /// <param name="traverser">The ruleset for which cells can be crossed and the cost for doing so</param>
     /// <returns>A collection of each step of the path from origin to destination OR null if no path could be found 
     /// within the given parameters</returns>
-    public static HexPath QuickestPath(HexCell origin, HexCell destination, float maximumCost, ITraverser traverser)
+    public static HexPath To(HexCell origin, HexCell destination, float maximumCost, ITraversable traverser)
     {
-        List<Step> evaluated = new List<Step>();        // Queue of cells whose costs have been evaluated
-        List<Step> toBeEvaluated = new List<Step>();    // Queue of discovered cells that have not yet been evaluated
+        return To(origin, traverser,
+                s => maximumCost < 0 || s.CostTo <= maximumCost,
+                s => s.Cell == destination);
+    }
 
-        // Add origin cell to collection
-        toBeEvaluated.Add(new Step(origin, null, 0));
-
-        // Evaluate ever cell that has not yet been evaluated
-        while (toBeEvaluated.Count > 0)
+    /// <summary>
+    /// Finds the quickest traversable path from the origin to the cell that is within the given criteria and matches the 
+    /// given condition.
+    /// </summary>
+    /// <param name="origin">The cell to begin the search from</param>
+    /// <param name="traverser">The ruleset for which cells can be crossed and the cost for doing so</param>
+    /// <param name="withinParameters">Predicate that defines whether a cells neighbours will be examined during pathfinding</param>
+    /// <param name="isTarget">Predicate that determines which cell is the desired cell</param>
+    /// <returns>The quickest traversable path from the origin to a cell within the given criteria and matches the given 
+    /// condition. Returns null if no such path exists</returns>
+    public static HexPath To(HexCell origin, ITraversable traverser, Func<Step, bool> withinParameters, Func<Step, bool> isTarget)
+    {
+        // Enumerate through cells that meet the criteria
+        foreach (Step step in Enumerate(origin, traverser, withinParameters))
         {
-            // Current cell being evaluated
-            Step current = toBeEvaluated.First();
-
-            // Remove current cell from unevaluated cells and add to evaluated cells
-            toBeEvaluated.RemoveAt(0);
-            evaluated.Add(current);
-
-            // Only consider cells that can be reached within cost
-            if (maximumCost < 0 || current.CostTo <= maximumCost)
-            {
-                if (current.Cell == destination)
-                    return new HexPath(current);
-
-                // For each neighbour of current cell
-                foreach (HexDirection direction in Directions())
-                {
-                    HexCell adjacent = current.Cell.GetNeighbor(direction);
-
-                    // Check that there is a cell in that direction   
-                    if (adjacent != null &&                                       // Is there an adjacent cell in the current direction?
-                        !evaluated.Select(s => s.Cell).Contains(adjacent) &&      // Has the adjacent cell already been evaluated?
-                        traverser.IsTraversable(current.Cell, direction))         // Is the adjacent cell traversable from current cell?
-                    {
-                        // Cost to move from origin to adjacent cell with current route
-                        float costToAdjacent = current.CostTo + traverser.Cost(current.Cell, direction);
-
-                        // Is adjacent a newly discovered node...?
-                        Step adjacentStep = toBeEvaluated.Find(s => s.Cell == adjacent);
-                        if (adjacentStep == null)
-                        {
-                            adjacentStep = new Step(adjacent, current, costToAdjacent);
-                            InsertStep(toBeEvaluated, adjacentStep);
-                        }
-
-                        // Is the current path to this already discovered node a better path?
-                        else if (costToAdjacent < adjacentStep.CostTo)
-                        {
-                            // This path is best until now, record it.
-                            adjacentStep.Previous = current;
-                            adjacentStep.CostTo = costToAdjacent;
-                        }
-                    }
-                }
-            }
+            // If the step matches the condition, return a path from origin to this cell
+            if (isTarget(step))
+                return new HexPath(step);
         }
 
-        // No path
+        // No traversable path
         return null;
     }
 
-    public static HexPath QuickestPath(HexCell origin, HexCell destination, ITraverser traverser)
+    /// <summary>
+    /// Finds a path from origin to the cheapest, traversable cell within maximumCost of the target cell
+    /// </summary>
+    /// <param name="origin">The cell to find a path from</param>
+    /// <param name="traverser">The ruleset for which cells can be crossed and the cost for doing so from the origin cell</param>
+    /// <returns>A path from the origin to the cheapest, traversable cell within maximum cost of the target cell</returns>
+    public static HexPath ToArea(HexCell origin, ITraversable traverser, ICollection<Step> area)
     {
-        List<Step> evaluated = new List<Step>();        // Queue of cells whose costs have been evaluated
-        List<Step> toBeEvaluated = new List<Step>();    // Queue of discovered cells that have not yet been evaluated
+        // Convert area to cells
+        IEnumerable<HexCell> cells = area.Select(s => s.Cell);
 
-        // Add origin cell to collection
-        toBeEvaluated.Add(new Step(origin, null, 0));
-
-        // Evaluate every cell that has not yet been evaluated
-        while (toBeEvaluated.Count > 0)
-        {
-            // Current cell being evaluated
-            Step current = toBeEvaluated.First();
-
-            // Remove current cell from unevaluated cells and add to evaluated cells
-            toBeEvaluated.RemoveAt(0);
-            evaluated.Add(current);
-
-            if (current.Cell == destination)
-                return new HexPath(current);
-
-            // For each neighbour of current cell
-            foreach (HexDirection direction in Directions())
-            {
-                HexCell adjacent = current.Cell.GetNeighbor(direction);
-
-                // Check that there is a cell in that direction   
-                if (adjacent != null &&                                       // Is there an adjacent cell in the current direction?
-                    !evaluated.Select(s => s.Cell).Contains(adjacent) &&      // Has the adjacent cell already been evaluated?
-                    traverser.IsTraversable(current.Cell, direction))         // Is the adjacent cell traversable from current cell?
-                {
-                    // Cost to move from origin to adjacent cell with current route
-                    float costToAdjacent = current.CostTo + traverser.Cost(current.Cell, direction);
-
-                    // Is adjacent a newly discovered node...?
-                    Step adjacentStep = toBeEvaluated.Find(s => s.Cell == adjacent);
-                    if (adjacentStep == null)
-                    {
-                        adjacentStep = new Step(adjacent, current, costToAdjacent);
-                        InsertStep(toBeEvaluated, adjacentStep);
-                    }
-
-                    // Is the current path to this already discovered node a better path?
-                    else if (costToAdjacent < adjacentStep.CostTo)
-                    {
-                        // This path is best until now, record it.
-                        adjacentStep.Previous = current;
-                        adjacentStep.CostTo = costToAdjacent;
-                    }
-                }
-            }
-        }
-
-        // No path
-        return null;
-    }
-
-    public static HexPath ToWithinRange(HexCell origin, HexCell target, int range, ITraverser traverser, ITraverser inRangeTraverser)
-    {
-        // Get list of steps in range
-        List<Step> cellsInRange = CellsInRange(target, range, inRangeTraverser);
-
-        // Pathfind to any of the steps
-        HexPath path = ToQuickest(origin, cellsInRange, traverser);
+        // Pathfind to cheapest of the cells
+        HexPath path = To(origin, traverser,
+                        s => true,
+                        s => cells.Contains(s.Cell));
         return path;
-
     }
 
-    public static HexPath ToQuickest(HexCell origin, List<Step> steps, ITraverser traverser)
+    /// <summary>
+    /// Checks if the origin cell is within range of the target cell
+    /// </summary>
+    /// <param name="origin">The cell to check the range from</param>
+    /// <param name="target">The cell to check for inclusion within the range</param>
+    /// <param name="maximumCost">The size of the area to check</param>
+    /// <param name="traverser">The ruleset for which cell can be crossed and the cost for doing so from the origin</param>
+    /// <returns>Wether the target cell is within range of the target cell</returns>
+    public static bool InRange(HexCell origin, HexCell target, float maximumCost, ITraversable traverser)
     {
-        List<Step> evaluated = new List<Step>();        // Queue of cells whose costs have been evaluated
-        List<Step> toBeEvaluated = new List<Step>();    // Queue of discovered cells that have not yet been evaluated
+        // Find path from origin to target
+        HexPath path = To(origin, traverser, 
+                        s => s.CostTo <= maximumCost, 
+                        s => s.Cell == target);
 
-        // Add origin cell to collection
-        toBeEvaluated.Add(new Step(origin, null, 0));
+        // Null = no path to target
+        bool inRange = false;
+        if (path != null)
+            inRange = path.Cost <= maximumCost; // Is the path to target within cost?
 
-        // Evaluate every cell that has not yet been evaluated
+        return inRange;
+    }
+
+    /// <summary>
+    /// Iterates over all traversable cells that meet the given criteria, beginning at the origin cell.
+    /// </summary>
+    /// <param name="origin">The cell to begin iterating from</param>
+    /// <param name="traverser">The ruleset for which cells can be crossed and the cost for doing so</param>
+    /// <param name="withinParameters">Function that determines whether a cells neighbous will be iterated over</param>
+    public static IEnumerable<Step> Enumerate(HexCell origin, ITraversable traverser, Func<Step, bool> withinParameters)
+    {
+        HashSet<Step> evaluated = new HashSet<Step>();                  // Cells whose cost has been evaluated
+        LinkedList<Step> toBeEvaluated = new LinkedList<Step>();        // Discovered cells that have not yet been evaluated
+
+        // Add origin cell to collection and iterate
+        toBeEvaluated.AddFirst(new Step(origin, null, 0));
         while (toBeEvaluated.Count > 0)
         {
-            // Current cell being evaluated
-            Step current = toBeEvaluated.First();
-
             // Remove current cell from unevaluated cells and add to evaluated cells
-            toBeEvaluated.RemoveAt(0);
+            Step current = toBeEvaluated.PopFirst();
             evaluated.Add(current);
 
-            if (steps.Select(s => s.Cell).Contains(current.Cell))
-                return new HexPath(current);
+            yield return current;
 
-            // For each neighbour of current cell
-            foreach (HexDirection direction in Directions())
+            if (withinParameters(current))
             {
-                HexCell adjacent = current.Cell.GetNeighbor(direction);
-
-                // Check that there is a cell in that direction   
-                if (adjacent != null &&                                       // Is there an adjacent cell in the current direction?
-                    !evaluated.Select(s => s.Cell).Contains(adjacent) &&      // Has the adjacent cell already been evaluated?
-                    traverser.IsTraversable(current.Cell, direction))         // Is the adjacent cell traversable from current cell?
-                {
-                    // Cost to move from origin to adjacent cell with current route
-                    float costToAdjacent = current.CostTo + traverser.Cost(current.Cell, direction);
-
-                    // Is adjacent a newly discovered node...?
-                    Step adjacentStep = toBeEvaluated.Find(s => s.Cell == adjacent);
-                    if (adjacentStep == null)
-                    {
-                        adjacentStep = new Step(adjacent, current, costToAdjacent);
-                        InsertStep(toBeEvaluated, adjacentStep);
-                    }
-
-                    // Is the current path to this already discovered node a better path?
-                    else if (costToAdjacent < adjacentStep.CostTo)
-                    {
-                        // This path is best until now, record it.
-                        adjacentStep.Previous = current;
-                        adjacentStep.CostTo = costToAdjacent;
-                    }
-                }
+                // Checks each cell adjacent to current, adds it to toBeEvaluated cells or updates it 
+                // if travelling through current is a better route
+                EvaluateAdjacent(current, toBeEvaluated, evaluated, traverser);
             }
         }
-
-        // No path
-        return null;
     }
 
-    public static bool IsInRange(HexCell origin, HexCell target, int range, ITraverser traverser)
+    private static void EvaluateAdjacent(Step current, LinkedList<Step> toBeEvaluated, HashSet<Step> evaluated, ITraversable traverser)
     {
-        HexPath path = QuickestPath(origin, target, traverser);
+        // For each neighbour of current cell
+        foreach (HexDirection direction in Directions())
+        {
+            HexCell adjacent = current.Cell.GetNeighbor(direction);
+            if (adjacent != null &&                                       // Is there an adjacent cell in the given direction?
+                !evaluated.Select(s => s.Cell).Contains(adjacent))        // Has the adjacent cell already been evaluated?
+            {
+                // Able to traverse to adjacent cell from current?
+                bool traversable = traverser != null ? traverser.IsTraversable(current.Cell, direction) : true;
+                if (!traversable)
+                    continue;
 
-        // Path.Count - 1 is the number of cells to traverses (path includes origin cell)
-        return path.Count - 1 <= range;
+                // Cost to move from origin to adjacent cell with current route
+                float costIncrement = traverser != null ? traverser.Cost(current.Cell, direction) : 1;
+                float costToAdjacent = current.CostTo + costIncrement;
+
+                InsertOrUpdate(current, adjacent, toBeEvaluated, costToAdjacent);
+            }
+        }
+    }
+
+    private static void InsertOrUpdate(Step current, HexCell adjacent, LinkedList<Step> toBeEvaluated, float costToAdjacent)
+    {
+        // Is adjacent a newly discovered node...?
+        Step adjacentStep = toBeEvaluated.Where(s => s.Cell == adjacent).SingleOrDefault();
+        if (adjacentStep == null)
+        {
+            adjacentStep = new Step(adjacent, current, costToAdjacent);
+            InsertStepByCost(toBeEvaluated, adjacentStep);
+        }
+
+        // Is the current path to this already discovered node a better path?
+        else if (costToAdjacent < adjacentStep.CostTo)
+        {
+            // This path is best until now, record it.
+            adjacentStep.Previous = current;
+            adjacentStep.CostTo = costToAdjacent;
+        }
     }
 
     /// <summary>
     /// Inserts the given step into the step list ordered based upon the cost to move to each step
     /// </summary>
-    private static void InsertStep(List<Step> steps, Step step)
+    private static void InsertStepByCost(LinkedList<Step> toBeEvaluated, Step step)
     {
-        int index = 0;
-        // Loop until end of collection or finding a larger cost step
-        for (index = 0; index < steps.Count; index++)
-        {
-            if (steps[index].CostTo >= step.CostTo)
-                break;
-        }
+        // Iterate until finding a larger cost step, or running out of elements to iterate
+        LinkedListNode<Step> walker = toBeEvaluated.First;
+        while (walker != null && walker.Value.CostTo < step.CostTo)
+            walker = walker.Next;
 
-        // Insert in front of larger step (or end of collection)
-        steps.Insert(index, step);
+        // If at end of list, step is largest cost step so add to end of list
+        if (walker == null)
+            toBeEvaluated.AddLast(step);
+
+        // Otherwise, insert in order according to cost
+        else
+            toBeEvaluated.AddBefore(walker, step);
     }
 
     /// <summary>

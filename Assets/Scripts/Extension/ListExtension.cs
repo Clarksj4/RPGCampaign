@@ -4,6 +4,13 @@ using UnityEngine;
 
 public static class ListExtension
 {
+    public static T PopFirst<T>(this LinkedList<T> list)
+    {
+        LinkedListNode<T> node = list.First;
+        list.RemoveFirst();
+        return node.Value;
+    }
+
     /// <summary>
     /// Shuffle the list according to Fisher-Yates shuffle
     /// </summary>

@@ -133,8 +133,12 @@ public class AggressiveBehaviour : IBehaviourStrategy
     {
         BehaviourTreeStatus result = BehaviourTreeStatus.Failure;
 
-        // Find a path from the current characters cell quickest to reach cell that is in range of the target for the given attack
-        path = Pathfind.ToWithinRange(current.Cell, target.Cell, spell.MaximumRange, current.Stats.Traverser, spell.Traverser);
+        // Get area around target which would put AI character in range for attack
+        ICollection<Step> area = Pathfind.Area(target.Cell, spell.MaximumRange, spell.Traverser);
+
+        // Find a path from the current characters cell to the quickest to reach cell that is in range of the target for 
+        // the given attack
+        path = Pathfind.ToArea(current.Cell, current.Stats.Traverser, area);
 
         // Is the path legit?
         if (path != null && path.Count >= 2)
