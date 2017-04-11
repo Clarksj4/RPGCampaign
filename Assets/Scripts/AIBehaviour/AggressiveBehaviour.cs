@@ -48,7 +48,7 @@ public class AggressiveBehaviour : IBehaviourStrategy
                         .End()
 
                         // Cast the chosen spell / attack if enough TU
-                        .Selector("Cast spell")
+                        .Sequence("Cast spell")
                             .Condition("Enough TU for attack?", t => current.Stats.CurrentTimeUnits >= attack.Cost)
                             .Do("Attack!", t => Attack())
                         .End()
@@ -189,18 +189,16 @@ public class AggressiveBehaviour : IBehaviourStrategy
         // Result by default is RUNNING rather than failure
         BehaviourTreeStatus result = BehaviourTreeStatus.Running;
 
-        // Has character finished attack?
-        if (!current.IsAttacking && toldToAttack)
-        {
-            toldToAttack = false;
-            result = BehaviourTreeStatus.Success;
-        }
-
-        // If the character has not been told to attack yet....
-        else if (!toldToAttack)
+        if (!toldToAttack)
         {
             current.Attack(target, attack);
             toldToAttack = true;
+        }
+
+        else if (!current.IsAttacking)
+        {
+            toldToAttack = false;
+            result = BehaviourTreeStatus.Success;
         }
 
         return result;
