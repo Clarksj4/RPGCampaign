@@ -4,6 +4,9 @@ using UnityEngine;
 
 public static class ListExtension
 {
+    /// <summary>
+    /// Remove and return the first item in the list
+    /// </summary>
     public static T PopFirst<T>(this LinkedList<T> list)
     {
         LinkedListNode<T> node = list.First;
