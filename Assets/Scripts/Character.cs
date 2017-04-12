@@ -20,13 +20,13 @@ public class Character : MonoBehaviour
     public Player Controller;
     [Tooltip("The spells this character can cast")]
     public Spell[] Spells;
+    public Vector3 CastPosition;
 
     private Animator animator;
     private Stats stats;
     private CharacterBehaviour state;
     private GameManager gameManger;
 
-    //public Attack[] Attacks { get { return GetComponents<Attack>(); } }
     public Animator Animator { get { return animator; } }
     public Stats Stats { get { return stats; } }
     public bool IsAttacking { get { return state.GetType() == typeof(AttackBehaviour); } }
