@@ -13,7 +13,7 @@ public class CastBehaviour : CharacterBehaviour
         this.target = target;
 
         // Create attack
-        spell.Cast(character.Cell, target);
+        spell.Cast(character, target);
 
         StartCoroutine(DoIdleAfterDelay());
     }
