@@ -57,15 +57,30 @@ public static class HexCellExtension
     }
 
     /// <summary>
-    /// Gets the direction that the given neighour cell lies in from this cell. Will raise an exception
-    /// if the given cell is not a neighbour of this cell
+    /// Gets the direction that the other cell lies in from this cell.
     /// </summary>
-    public static HexDirection GetDirection(this HexCell cell, HexCell neighbour)
+    public static HexDirection GetDirection(this HexCell cell, HexCell other)
     {
-        int index = Array.IndexOf(cell.GetNeighbours(), neighbour);
-        if (index == -1)
-            throw new ArgumentException("Cells are not neighbours");
+        return cell.GetDirection(other.Position);
+    }
 
-        return (HexDirection)Enum.GetValues(typeof(HexDirection)).GetValue(index);
+    /// <summary>
+    /// Gets the direction that the point lies in from this cell
+    /// </summary>
+    public static HexDirection GetDirection(this HexCell cell, Vector3 point)
+    {
+        HexDirection[] directions = (HexDirection[])Enum.GetValues(typeof(HexDirection));
+
+        // Ignore cell height so that angle is based on x and z only
+        Vector3 cellNoHeightPosition = cell.Position;
+        cellNoHeightPosition.y = 0;
+        point.y = 0;
+
+        // Angle from forward vector  converted to an index
+        float angle = Vector3.Angle(Vector3.forward, point - cellNoHeightPosition);
+        int index = (int)(angle / 60);
+
+        HexDirection direction = directions[index];
+        return direction;
     }
 }
