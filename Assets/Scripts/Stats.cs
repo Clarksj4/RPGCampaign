@@ -14,6 +14,8 @@ public class Stats : MonoBehaviour
     /// </summary>
     public event ElementMeterEventHandler ElementCapacityChanged;
 
+    public float CurrentHP;
+    public float MaxHP;
     [Tooltip("The element that this character is spec'd in. Determines the capacity this character has for each of the elements, as well " +
              "as which elements are strong against this character.")]
     public ElementType Element;
@@ -38,6 +40,11 @@ public class Stats : MonoBehaviour
         Elements = new Range[4];
         for (int i = 0; i < Elements.Length; i++)
             Elements[i] = new Range();
+    }
+
+    public void TakeDamage(float damage)
+    {
+        CurrentHP -= damage;
     }
 
     public void RefreshTimeUnits()
