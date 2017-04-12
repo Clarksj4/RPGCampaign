@@ -12,7 +12,7 @@ public abstract class Spell : MonoBehaviour
     public Traverser Traverser = Traverser.RangedAttack();
 
     [HideInInspector]
-    public HexCell origin;
+    public Character caster;
     [HideInInspector]
     public HexCell target;
 
@@ -23,5 +23,5 @@ public abstract class Spell : MonoBehaviour
                 Pathfind.InRange(origin, target, MaximumRange, Traverser);
     }
 
-    public abstract void Cast(HexCell origin, HexCell target);
+    public abstract void Cast(Character caster, HexCell target);
 }

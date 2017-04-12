@@ -7,12 +7,12 @@ public class AirShield : Spell
 {
     private HexDirection direction;
 
-    public override void Cast(HexCell origin, HexCell target)
+    public override void Cast(Character caster, HexCell target)
     {
-        GameObject instance = Instantiate(gameObject, origin.Position, Quaternion.identity) as GameObject;
+        GameObject instance = Instantiate(gameObject, caster.Cell.Position, Quaternion.identity) as GameObject;
 
         Spell spell = instance.GetComponent<Spell>();
-        spell.origin = origin;
+        spell.caster = caster;
         spell.target = target;
 
         spell.transform.LookAt(target.Position);
