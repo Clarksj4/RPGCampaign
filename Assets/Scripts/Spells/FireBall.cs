@@ -6,7 +6,8 @@ using UnityEngine;
 public class FireBall : Spell
 {
     public Vector3 DetonationPosition;
-    public float speed = 10;
+    public float Speed = 10;
+    public float Damage = 1;
 
     public override void Cast(Character caster, HexCell target)
     {
@@ -21,9 +22,18 @@ public class FireBall : Spell
 
     void Update ()
     {
-        Vector3 movementSpeed = Vector3.MoveTowards(transform.position, target.Position + DetonationPosition, speed * Time.deltaTime);
+        Vector3 destination = target.Position + DetonationPosition;
+
+        Vector3 movementSpeed = Vector3.MoveTowards(transform.position, destination, Speed * Time.deltaTime);
         transform.position = movementSpeed;
 
         // TODO: Destroy upon arriving at destination
+        if (transform.position == destination)
+        {
+            target.Occupant.Stats.TakeDamage(Damage);
+
+            Destroy(gameObject);
+        }
+            
     }
 }
