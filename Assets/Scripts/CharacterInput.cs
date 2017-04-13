@@ -53,13 +53,11 @@ public class CharacterInput : MonoBehaviour
                         .Selector("Move or Attack")
                             .Sequence("Sequence")
                                 .Inverter("Not")
-                                    .Condition("Cell occupised?", t => CellOccupied())
+                                    .Condition("Cell occupied?", t => CellOccupied())
                                 .End()
-                                .Condition("Enough TU?", t => EnoughTU(movementPath.Cost))
                                 .Do("Move along path", t => Move())
                             .End()
                             .Sequence("Sequence")
-                                .Condition("Cell occupied", t => CellOccupied())
                                 .Condition("Occupant stationary?", t => OccupantStationary())
                                 .Condition("Enough TU?", t => EnoughTU(Spell.Cost))
                                 .Do("Attack", t => Attack())
@@ -93,15 +91,10 @@ public class CharacterInput : MonoBehaviour
             foreach (Step step in movementPath)
             {
                 if (step.CostTo <= Selected.Stats.CurrentTimeUnits)
-                {
                     DrawCell(step.Cell, Color.green);
-                }
 
                 else
-                {
                     DrawCell(step.Cell, Color.red);
-                }
-                
             }
         }
 
@@ -109,12 +102,7 @@ public class CharacterInput : MonoBehaviour
         if (movementRange != null)
         {
             foreach (Step step in movementRange)
-            {
-                // 'Green-er' closer to start, 'red-er' towards end
-                Color colour = Color.Lerp(Color.green, Color.red, step.CostTo / Selected.Stats.CurrentTimeUnits);
-
-                DrawCell(step.Cell, colour);
-            }
+                DrawCell(step.Cell, Color.green);
         }
     }
 
@@ -215,7 +203,8 @@ public class CharacterInput : MonoBehaviour
 
     private BehaviourTreeStatus Move()
     {
-        Selected.Move(movementPath);
+        HexPath affordablePath = movementPath.To(Selected.Stats.CurrentTimeUnits);
+        Selected.Move(affordablePath);
         return BehaviourTreeStatus.Success;
     }
 
