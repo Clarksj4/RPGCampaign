@@ -38,6 +38,9 @@ public class AIPlayer : Player
 
     IEnumerator ProcessTurn()
     {
+        // Think for a second
+        yield return new WaitForSeconds(1);
+
         // Behaviour strategy traverses behaviour tree and reports its status
         BehaviourTreeStatus status = behaviour.Update();
 
