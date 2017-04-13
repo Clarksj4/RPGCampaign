@@ -29,14 +29,22 @@ public class CharacterInput : MonoBehaviour
         BehaviourTreeBuilder builder = new BehaviourTreeBuilder();
         behaviourTree = builder
             .Sequence("Sequence")
+                
+                // If the cursor isn't on a cell, then don't do anything
                 .Do("Get cell under cursor", t => GetCellBehaviour())
+
+                // Highlight AND do an action (cast or move)
                 .Parallel("Both", 2, 2)
                     .Selector("Highlight")
+
+                        // Highlight the movement range of the character in the targeted cell
                         .Sequence("Sequence")
                             .Condition("Cell occupied?", t => CellOccupied())
                             .Condition("Occupant stationary?", t => OccupantStationary())
                             .Do("Highlight move range", t => HighlightArea())
                         .End()
+
+                        // Highlight the movement path of the selected character
                         .Sequence("Sequence")
                             .Inverter("Not")
                                 .Condition("Cell occupied?", t => CellOccupied())
@@ -47,27 +55,32 @@ public class CharacterInput : MonoBehaviour
                         .End()
                     .End()
                     .Sequence("Act")
+
+                        // Do an action when the mouse is clicked
                         .Condition("Left mouse clicked?", t => Input.GetMouseButtonDown(0))
                         .Condition("Selected character's turn?", t => IsSelectedCharactersTurn())
                         .Condition("Selected character idle?", t => IsSelectedCharacterIdle())
                         .Selector("Move or Attack")
+
+                            // Move along the affordable section of the path
                             .Sequence("Sequence")
                                 .Inverter("Not")
                                     .Condition("Cell occupied?", t => CellOccupied())
                                 .End()
                                 .Do("Move along path", t => Move())
                             .End()
+
+                            // Cast spell at the targeted cell
                             .Sequence("Sequence")
                                 .Condition("Occupant stationary?", t => OccupantStationary())
                                 .Condition("Enough TU?", t => EnoughTU(Spell.Cost))
-                                .Do("Attack", t => Attack())
+                                .Do("Cast", t => Cast())
                             .End()
                         .End()
                     .End()
                 .End()
             .End()
         .Build();
-
     }
 
     void Update()
@@ -210,7 +223,7 @@ public class CharacterInput : MonoBehaviour
         return BehaviourTreeStatus.Success;
     }
 
-    private BehaviourTreeStatus Attack()
+    private BehaviourTreeStatus Cast()
     {
         // [PLACEHOLDER] TODO: pick spell to cast
         Selected.Cast(Spell, targetCell);
