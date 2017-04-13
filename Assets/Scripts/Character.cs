@@ -32,6 +32,7 @@ public class Character : MonoBehaviour
     public bool IsAttacking { get { return state.GetType() == typeof(AttackBehaviour); } }
     public bool IsMoving { get { return state.GetType() == typeof(MoveBehaviour); } }
     public bool CanMove { get { return !IsMoving; } }
+    public bool IsIdle { get { return state.GetType() == typeof(IdleBehaviour); } }
 
     private void Awake()
     {
