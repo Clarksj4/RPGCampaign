@@ -90,9 +90,11 @@ public class CharacterInput : MonoBehaviour
         {
             foreach (Step step in movementPath)
             {
+                // Cell is green if in range
                 if (step.CostTo <= Selected.Stats.CurrentTimeUnits)
                     DrawCell(step.Cell, Color.green);
 
+                // Cell is red if out of range
                 else
                     DrawCell(step.Cell, Color.red);
             }
