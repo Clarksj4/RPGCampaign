@@ -25,7 +25,6 @@ public class Character : MonoBehaviour
     private Animator animator;
     private Stats stats;
     private CharacterBehaviour state;
-    private GameManager gameManger;
 
     public Animator Animator { get { return animator; } }
     public Stats Stats { get { return stats; } }
@@ -37,7 +36,6 @@ public class Character : MonoBehaviour
     {
         animator = GetComponentInChildren<Animator>();
         stats = GetComponent<Stats>();
-        gameManger = GameObject.FindGameObjectWithTag("GameController").GetComponent<GameManager>();
     }
 
     private void Start()
@@ -86,14 +84,24 @@ public class Character : MonoBehaviour
     /// <summary>
     /// Activate this character so it can have its turn. Returns true if this character is able to act.
     /// </summary>
-    public bool Activate()
+    public bool BeginTurn()
     {
-        state.Activate();
+        state.BeginTurn();
 
+        // TODO: Stats.BeginTurn()
         Stats.RefreshTimeUnits();
+
+        Controller.Activate(this);
 
         // Return true because nothing can prevent the character from acting
         return true;
+    }
+
+    public void EndTurn()
+    {
+        state.EndTurn();
+
+        // TODO: Stats.EndTurn()
     }
 
     public void Cast(Spell spell, HexCell target)
