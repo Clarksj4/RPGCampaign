@@ -3,6 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-class BehaviourFactory
+public class BehaviourFactory
 {
+    // Pick Spell
+    // Pick Target
+    // Do Spell
 }
