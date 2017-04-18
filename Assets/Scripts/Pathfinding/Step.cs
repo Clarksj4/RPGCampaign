@@ -1,19 +1,19 @@
 ﻿
-namespace HexMapPathfinding
+namespace Pathfinding
 {
     /// <summary>
-    /// A unit of pathfinding for use on a hex map. Contains the cost to move to a given hex as well as the previous step in the path to reach
+    /// A unit of pathfinding. Contains the cost to move to a given node as well as the previous step in the path to reach
     /// this step
     /// </summary>
     public class Step
     {
         /// <summary>
-        /// The cell being traversed
+        /// The node being traversed
         /// </summary>
-        public HexCell Cell { get; set; }
+        public IPathNode Node { get; set; }
 
         /// <summary>
-        /// The cell that was previously traversed
+        /// The node that was previously traversed
         /// </summary>
         public Step Previous { get; set; }
 
@@ -22,15 +22,14 @@ namespace HexMapPathfinding
         /// </summary>
         public float CostTo { get; set; }
 
-        /// <param name="cell">The cell being traversed</param>
-        /// <param name="previous">The cell that was previously traversed</param>
+        /// <param name="node">The node being traversed</param>
+        /// <param name="previous">The node that was previously traversed</param>
         /// <param name="costTo">The cost to traverse the path from beginning until and including this step</param>
-        public Step(HexCell cell, Step previous, float costTo)
+        public Step(IPathNode node, Step previous, float costTo)
         {
-            Cell = cell;
+            Node = node;
             Previous = previous;
             CostTo = costTo;
         }
     }
-
 }

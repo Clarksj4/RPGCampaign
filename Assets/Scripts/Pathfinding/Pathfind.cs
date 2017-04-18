@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace HexMapPathfinding
+namespace Pathfinding
 {
     /// <summary>
     /// Utility methods for finding paths, areas, and ranges on a hex map
@@ -16,12 +16,12 @@ namespace HexMapPathfinding
         /// <param name="maximumCost">The maximum cost of traversing to any cell in range</param>
         /// <param name="traverser">The ruleset for which tiles can be traversed and the cost of doing so</param>
         /// <returns> Steps that are traversable and within range of origin</returns>
-        public static ICollection<Step> Area(HexCell target, float maximumCost, ITraversable traverser)
+        public static ICollection<Step> Area(IPathNode origin, float maximumCost, ITraversable traverser)
         {
             List<Step> inRange = new List<Step>();
 
             // Enumerate over each step that is in range, add it to the collection
-            foreach (Step step in Enumerate(target, maximumCost, traverser))
+            foreach (Step step in Enumerate(origin, maximumCost, traverser))
                 inRange.Add(step);
 
             return inRange;
@@ -36,10 +36,10 @@ namespace HexMapPathfinding
         /// <param name="traverser">The ruleset for which cells can be crossed and the cost for doing so</param>
         /// <returns>A collection of each step of the path from origin to destination OR null if no path could be found 
         /// within the given parameters</returns>
-        public static HexPath To(HexCell origin, HexCell destination, float maximumCost, ITraversable traverser = null)
+        public static Path To(IPathNode origin, IPathNode destination, float maximumCost, ITraversable traverser = null)
         {
             return To(origin,
-                      s => s.Cell == destination,       // Search until the returned step is the destination cell
+                      s => s.Node == destination,       // Search until the returned step is the destination cell
                       maximumCost,
                       traverser);
         }
@@ -54,14 +54,14 @@ namespace HexMapPathfinding
         /// <param name="traverser">The ruleset for which cells can be crossed and the cost for doing so</param>
         /// <returns>The quickest traversable path from the origin to a cell within the given criteria and matches the given 
         /// condition. Returns null if no such path exists</returns>
-        public static HexPath To(HexCell origin, Func<Step, bool> isTarget, float maximumCost, ITraversable traverser = null)
+        public static Path To(IPathNode origin, Func<Step, bool> isTarget, float maximumCost, ITraversable traverser = null)
         {
             // Enumerate through cells that meet the criteria
             foreach (Step step in Enumerate(origin, maximumCost, traverser))
             {
                 // If the step matches the condition, return a path from origin to this cell
                 if (isTarget(step))
-                    return new HexPath(step);
+                    return new Path(step);
             }
 
             // No traversable path
@@ -77,13 +77,13 @@ namespace HexMapPathfinding
         /// <param name="traverser">The ruleset for which cells can be crossed and the cost for doing so</param>
         /// <returns>The cheapest, traversable path from the origin to any of the cells in the collection of cells. Returns null if
         /// no such path exists</returns>
-        public static HexPath ToArea(HexCell origin, IEnumerable<HexCell> area, ITraversable traverser = null)
+        public static Path ToArea(IPathNode origin, IEnumerable<IPathNode> area, ITraversable traverser = null)
         {
             // Pathfind to cheapest of the cells
-            HexPath path = To(origin,
-                                s => area.Contains(s.Cell),     // Search until the returned step is any of the cells in the area
-                                -1,                             // Cost doesn't matter
-                                traverser);
+            Path path = To(origin,
+                           s => area.Contains(s.Node),     // Search until the returned step is any of the cells in the area
+                           -1,                             // Cost doesn't matter
+                           traverser);
             return path;
         }
 
@@ -95,13 +95,13 @@ namespace HexMapPathfinding
         /// <param name="maximumCost">The size of the area to check</param>
         /// <param name="traverser">The ruleset for which cell can be crossed and the cost for doing so from the origin</param>
         /// <returns>Wether the target cell is within range of the target cell</returns>
-        public static bool InRange(HexCell origin, HexCell target, float maximumCost, ITraversable traverser = null)
+        public static bool InRange(IPathNode origin, IPathNode target, float maximumCost, ITraversable traverser = null)
         {
             // Find path from origin to target
-            HexPath path = To(origin,
-                              s => s.Cell == target,        // Search until the returned step is the target cell
-                              maximumCost,
-                              traverser);
+            Path path = To(origin,
+                           s => s.Node == target,        // Search until the returned step is the target cell
+                           maximumCost,
+                           traverser);
 
             // Null = no path to target
             bool inRange = false;
@@ -117,7 +117,7 @@ namespace HexMapPathfinding
         /// <param name="origin">The cell to begin iterating from</param>
         /// <param name="maximumCost">The maximum cost</param>
         /// <param name="traverser">The ruleset for which cells can be crossed and the cost for doing so</param>
-        public static IEnumerable<Step> Enumerate(HexCell origin, float maximumCost, ITraversable traverser = null)
+        public static IEnumerable<Step> Enumerate(IPathNode origin, float maximumCost, ITraversable traverser = null)
         {
             HashSet<Step> evaluated = new HashSet<Step>();                  // Cells whose cost has been evaluated
             LinkedList<Step> toBeEvaluated = new LinkedList<Step>();        // Discovered cells that have not yet been evaluated
@@ -152,20 +152,18 @@ namespace HexMapPathfinding
         /// <param name="traverser">The ruleset that defines which cells can be crossed and the cost for doing so</param>
         private static void EvaluateAdjacent(Step current, LinkedList<Step> toBeEvaluated, HashSet<Step> evaluated, ITraversable traverser)
         {
-            // For each neighbour of current cell
-            foreach (HexDirection direction in HexDirectionExtension.All())
+            foreach (IPathNode adjacent in current.Node.Nodes)
             {
-                HexCell adjacent = current.Cell.GetNeighbor(direction);
                 if (adjacent != null &&                                       // Is there an adjacent cell in the given direction?
-                    !evaluated.Select(s => s.Cell).Contains(adjacent))        // Has the adjacent cell already been evaluated?
+                    !evaluated.Select(s => s.Node).Contains(adjacent))        // Has the adjacent cell already been evaluated?
                 {
                     // Able to traverse to adjacent cell from current?
-                    bool traversable = traverser != null ? traverser.IsTraversable(current.Cell, direction) : true;
+                    bool traversable = traverser != null ? traverser.IsTraversable(current.Node, adjacent) : true;
                     if (!traversable)
                         continue;
 
                     // Cost to move from origin to adjacent cell with current route
-                    float costIncrement = traverser != null ? traverser.Cost(current.Cell, direction) : 1;
+                    float costIncrement = traverser != null ? traverser.Cost(current.Node, adjacent) : 1;
                     float costToAdjacent = current.CostTo + costIncrement;
 
                     InsertOrUpdate(current, adjacent, toBeEvaluated, costToAdjacent);
@@ -177,10 +175,10 @@ namespace HexMapPathfinding
         /// Adds the adjacent cell to the queue of cells to be evaluated OR updates its
         /// cost and path to information should it already exist in the queue.
         /// </summary>
-        private static void InsertOrUpdate(Step current, HexCell adjacent, LinkedList<Step> toBeEvaluated, float costToAdjacent)
+        private static void InsertOrUpdate(Step current, IPathNode adjacent, LinkedList<Step> toBeEvaluated, float costToAdjacent)
         {
             // Is adjacent a newly discovered node...?
-            Step adjacentStep = toBeEvaluated.Where(s => s.Cell == adjacent).SingleOrDefault();
+            Step adjacentStep = toBeEvaluated.Where(s => s.Node == adjacent).SingleOrDefault();
             if (adjacentStep == null)
             {
                 adjacentStep = new Step(adjacent, current, costToAdjacent);

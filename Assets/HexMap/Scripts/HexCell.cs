@@ -1,10 +1,10 @@
 ﻿using UnityEngine;
 using System.IO;
+using System;
+using System.Collections.Generic;
 
-public class HexCell : MonoBehaviour {
-
-    public Character Occupant;
-
+public partial class HexCell : MonoBehaviour
+{
 	public HexCoordinates coordinates;
 
 	public RectTransform uiRect;

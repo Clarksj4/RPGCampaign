@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using System.Linq;
 using System;
-using HexMapPathfinding;
+using Pathfinding;
 
 [RequireComponent(typeof(Stats))]
 public class Character : MonoBehaviour
@@ -110,7 +110,7 @@ public class Character : MonoBehaviour
     /// Moves the character along the given path regardless of its time units. Returns true if the character moves atleast one cell along
     /// the path
     /// </summary>
-    public void Move(HexPath path)
+    public void Move(Path path)
     {
         SetState(new MoveBehaviour(this, path));
     }
