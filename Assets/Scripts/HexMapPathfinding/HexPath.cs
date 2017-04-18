@@ -1,135 +1,114 @@
-﻿using System;
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-public class HexPath : IEnumerable<Step>
+namespace HexMapPathfinding
 {
-    public Step this[int index]
-    {
-        get { return Steps[index]; }
-        set { Steps[index] = value; }
-    }
-
-    public List<Step> Steps { get; private set; }
-    public HexCell Origin { get { return Steps.First().Cell; } }
-    public HexCell Destination { get { return Steps.Last().Cell; } }
-    public float Cost { get { return Steps.Select(s => s.CostTo).Sum(); } }
-    public int Count { get { return Steps.Count; } }
-
-    public Vector3[] Points
-    {
-        get
-        {
-            if (points == null)
-                points = Steps.Select(s => s.Cell.Position).ToArray();
-            return points;
-        }
-    }
-
-    private Vector3[] points;
-
-    public HexPath()
-    {
-        Steps = new List<Step>();
-    }
-
-    public HexPath(List<Step> steps)
-    {
-        Steps = steps;
-    }
-
     /// <summary>
-    /// Creates a new path by walking backwards from the given step
+    /// A path for traversing a hex map. Contains an inorder collection of steps, as well as the cost to traverse them
     /// </summary>
-    public HexPath(Step final)
-        : this()
+    public class HexPath : IEnumerable<Step>
     {
-        // Iterate through steps to obtain cell reference
-        Step walker = final;
-        while (walker != null)
+        /// <summary>
+        /// The first step in this path
+        /// </summary>
+        public HexCell Origin { get { return steps.First().Cell; } }
+
+        /// <summary>
+        /// The last step in this path
+        /// </summary>
+        public HexCell Destination { get { return steps.Last().Cell; } }
+
+        /// <summary>
+        /// The total cost of moving along this path
+        /// </summary>
+        public float Cost { get { return steps.Last().CostTo; } }
+
+        /// <summary>
+        /// The number of steps in this path
+        /// </summary>
+        public int Count { get { return steps.Count; } }
+
+        /// <summary>
+        /// The position of each step in this path
+        /// </summary>
+        public Vector3[] Points
         {
-            // Add to list of cells
-            Steps.Add(walker);
-            walker = walker.Previous;
+            get
+            {
+                // Lazy initialisation of point collection
+                if (points == null)
+                    points = steps.Select(s => s.Cell.Position).ToArray();
+                return points;
+            }
         }
 
-        Steps.Reverse();
-    }
+        private LinkedList<Step> steps;
+        private Vector3[] points;
 
-    public HexPath(Step final, float maximumCost)
-    : this()
-    {
-        // Iterate through steps to obtain cell reference
-        Step walker = final;
-        while (walker != null)
+        /// <summary>
+        /// An empty path
+        /// </summary>
+        public HexPath()
         {
-            // Add to list of cells if within cost
-            if (walker.CostTo <= maximumCost)
-                Steps.Add(walker);
-
-            walker = walker.Previous;
+            steps = new LinkedList<Step>();
         }
 
-        Steps.Reverse();
-    }
-
-    public void AddStep(Step step)
-    {
-        Steps.Add(step);
-    }
-
-    public HexPath To(HexCell cell)
-    {
-        int index = IndexOf(cell);
-
-        List<Step> subSteps = Steps.GetRange(0, index);
-
-        return new HexPath(subSteps);
-    }
-
-    public HexPath To(float timeUnits)
-    {
-        HexPath subPath = new HexPath();
-        foreach (Step step in Steps)
+        /// <summary>
+        /// Creates a path by walking backwards from the given step
+        /// </summary>
+        public HexPath(Step final)
+            : this()
         {
-            if (step.CostTo <= timeUnits)
-                subPath.AddStep(step);
-            else
-                break;
-        }
-        return subPath;
-    }
-
-    public HexPath From(HexCell cell)
-    {
-        int index = IndexOf(cell);
-        int remaining = Steps.Count - index;
-
-        List<Step> subSteps = Steps.GetRange(index, remaining);
-
-        return new HexPath(subSteps);
-    }
-
-    public int IndexOf(HexCell cell)
-    {
-        for (int i = 0; i < Steps.Count; i++)
-        {
-            if (Steps[i].Cell == cell)
-                return i;
+            // Iterate through given cell's chain of cells
+            Step walker = final;
+            while (walker != null)
+            {
+                // Add to cell as first cell in path
+                steps.AddFirst(walker);
+                walker = walker.Previous;
+            }
         }
 
-        return -1;
-    }
+        /// <summary>
+        /// Adds a step to the path
+        /// </summary>
+        public void AddStep(Step step)
+        {
+            steps.AddLast(step);
+        }
 
-    public IEnumerator<Step> GetEnumerator()
-    {
-        return Steps.GetEnumerator();
-    }
+        /// <summary>
+        /// Returns a new path beginning at origin and containing all steps in this path less than the 
+        /// given time units
+        /// </summary>
+        public HexPath Truncate(float timeUnits)
+        {
+            // Iterate through steps adding those that are less that given time units
+            HexPath subPath = new HexPath();
+            foreach (Step step in this)
+            {
+                if (step.CostTo <= timeUnits)
+                    subPath.AddStep(step);
 
-    IEnumerator IEnumerable.GetEnumerator()
-    {
-        return Steps.GetEnumerator();
+                // Stop once steps are out of time units range
+                else
+                    break;
+            }
+
+            // All steps that are within cost
+            return subPath;
+        }
+
+        public IEnumerator<Step> GetEnumerator()
+        {
+            return steps.GetEnumerator();
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return steps.GetEnumerator();
+        }
     }
 }

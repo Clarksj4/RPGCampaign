@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using HexMapPathfinding;
 
 public class Stats : MonoBehaviour
 {
@@ -14,6 +15,8 @@ public class Stats : MonoBehaviour
     /// </summary>
     public event ElementMeterEventHandler ElementCapacityChanged;
 
+    public float CurrentHP;
+    public float MaxHP;
     [Tooltip("The element that this character is spec'd in. Determines the capacity this character has for each of the elements, as well " +
              "as which elements are strong against this character.")]
     public ElementType Element;
@@ -22,7 +25,7 @@ public class Stats : MonoBehaviour
     [Tooltip("The speed at which this character moves")]
     public float Speed;
     [Tooltip("Which cells can be crossed by this character and the cost of doing so")]
-    public Traverser Traverser;
+    public DefaultTraverser Traverser = DefaultTraverser.Walking();
     [Header("Time Units")]
     public float CurrentTimeUnits;
     public float MaxTimeUnits;
@@ -38,6 +41,11 @@ public class Stats : MonoBehaviour
         Elements = new Range[4];
         for (int i = 0; i < Elements.Length; i++)
             Elements[i] = new Range();
+    }
+
+    public void TakeDamage(float damage)
+    {
+        CurrentHP -= damage;
     }
 
     public void RefreshTimeUnits()

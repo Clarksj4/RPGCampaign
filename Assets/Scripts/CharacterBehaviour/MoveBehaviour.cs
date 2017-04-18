@@ -1,5 +1,6 @@
 ﻿using System;
 using UnityEngine;
+using HexMapPathfinding;
 
 public class MoveBehaviour : CharacterBehaviour
 {
@@ -45,35 +46,57 @@ public class MoveBehaviour : CharacterBehaviour
         // Update the character's animation
         UpdateAnimator();
 
-        // Update reference to the currently occupied cell
-        UpdateOccupiedCell();
-
+        // If reached destination
         if (t >= 1.0f)
+        {
+            // Pay for movement
+            character.Stats.CurrentTimeUnits -= path.Cost;
+
+            // Update reference to the currently occupied cell
+            UpdateOccupiedCellFinal();
+
             SetState(new IdleBehaviour(character));
+        }
     }
 
-    private void UpdateOccupiedCell()
+    private void UpdateOccupiedCellFinal()
     {
         // Has the character entered a new cell?
         HexCell newCell = HexGrid.GetCell(Transform.position);
-        if (newCell != Cell)
-        {
-            // Calculate direction moved and cost to do so, subtract from time units
-            HexDirection directionMoved = Cell.GetDirection(newCell);
-            float moveCost = character.TraverseCost(directionMoved);
-            character.Stats.CurrentTimeUnits -= moveCost;
 
-            // Update ref to which cell is occupied
-            Cell.Occupant = null;
-            Cell = newCell;
+        // Can't occupy a cell thats already occupied
+        if (newCell.Occupant != null)
+            throw new NotImplementedException("Cannot currently occupy cells that are already occupied");
 
-            // Can't move through an occupied cell
-            if (Cell.Occupant != null && Cell.Occupant != character)
-                throw new NotImplementedException("Cannot currently traverse cells that are already occupied");
-
-            Cell.Occupant = character;
-        }
+        // Update ref to which cell is occupied
+        Cell.Occupant = null;
+        Cell = newCell;
+        Cell.Occupant = character;
     }
+
+
+    //private void UpdateOccupiedCell()
+    //{
+    //    // Has the character entered a new cell?
+    //    HexCell newCell = HexGrid.GetCell(Transform.position);
+    //    if (newCell != Cell)
+    //    {
+    //        // Calculate direction moved and cost to do so, subtract from time units
+    //        HexDirection directionMoved = Cell.GetDirection(newCell);
+    //        float moveCost = character.TraverseCost(directionMoved);
+    //        character.Stats.CurrentTimeUnits -= moveCost;
+
+    //        // Update ref to which cell is occupied
+    //        Cell.Occupant = null;
+    //        Cell = newCell;
+
+    //        // Can't move through an occupied cell
+    //        if (Cell.Occupant != null && Cell.Occupant != character)
+    //            throw new NotImplementedException("Cannot currently traverse cells that are already occupied");
+
+    //        Cell.Occupant = character;
+    //    }
+    //}
 
     private void UpdateAnimator()
     {

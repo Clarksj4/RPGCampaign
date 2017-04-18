@@ -5,22 +5,24 @@ using System.Linq;
 
 public abstract class Player : MonoBehaviour
 {
-    public GameManager GameManager;
-
     protected Character current;
     protected List<Character> characters;
 
     public List<Character> Characters { get { return characters; } }
     public Character Current { get { return current; } }
-    public bool IsTurn { get { return GameManager.CurrentPlayer == this; } }
+    public bool IsTurn { get { return turnSystem.CurrentPlayer == this; } }
 
-    private void Awake()
+    private TurnSystem turnSystem;
+
+    protected virtual void Awake()
     {
+        turnSystem = FindObjectOfType<TurnSystem>();
+
         // Get list of all characters this player controls
         characters = GetComponentsInChildren<Character>().ToList();
     }
 
-    private void Start()
+    protected virtual void Start()
     {
         foreach (Character actor in characters)
             actor.Controller = this;
@@ -43,6 +45,6 @@ public abstract class Player : MonoBehaviour
 
     public virtual void EndTurn()
     {
-        GameManager.EndTurn(current);
+        turnSystem.EndTurn();
     }
 }

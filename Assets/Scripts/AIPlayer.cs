@@ -3,39 +3,59 @@ using System.Linq;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using FluentBehaviourTree;
 
 public class AIPlayer : Player
 {
-    private Character target;
-    private AIBehaviour state;
+    private IBehaviourStrategy behaviour;
 
-    private void Start()
+    protected override void Awake()
     {
-        // Find a character that is not one of this player's characters
-        target = GameManager.Characters.Where(c => !characters.Contains(c)).Single();
-        SetState(new ChaseBehaviour(this));
+        base.Awake();
+
+        // [PLACEHOLDER] TODO: Behaviour factory assembles behaviour trees and instantiates behaviour classes
+        SetBehaviour(new AggressiveBehaviour());
     }
 
-    private void Update()
+    /// <summary>
+    /// Sets this AI's behaviour strategy
+    /// </summary>
+    public void SetBehaviour(IBehaviourStrategy behaviour)
     {
-        state.Update();
-    }
-
-    public void SetState(AIBehaviour newState)
-    {
-        // If there is a previous state, tell it it is being closed
-        if (state != null)
-            state.Closing();
-
-        // Save ref to new state, initialize state
-        state = newState;
-        state.Init();
+        this.behaviour = behaviour;
     }
 
     public override void Activate(Character actor)
     {
         base.Activate(actor);
 
-        state.Activate();
+        // Behaviour handler is notified that it's its turn
+        behaviour.Activate(actor);
+
+        // Traverse tree until tree fails or succeeds
+        StartCoroutine(ProcessTurn());
+    }
+
+    IEnumerator ProcessTurn()
+    {
+        // Think for a second
+        yield return new WaitForSeconds(1);
+
+        // Behaviour strategy traverses behaviour tree and reports its status
+        BehaviourTreeStatus status = behaviour.Update();
+
+        // Continuously update the behaviour tree until it reports that it is done
+        while (status == BehaviourTreeStatus.Running)
+        {
+            yield return null;
+
+            status = behaviour.Update();
+        }
+
+        // Same as above logic, but condensed to one line; therefore, harder to debug
+        //yield return new WaitUntil(() => behaviour.Update() != BehaviourTreeStatus.Running);
+
+        // End turn once the behaviour tree has completed its actions 
+        EndTurn();
     }
 }

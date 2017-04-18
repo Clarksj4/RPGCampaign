@@ -3,6 +3,8 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using FluentBehaviourTree;
+using HexMapPathfinding;
 
 public class CharacterInput : MonoBehaviour
 {
@@ -13,89 +15,110 @@ public class CharacterInput : MonoBehaviour
     [Tooltip("The layer the hex grid is on. Used for raycasting")]
     public string HexGridLayer = "HexGrid";
 
-    private HexCell target;
-    private List<Step> movementRange;
+    private HexCell targetCell;
+    private ICollection<Step> movementRange;
     private HexPath movementPath;
+    private IBehaviourTreeNode behaviourTree;
+    private Spell Spell { get { return Selected.Spells[0]; } }
 
     private void Start()
     {
         // Set all cell to hex grid layer
         foreach (Transform child in HexGrid.GetComponentsInChildren<Transform>())
             child.gameObject.layer = LayerMask.NameToLayer(HexGridLayer);
+
+        BehaviourTreeBuilder builder = new BehaviourTreeBuilder();
+        behaviourTree = builder
+            .Sequence("Sequence")
+                
+                // If the cursor isn't on a cell, then don't do anything
+                .Do("Get cell under cursor", t => GetCellBehaviour())
+
+                // Highlight AND do an action (cast or move)
+                .Parallel("Both", 2, 2)
+                    .Selector("Highlight")
+
+                        // Highlight the movement range of the character in the targeted cell
+                        .Sequence("Sequence")
+                            .Condition("Cell occupied?", t => CellOccupied())
+                            .Condition("Occupant stationary?", t => OccupantStationary())
+                            .Do("Highlight move range", t => HighlightArea())
+                        .End()
+
+                        // Highlight the movement path of the selected character
+                        .Sequence("Sequence")
+                            .Inverter("Not")
+                                .Condition("Cell occupied?", t => CellOccupied())
+                            .End()
+                            .Condition("Selected character's turn?", t => IsSelectedCharactersTurn())
+                            .Condition("Selected character idle?", t => IsSelectedCharacterIdle())
+                            .Do("Highlight path", t => HighlightPath())
+                        .End()
+                    .End()
+                    .Sequence("Act")
+
+                        // Do an action when the mouse is clicked
+                        .Condition("Left mouse clicked?", t => Input.GetMouseButtonDown(0))
+                        .Condition("Selected character's turn?", t => IsSelectedCharactersTurn())
+                        .Condition("Selected character idle?", t => IsSelectedCharacterIdle())
+                        .Selector("Move or Attack")
+
+                            // Move along the affordable section of the path
+                            .Sequence("Sequence")
+                                .Inverter("Not")
+                                    .Condition("Cell occupied?", t => CellOccupied())
+                                .End()
+                                .Do("Move along path", t => Move())
+                            .End()
+
+                            // Cast spell at the targeted cell
+                            .Sequence("Sequence")
+                                .Condition("Occupant stationary?", t => OccupantStationary())
+                                .Condition("Enough TU?", t => EnoughTU(Spell.Cost))
+                                .Do("Cast", t => Cast())
+                            .End()
+                        .End()
+                    .End()
+                .End()
+            .End()
+        .Build();
     }
 
-    private void Update()
+    void Update()
     {
-        target = GetMousedCell();
-        if (target != null)                         // IF the mouse is over a cell
-        {
-            Character occupant = target.Occupant;
-            if (occupant != null &&                 // IF the targeted cell is occupied
-                !occupant.IsMoving)                 // AND the occupant is not currently moving
-            {
-                // Get the character's movement range
-                movementRange = Pathfind.CellsInRange(target, occupant.Stats.CurrentTimeUnits, occupant.Stats.Traverser);
-                movementPath = null;    // Get rid of path so it is not drawn
-            }
+        targetCell = null;
+        movementPath = null;
+        movementRange = null;
 
-            else if (!Selected.Controller.IsTurn)   // IF its not the selected characters turn
-            {
-                // Get rid of range and path so they are not drawn
-                movementRange = null;       
-                movementPath = null;
-            }
-            
-            else if (!Selected.IsMoving)            // IF its the selected character's turn AND the character is not moving    
-            {
-                if (Input.GetMouseButton(0))
-                {
-                    Selected.Move(movementPath);     // Follow path
-
-                    // Get rid of path and range because they are not valid anymore
-                    movementPath = null;
-                    movementRange = null;
-                }
-
-                else
-                {
-                    // Get the character's movement path to the targeted cell
-                    movementPath = Pathfind.QuickestPath(Selected.Cell, target, Selected.Stats.CurrentTimeUnits, Selected.Stats.Traverser);
-                    movementRange = null;   // Get rid of range so it is not drawn
-                }
-            }
-        }
+        behaviourTree.Tick(new TimeData(Time.deltaTime));
     }
 
     private void OnDrawGizmos()
     {
         // Draw destination
-        if (target != null)
-            DrawCell(target, Color.white);
+        if (targetCell != null)
+            DrawCell(targetCell, Color.white);
 
         // Draw movementPath
         if (movementPath != null)
         {
             foreach (Step step in movementPath)
             {
-                // Colour changes from green to red during the path
-                Color colour = Color.Lerp(Color.green, Color.red, step.CostTo / Selected.Stats.CurrentTimeUnits);
-                DrawCell(step.Cell, colour);
-            }
+                // Cell is green if in range
+                if (step.CostTo <= Selected.Stats.CurrentTimeUnits)
+                    DrawCell(step.Cell, Color.green);
 
-            Gizmos.color = Color.red;
-            iTween.DrawPath(movementPath.Select(s => s.Cell.Position + Vector3.up).ToArray());
+                // Cell is red if out of range
+                else
+                    DrawCell(step.Cell, Color.red);
+            }
         }
 
         // Draw all cells in range
         if (movementRange != null)
         {
             foreach (Step step in movementRange)
-            {
-                // 'Green-er' closer to start, 'red-er' towards end
-                Color colour = Color.Lerp(Color.green, Color.red, step.CostTo / Selected.Stats.CurrentTimeUnits);
-
-                DrawCell(step.Cell, colour);
-            }
+                DrawCell(step.Cell, Color.green);
         }
     }
 
@@ -121,7 +144,7 @@ public class CharacterInput : MonoBehaviour
     /// <summary>
     /// Get the hex cell the mouse is currently over
     /// </summary>
-    private HexCell GetMousedCell()
+    private HexCell GetCell()
     {
         // If mouse not over UI
         if (!EventSystem.current.IsPointerOverGameObject())
@@ -139,5 +162,79 @@ public class CharacterInput : MonoBehaviour
 
         // No cell clicked
         return null;
+    }
+
+    private BehaviourTreeStatus GetCellBehaviour()
+    {
+        BehaviourTreeStatus result = BehaviourTreeStatus.Failure;
+
+        // Get the cell currently under the curosr
+        targetCell = GetCell();
+
+        // If there is one, success!
+        if (targetCell != null)
+            result = BehaviourTreeStatus.Success;
+
+        return result;
+    }
+
+    private bool CellOccupied()
+    {
+        bool occupied = targetCell.Occupant != null;
+        return occupied;
+    }
+
+    private bool OccupantStationary()
+    {
+        bool stationary = !targetCell.Occupant.IsMoving;
+        return stationary;
+    }
+
+    private BehaviourTreeStatus HighlightArea()
+    {
+        Character occupant = targetCell.Occupant;
+        movementRange = Pathfind.Area(targetCell, occupant.Stats.CurrentTimeUnits, occupant.Stats.Traverser);
+
+        // Always returns success
+        return BehaviourTreeStatus.Success;
+    }
+
+    private BehaviourTreeStatus HighlightPath()
+    {
+        movementPath = Pathfind.To(Selected.Cell, targetCell, -1, Selected.Stats.Traverser);
+        return BehaviourTreeStatus.Success;
+    }
+
+    private bool IsSelectedCharactersTurn()
+    {
+        bool isTurn = Selected.Controller.IsTurn;
+        return isTurn;
+    }
+
+    private bool IsSelectedCharacterIdle()
+    {
+        bool isIdle = Selected.IsIdle;
+        return isIdle;
+    }
+
+    private BehaviourTreeStatus Move()
+    {
+        HexPath affordablePath = movementPath.Truncate(Selected.Stats.CurrentTimeUnits);
+        Selected.Move(affordablePath);
+        return BehaviourTreeStatus.Success;
+    }
+
+    private BehaviourTreeStatus Cast()
+    {
+        // [PLACEHOLDER] TODO: pick spell to cast
+        Selected.Cast(Spell, targetCell);
+
+        return BehaviourTreeStatus.Success;
+    }
+
+    private bool EnoughTU(float cost)
+    {
+        bool enoughTU = Selected.Stats.CurrentTimeUnits >= cost;
+        return enoughTU;
     }
 }
