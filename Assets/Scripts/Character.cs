@@ -3,14 +3,13 @@ using System.Collections.Generic;
 using UnityEngine;
 using System.Linq;
 using System;
+using HexMapPathfinding;
 
 [RequireComponent(typeof(Stats))]
 public class Character : MonoBehaviour
 {
     public event CharacterMovementEventHandler BeginMovement;
     public event CharacterMovementEventHandler FinishedMovement;
-    public event EventHandler BeginAttack;
-    public event EventHandler FinishedAttack;
 
     public HexDirection Facing;
     public HexCell Cell;
@@ -20,6 +19,7 @@ public class Character : MonoBehaviour
     public Player Controller;
     [Tooltip("The spells this character can cast")]
     public Spell[] Spells;
+    [Tooltip("The local position at which spells will spawn")]
     public Vector3 CastPosition;
 
     private Animator animator;
@@ -28,7 +28,7 @@ public class Character : MonoBehaviour
 
     public Animator Animator { get { return animator; } }
     public Stats Stats { get { return stats; } }
-    public bool IsAttacking { get { return state.GetType() == typeof(AttackBehaviour); } }
+    public bool IsCasting { get { return state.GetType() == typeof(CastBehaviour); } }
     public bool IsMoving { get { return state.GetType() == typeof(MoveBehaviour); } }
     public bool IsIdle { get { return state.GetType() == typeof(IdleBehaviour); } }
 
@@ -69,16 +69,10 @@ public class Character : MonoBehaviour
 
             if (oldState is MoveBehaviour && FinishedMovement != null)
                 FinishedMovement(this, new CharacterMovementEventArgs(null));
-
-            else if (oldState is AttackBehaviour && FinishedAttack != null)
-                FinishedAttack(this, new EventArgs());
         }
 
         if (state is MoveBehaviour && BeginMovement != null)
             BeginMovement(this, new CharacterMovementEventArgs(null));
-
-        else if (state is AttackBehaviour && BeginAttack != null)
-            BeginAttack(this, new EventArgs());
     }
 
     /// <summary>
@@ -116,12 +110,8 @@ public class Character : MonoBehaviour
     /// Moves the character along the given path regardless of its time units. Returns true if the character moves atleast one cell along
     /// the path
     /// </summary>
-    public bool Move(HexPath path)
+    public void Move(HexPath path)
     {
-        if (path == null || path.Count < 2)
-            return false;
-
         SetState(new MoveBehaviour(this, path));
-        return true;
     }
 }

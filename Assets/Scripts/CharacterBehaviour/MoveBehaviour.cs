@@ -1,5 +1,6 @@
 ﻿using System;
 using UnityEngine;
+using HexMapPathfinding;
 
 public class MoveBehaviour : CharacterBehaviour
 {

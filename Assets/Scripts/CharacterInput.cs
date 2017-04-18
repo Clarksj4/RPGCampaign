@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using FluentBehaviourTree;
+using HexMapPathfinding;
 
 public class CharacterInput : MonoBehaviour
 {
@@ -200,7 +201,7 @@ public class CharacterInput : MonoBehaviour
 
     private BehaviourTreeStatus HighlightPath()
     {
-        movementPath = Pathfind.To(Selected.Cell, targetCell, Selected.Stats.Traverser);
+        movementPath = Pathfind.To(Selected.Cell, targetCell, -1, Selected.Stats.Traverser);
         return BehaviourTreeStatus.Success;
     }
 
@@ -218,7 +219,7 @@ public class CharacterInput : MonoBehaviour
 
     private BehaviourTreeStatus Move()
     {
-        HexPath affordablePath = movementPath.To(Selected.Stats.CurrentTimeUnits);
+        HexPath affordablePath = movementPath.Truncate(Selected.Stats.CurrentTimeUnits);
         Selected.Move(affordablePath);
         return BehaviourTreeStatus.Success;
     }

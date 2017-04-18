@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using HexMapPathfinding;
 
 public class Stats : MonoBehaviour
 {
@@ -24,7 +25,7 @@ public class Stats : MonoBehaviour
     [Tooltip("The speed at which this character moves")]
     public float Speed;
     [Tooltip("Which cells can be crossed by this character and the cost of doing so")]
-    public Traverser Traverser;
+    public DefaultTraverser Traverser = DefaultTraverser.Walking();
     [Header("Time Units")]
     public float CurrentTimeUnits;
     public float MaxTimeUnits;

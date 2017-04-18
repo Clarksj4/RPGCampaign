@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using FluentBehaviourTree;
 using UnityEngine;
+using HexMapPathfinding;
 
 public class AggressiveBehaviour : IBehaviourStrategy
 {
@@ -50,7 +51,7 @@ public class AggressiveBehaviour : IBehaviourStrategy
                         // Cast the chosen spell / attack if enough TU
                         .Sequence("Cast spell")
                             .Condition("Enough TU for attack?", t => current.Stats.CurrentTimeUnits >= spell.Cost)
-                            .Do("Attack!", t => Attack())
+                            .Do("Attack!", t => Cast())
                         .End()
                     .End()
                 .End()
@@ -138,7 +139,7 @@ public class AggressiveBehaviour : IBehaviourStrategy
 
         // Find a path from the current characters cell to the quickest to reach cell that is in range of the target for 
         // the given attack
-        path = Pathfind.ToArea(current.Cell, current.Stats.Traverser, area);
+        path = Pathfind.ToArea(current.Cell, area.Select(s => s.Cell), current.Stats.Traverser);
 
         // Is the path legit?
         if (path != null && path.Count >= 2)
@@ -188,7 +189,7 @@ public class AggressiveBehaviour : IBehaviourStrategy
     /// Orders the current character to attack the chosen target with the chosen spell
     /// </summary>
     /// <returns>Success when the character has finished attacking the target, RUNNING otherwise</returns>
-    private BehaviourTreeStatus Attack()
+    private BehaviourTreeStatus Cast()
     {
         // Result by default is RUNNING rather than failure
         BehaviourTreeStatus result = BehaviourTreeStatus.Running;
@@ -199,7 +200,7 @@ public class AggressiveBehaviour : IBehaviourStrategy
             toldToAttack = true;
         }
 
-        else if (!current.IsAttacking)
+        else if (!current.IsCasting)
         {
             toldToAttack = false;
             result = BehaviourTreeStatus.Success;

@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using UnityEngine;
+﻿using HexMapPathfinding;
 
 public delegate void CharacterMovementEventHandler(object sender, CharacterMovementEventArgs e);
 
