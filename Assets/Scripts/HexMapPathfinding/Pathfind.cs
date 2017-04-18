@@ -77,7 +77,7 @@ public static class Pathfind
     }
 
     /// <summary>
-    /// Finds a path from origin to the cheapest, traversable cell within maximumCost of the target cell
+    /// Finds a path from origin to the cheapest, traversable cell in the given collection of cells
     /// </summary>
     /// <param name="origin">The cell to find a path from</param>
     /// <param name="traverser">The ruleset for which cells can be crossed and the cost for doing so from the origin cell</param>
@@ -117,13 +117,44 @@ public static class Pathfind
         return inRange;
     }
 
+    // TODO: Enumerate without conditions. Starts at origin. Enumerates based on step cost - i.e. cheapest steps iterated over first
+
+    ///// <summary>
+    ///// Iterates over all traversable cells that meet the given criteria, beginning at the origin cell.
+    ///// </summary>
+    ///// <param name="origin">The cell to begin iterating from</param>
+    ///// <param name="traverser">The ruleset for which cells can be crossed and the cost for doing so</param>
+    ///// <param name="withinParameters">Function that determines whether a cells neighbous will be iterated over</param>
+    //public static IEnumerable<Step> Enumerate(HexCell origin, ITraversable traverser, Func<Step, bool> withinParameters)
+    //{
+    //    HashSet<Step> evaluated = new HashSet<Step>();                  // Cells whose cost has been evaluated
+    //    LinkedList<Step> toBeEvaluated = new LinkedList<Step>();        // Discovered cells that have not yet been evaluated
+
+    //    // Add origin cell to collection and iterate
+    //    toBeEvaluated.AddFirst(new Step(origin, null, 0));
+    //    while (toBeEvaluated.Count > 0)
+    //    {
+    //        // Remove current cell from unevaluated cells and add to evaluated cells
+    //        Step current = toBeEvaluated.PopFirst();
+    //        evaluated.Add(current);
+
+    //        yield return current;
+
+    //        if (withinParameters(current))
+    //        {
+    //            // Checks each cell adjacent to current, adds it to toBeEvaluated cells or updates it 
+    //            // if travelling through current is a better route
+    //            EvaluateAdjacent(current, toBeEvaluated, evaluated, traverser);
+    //        }
+    //    }
+    //}
+
     /// <summary>
-    /// Iterates over all traversable cells that meet the given criteria, beginning at the origin cell.
+    /// Iterates over all traversable cells beginning at the origin cell. Cells are traversed in order of cost
     /// </summary>
     /// <param name="origin">The cell to begin iterating from</param>
     /// <param name="traverser">The ruleset for which cells can be crossed and the cost for doing so</param>
-    /// <param name="withinParameters">Function that determines whether a cells neighbous will be iterated over</param>
-    public static IEnumerable<Step> Enumerate(HexCell origin, ITraversable traverser, Func<Step, bool> withinParameters)
+    public static IEnumerable<Step> Enumerate(HexCell origin, ITraversable traverser, float maximumCost)
     {
         HashSet<Step> evaluated = new HashSet<Step>();                  // Cells whose cost has been evaluated
         LinkedList<Step> toBeEvaluated = new LinkedList<Step>();        // Discovered cells that have not yet been evaluated
@@ -138,7 +169,8 @@ public static class Pathfind
 
             yield return current;
 
-            if (withinParameters(current))
+            // Don't bother evaluating cells that are out of cost range
+            if (maximumCost < 0 || current.CostTo <= maximumCost)
             {
                 // Checks each cell adjacent to current, adds it to toBeEvaluated cells or updates it 
                 // if travelling through current is a better route
