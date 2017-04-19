@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using FluentBehaviourTree;
 using UnityEngine;
-using HexMapPathfinding;
+using Pathfinding;
 
 public class AggressiveBehaviour : IBehaviourStrategy
 {
@@ -12,7 +12,7 @@ public class AggressiveBehaviour : IBehaviourStrategy
     private Character current;
     private Character target;
     private Spell spell;
-    private HexPath path;
+    private Path path;
     private bool setAlongPath = false;
     private bool toldToAttack = false;
 
@@ -139,7 +139,7 @@ public class AggressiveBehaviour : IBehaviourStrategy
 
         // Find a path from the current characters cell to the quickest to reach cell that is in range of the target for 
         // the given attack
-        path = Pathfind.ToArea(current.Cell, area.Select(s => s.Cell), current.Stats.Traverser);
+        path = Pathfind.ToArea(current.Cell, area.Select(s => s.Node), current.Stats.Traverser);
 
         // Is the path legit?
         if (path != null && path.Count >= 2)

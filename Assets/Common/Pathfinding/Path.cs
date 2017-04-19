@@ -1,24 +1,23 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using UnityEngine;
 
-namespace HexMapPathfinding
+namespace Pathfinding
 {
     /// <summary>
     /// A path for traversing a hex map. Contains an inorder collection of steps, as well as the cost to traverse them
     /// </summary>
-    public class HexPath : IEnumerable<Step>
+    public class Path : IEnumerable<Step>
     {
         /// <summary>
         /// The first step in this path
         /// </summary>
-        public HexCell Origin { get { return steps.First().Cell; } }
+        public IPathNode Origin { get { return steps.First().Node; } }
 
         /// <summary>
         /// The last step in this path
         /// </summary>
-        public HexCell Destination { get { return steps.Last().Cell; } }
+        public IPathNode Destination { get { return steps.Last().Node; } }
 
         /// <summary>
         /// The total cost of moving along this path
@@ -30,27 +29,12 @@ namespace HexMapPathfinding
         /// </summary>
         public int Count { get { return steps.Count; } }
 
-        /// <summary>
-        /// The position of each step in this path
-        /// </summary>
-        public Vector3[] Points
-        {
-            get
-            {
-                // Lazy initialisation of point collection
-                if (points == null)
-                    points = steps.Select(s => s.Cell.Position).ToArray();
-                return points;
-            }
-        }
-
         private LinkedList<Step> steps;
-        private Vector3[] points;
 
         /// <summary>
         /// An empty path
         /// </summary>
-        public HexPath()
+        public Path()
         {
             steps = new LinkedList<Step>();
         }
@@ -58,7 +42,7 @@ namespace HexMapPathfinding
         /// <summary>
         /// Creates a path by walking backwards from the given step
         /// </summary>
-        public HexPath(Step final)
+        public Path(Step final)
             : this()
         {
             // Iterate through given cell's chain of cells
@@ -83,10 +67,10 @@ namespace HexMapPathfinding
         /// Returns a new path beginning at origin and containing all steps in this path less than the 
         /// given time units
         /// </summary>
-        public HexPath Truncate(float timeUnits)
+        public Path Truncate(float timeUnits)
         {
             // Iterate through steps adding those that are less that given time units
-            HexPath subPath = new HexPath();
+            Path subPath = new Path();
             foreach (Step step in this)
             {
                 if (step.CostTo <= timeUnits)

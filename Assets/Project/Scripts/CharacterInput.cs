@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using FluentBehaviourTree;
-using HexMapPathfinding;
+using Pathfinding;
 
 public class CharacterInput : MonoBehaviour
 {
@@ -17,7 +17,7 @@ public class CharacterInput : MonoBehaviour
 
     private HexCell targetCell;
     private ICollection<Step> movementRange;
-    private HexPath movementPath;
+    private Path movementPath;
     private IBehaviourTreeNode behaviourTree;
     private Spell Spell { get { return Selected.Spells[0]; } }
 
@@ -106,11 +106,11 @@ public class CharacterInput : MonoBehaviour
             {
                 // Cell is green if in range
                 if (step.CostTo <= Selected.Stats.CurrentTimeUnits)
-                    DrawCell(step.Cell, Color.green);
+                    DrawCell((HexCell)step.Node, Color.green);
 
                 // Cell is red if out of range
                 else
-                    DrawCell(step.Cell, Color.red);
+                    DrawCell((HexCell)step.Node, Color.red);
             }
         }
 
@@ -118,7 +118,7 @@ public class CharacterInput : MonoBehaviour
         if (movementRange != null)
         {
             foreach (Step step in movementRange)
-                DrawCell(step.Cell, Color.green);
+                DrawCell((HexCell)step.Node, Color.green);
         }
     }
 
@@ -219,7 +219,7 @@ public class CharacterInput : MonoBehaviour
 
     private BehaviourTreeStatus Move()
     {
-        HexPath affordablePath = movementPath.Truncate(Selected.Stats.CurrentTimeUnits);
+        Path affordablePath = movementPath.Truncate(Selected.Stats.CurrentTimeUnits);
         Selected.Move(affordablePath);
         return BehaviourTreeStatus.Success;
     }

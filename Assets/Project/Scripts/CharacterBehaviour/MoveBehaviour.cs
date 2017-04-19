@@ -1,19 +1,21 @@
 ﻿using System;
 using UnityEngine;
-using HexMapPathfinding;
+using Pathfinding;
 
 public class MoveBehaviour : CharacterBehaviour
 {
-    private HexPath path;
+    private Path path;
+    private Vector3[] points;
     private float distance;
     private float eta;
     private float time;
     private float t;
 
-    public MoveBehaviour(Character character, HexPath path)
+    public MoveBehaviour(Character character, Path path)
         : base(character)
     {
         this.path = path;
+        points = path.GetPoints();
     }
 
     public override void Init()
@@ -25,7 +27,7 @@ public class MoveBehaviour : CharacterBehaviour
 
         else
         {
-            distance = iTween.PathLength(path.Points);
+            distance = iTween.PathLength(points);
             eta = distance / character.Stats.Speed;
             time = 0;
             t = 0;
@@ -40,8 +42,8 @@ public class MoveBehaviour : CharacterBehaviour
         t = time / eta;
 
         // Face along path, move along path
-        character.transform.LookAt(iTween.PointOnPath(path.Points, t));
-        iTween.PutOnPath(character.gameObject, path.Points, t);
+        character.transform.LookAt(iTween.PointOnPath(points, t));
+        iTween.PutOnPath(character.gameObject, points, t);
 
         // Update the character's animation
         UpdateAnimator();
@@ -115,7 +117,7 @@ public class MoveBehaviour : CharacterBehaviour
                 Animator.SetFloat("Speed", 1f);
 
                 // Focus point for model looking is 4 updates ahead of current position on path
-                Vector3 focalPoint = iTween.PointOnPath(path.Points, (time + 4 * Time.smoothDeltaTime) / eta);
+                Vector3 focalPoint = iTween.PointOnPath(points, (time + 4 * Time.smoothDeltaTime) / eta);
 
                 // Calculate direction then angle of focal point
                 Vector3 lookDir = (focalPoint - Transform.position).normalized;

@@ -1,12 +1,12 @@
 ﻿using UnityEngine;
-using HexMapPathfinding;
+using Pathfinding;
 
 public abstract class Spell : MonoBehaviour
 {
     public float Cost;
     public int MinimumRange = 1;
     public int MaximumRange = 3;
-    public DefaultTraverser Traverser = DefaultTraverser.RangedAttack();
+    public HexMapTraverser Traverser = HexMapTraverser.RangedAttack();
 
     [HideInInspector]
     public Character caster;
