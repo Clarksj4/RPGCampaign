@@ -117,7 +117,7 @@ namespace Pathfinding
         /// <param name="traverser">The ruleset for which nodes can be traversed and the cost for doing so</param>
         public static IEnumerable<PathStep> Enumerate(IPathNode origin, float maximumCost, ITraversable traverser = null)
         {
-            HashSet<PathStep> evaluated = new HashSet<PathStep>();            // Nodes whose cost has been evaluated
+            HashSet<IPathNode> evaluated = new HashSet<IPathNode>();            // Nodes whose cost has been evaluated
             LinkedList<PathStep> toBeEvaluated = new LinkedList<PathStep>();  // Discovered nodes that have not yet been evaluated
 
             // Add origin to collection and iterate
@@ -126,7 +126,7 @@ namespace Pathfinding
             {
                 // Remove current from unevaluated and add to evaluated
                 PathStep current = toBeEvaluated.PopFirst();
-                evaluated.Add(current);
+                evaluated.Add(current.Node);
 
                 // Don't bother evaluating nodes that are out of cost range
                 if (maximumCost < 0 || current.CostTo <= maximumCost)
@@ -149,14 +149,14 @@ namespace Pathfinding
         /// <param name="evaluated">Set of nodes that have already been evaluated</param>
         /// <param name="traverser">The ruleset for which nodes can be traversed and the cost for doing so</param>
         private static void EvaluateAdjacent(PathStep current, 
-                                             LinkedList<PathStep> toBeEvaluated, 
-                                             HashSet<PathStep> evaluated, 
+                                             LinkedList<PathStep> toBeEvaluated,
+                                             HashSet<IPathNode> evaluated, 
                                              ITraversable traverser)
         {
             // Evaluate all adjacent nodes
             foreach (IPathNode adjacent in current.Node.Nodes)
             {
-                if (!evaluated.Select(s => s.Node).Contains(adjacent))        // Has adjacent already been evaluated?
+                if (!evaluated.Contains(adjacent))        // Has adjacent already been evaluated?
                 {
                     // Able to traverse to adjacent from current?
                     bool traversable = traverser != null ? traverser.IsTraversable(current.Node, adjacent) : true;
@@ -192,6 +192,8 @@ namespace Pathfinding
             // Is the current path to this already discovered node a better path?
             else if (costToAdjacent < adjacentStep.CostTo)
             {
+                // TODO: Update order of queue to reflect updated cost
+
                 // This path is best until now, record it.
                 adjacentStep.Previous = current;
                 adjacentStep.CostTo = costToAdjacent;
