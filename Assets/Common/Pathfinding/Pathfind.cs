@@ -9,6 +9,10 @@ namespace Pathfinding
     /// </summary>
     public static class Pathfind
     {
+        private static HashSet<IPathNode> evaluated;
+        private static LinkedList<PathStep> toBeEvaluated;
+        private static Dictionary<IPathNode, LinkedListNode<PathStep>> nodeCatalogue;
+
         /// <summary>
         /// Finds all traversable nodes within cost of origin.
         /// </summary>
@@ -117,8 +121,9 @@ namespace Pathfinding
         /// <param name="traverser">The ruleset for which nodes can be traversed and the cost for doing so</param>
         public static IEnumerable<PathStep> Enumerate(IPathNode origin, float maximumCost, ITraversable traverser = null)
         {
-            HashSet<IPathNode> evaluated = new HashSet<IPathNode>();            // Nodes whose cost has been evaluated
-            LinkedList<PathStep> toBeEvaluated = new LinkedList<PathStep>();  // Discovered nodes that have not yet been evaluated
+            evaluated = new HashSet<IPathNode>();            // Nodes whose cost has been evaluated
+            toBeEvaluated = new LinkedList<PathStep>();    // Discovered nodes that have not yet been evaluated
+            nodeCatalogue = new Dictionary<IPathNode, LinkedListNode<PathStep>>();
 
             // Add origin to collection and iterate
             toBeEvaluated.AddFirst(new PathStep(origin, null, 0));
@@ -135,7 +140,7 @@ namespace Pathfinding
 
                     // Checks each node adjacent to current, adds it to toBeEvaluated or updates it 
                     // if travelling through current is a better route
-                    EvaluateAdjacent(current, toBeEvaluated, evaluated, traverser);
+                    EvaluateAdjacent(current, traverser);
                 }
             }
         }
@@ -145,13 +150,8 @@ namespace Pathfinding
         /// cost and 'path to' information should they already exist in the queue.
         /// </summary>
         /// <param name="current">The node whose neighbous are to be checked</param>
-        /// <param name="toBeEvaluated">Queue of nodes that are due to be evaluated</param>
-        /// <param name="evaluated">Set of nodes that have already been evaluated</param>
         /// <param name="traverser">The ruleset for which nodes can be traversed and the cost for doing so</param>
-        private static void EvaluateAdjacent(PathStep current, 
-                                             LinkedList<PathStep> toBeEvaluated,
-                                             HashSet<IPathNode> evaluated, 
-                                             ITraversable traverser)
+        private static void EvaluateAdjacent(PathStep current, ITraversable traverser)
         {
             // Evaluate all adjacent nodes
             foreach (IPathNode adjacent in current.Node.Nodes)
@@ -160,14 +160,13 @@ namespace Pathfinding
                 {
                     // Able to traverse to adjacent from current?
                     bool traversable = traverser != null ? traverser.IsTraversable(current.Node, adjacent) : true;
-                    if (!traversable)
-                        continue;
+                    if (!traversable) continue;
 
                     // Cost to move from origin to adjacent with current route
                     float costIncrement = traverser != null ? traverser.Cost(current.Node, adjacent) : 1;
                     float costToAdjacent = current.CostTo + costIncrement;
 
-                    InsertOrUpdate(current, adjacent, toBeEvaluated, costToAdjacent);
+                    InsertOrUpdate(current, adjacent, costToAdjacent);
                 }
             }
         }
@@ -176,47 +175,76 @@ namespace Pathfinding
         /// Adds adjacent to the queue of nodes to be evaluated OR updates its
         /// cost and path to information should it already exist in the queue.
         /// </summary>
-        private static void InsertOrUpdate(PathStep current, 
-                                           IPathNode adjacent, 
-                                           LinkedList<PathStep> toBeEvaluated, 
-                                           float costToAdjacent)
+        private static void InsertOrUpdate(PathStep current, IPathNode adjacent, float costToAdjacent)
         {
             // Is adjacent a newly discovered node...?
-            PathStep adjacentStep = toBeEvaluated.Where(s => s.Node == adjacent).SingleOrDefault();
-            if (adjacentStep == null)
-            {
-                adjacentStep = new PathStep(adjacent, current, costToAdjacent);
-                InsertStepByCost(toBeEvaluated, adjacentStep);
-            }
+            if (!nodeCatalogue.ContainsKey(adjacent))
+                InsertNodeByCost(adjacent, current, costToAdjacent);
+
+            else
+                UpdateQueue(adjacent, current, costToAdjacent);
+        }
+
+        private static void UpdateQueue(IPathNode node, PathStep previous, float costTo)
+        {
+            LinkedListNode<PathStep> queueNode = nodeCatalogue[node];
 
             // Is the current path to this already discovered node a better path?
-            else if (costToAdjacent < adjacentStep.CostTo)
+            if (costTo < queueNode.Value.CostTo)
             {
-                // TODO: Update order of queue to reflect updated cost
-
                 // This path is best until now, record it.
-                adjacentStep.Previous = current;
-                adjacentStep.CostTo = costToAdjacent;
+                queueNode.Value.Previous = previous;
+                queueNode.Value.CostTo = costTo;
+
+                // Update order of queue to reflect updated cost
+                UpdatePriority(queueNode);
             }
         }
 
         /// <summary>
         /// Inserts the given step into the list in order of cost
         /// </summary>
-        private static void InsertStepByCost(LinkedList<PathStep> toBeEvaluated, PathStep step)
+        private static void InsertNodeByCost(IPathNode node, PathStep previous, float costTo)
         {
+            PathStep step = new PathStep(node, previous, costTo);
+
             // Iterate until finding a larger cost step, or running out of elements to iterate
             LinkedListNode<PathStep> walker = toBeEvaluated.First;
             while (walker != null && walker.Value.CostTo < step.CostTo)
                 walker = walker.Next;
 
+            LinkedListNode<PathStep> queueNode;
+
             // If at end of list, step is largest cost step so add to end of list
             if (walker == null)
-                toBeEvaluated.AddLast(step);
+                queueNode = toBeEvaluated.AddLast(step);
 
             // Otherwise, insert in order according to cost
             else
-                toBeEvaluated.AddBefore(walker, step);
+                queueNode = toBeEvaluated.AddBefore(walker, step);
+
+            nodeCatalogue.Add(node, queueNode);
+        }
+
+        private static void UpdatePriority(LinkedListNode<PathStep> queueNode)
+        {
+            // Higher priority
+            while (queueNode.Previous != null &&
+                   queueNode.Value.CostTo < queueNode.Previous.Value.CostTo)
+            {
+                PathStep previous = queueNode.Previous.Value;
+                toBeEvaluated.Remove(queueNode.Previous);
+                toBeEvaluated.AddAfter(queueNode, previous);
+            }
+
+            // Lesser priority
+            while (queueNode.Next != null &&
+                   queueNode.Value.CostTo > queueNode.Next.Value.CostTo)
+            {
+                PathStep next = queueNode.Next.Value;
+                toBeEvaluated.Remove(queueNode.Next);
+                toBeEvaluated.AddAfter(queueNode, next);
+            }
         }
     }
 }
