@@ -5,13 +5,13 @@ using System.Text;
 
 namespace Pathfinding
 {
+    /// <summary>
+    /// Min heap data structure that lazily defers consolidation of trees until delete min operation
+    /// </summary>
     public class FibonacciHeap<TPriority, TItem> where TPriority : IComparable<TPriority>
     {
         public LinkedList<HeapNode<TPriority, TItem>> Trees { get; private set; }
         public HeapNode<TPriority, TItem> Minimum { get { return minimumTreesNode.Value; } }
-        public List<HeapNode<TPriority, TItem>> Marked { get; private set; }
-        public int Count { get; private set; }
-        public int MaximumRank { get; private set; }
 
         private LinkedListNode<HeapNode<TPriority, TItem>> minimumTreesNode;
 
@@ -19,15 +19,19 @@ namespace Pathfinding
         {
             Trees = new LinkedList<HeapNode<TPriority, TItem>>();
             minimumTreesNode = null;
-            Marked = new List<HeapNode<TPriority, TItem>>();
-            Count = 0;
+        }
+
+        public TItem Pop()
+        {
+            TItem min = Minimum.Value;
+            DeleteMin();
+            return min;
         }
 
         public HeapNode<TPriority, TItem> Insert(TPriority priority, TItem value)
         {
             HeapNode<TPriority, TItem> node = new HeapNode<TPriority, TItem>(priority, value);
             Trees.AddFirst(node);
-            Count++;
 
             return node;
         }
@@ -37,26 +41,85 @@ namespace Pathfinding
             if (Minimum == null)
                 throw new InvalidOperationException("Heap is empty, cannot remove minimum priority item");
 
+            // Remove minimum element from list of trees
             RemoveRoot(minimumTreesNode);
 
+            // Update new minimum value
             FindMinimum();
 
+            // Consolidate trees
             ConsolidateTrees();
+        }
+
+        public void DecreasePriority(HeapNode<TPriority, TItem> node, TPriority priority)
+        {
+            if (node.Priority.CompareTo(priority) > 0)
+                throw new ArgumentException("Priority did not decrease");
+
+            // Decrease key of node
+            node.Priority = priority;
+
+            // If heap order violated:
+            //  Cut node from parent 
+            //  Add to root list of trees
+            //  Unmark
+
+            // If parent of node is unmarked:
+            //  Mark it
+
+            // Else
+            //  Cut parent and meld into root list
+            //  Do so recursively for all ancestors
+
+            // Is heap order violated?
+            if (node.Parent != null &&
+                node.Priority.CompareTo(node.Parent.Priority) < 0)
+            {
+                HeapNode<TPriority, TItem> parent = MoveToRoot(node);       // Cut from parent and move to root (remember ref to parent)
+                node.Marked = false;                                        // Unmark
+
+                // Is new priority less than minimum?
+                if (priority.CompareTo(Minimum.Priority) < 0)
+                    minimumTreesNode = Trees.First;             // Node is first element in trees list
+
+                // If parent is unmarked, mark it
+                if (!parent.Marked)
+                    parent.Marked = true;
+
+                else    // Parent IS already marked
+                {
+                    // Cut parent, move to root, DO FOR ALL ANCESTORS
+                    while (parent != null &&
+                           parent.Marked)
+                    {
+                        parent.Marked = false;          // Unmark because its moving to root
+                        parent = MoveToRoot(parent);    // Move to root, check its parent
+                    }
+                }
+            }
+        }
+
+        private HeapNode<TPriority, TItem> MoveToRoot(HeapNode<TPriority, TItem> node)
+        {
+            // Remeber ref to parent because child is about to be cut
+            HeapNode<TPriority, TItem> parent = node.Parent;
+
+            // Remove ref to parent and parent ref to child
+            node.RemoveParent();
+            Trees.AddFirst(node);
+
+            // Return old parent of node
+            return parent;
         }
 
         private void RemoveRoot(LinkedListNode<HeapNode<TPriority, TItem>> root)
         {
-            // Remove from list of trees, update item count
+            // Remove from list of trees
             Trees.Remove(root);
-            Count--;
 
+            // Add each child as a root tree, remove ref to parent
             foreach (HeapNode<TPriority, TItem> child in root.Value.Children)
-            {
-                // Add each child as a root tree, remove ref to parent
-                Trees.AddFirst(child);
-                child.Parent = null;
-                child.Rank -= 1;
-            }
+                MoveToRoot(child);
         }
 
         private void FindMinimum()
@@ -80,30 +143,34 @@ namespace Pathfinding
 
         private void ConsolidateTrees()
         {
-            LinkedListNode<HeapNode<TPriority, TItem>>[] rankBucket = new LinkedListNode<HeapNode<TPriority, TItem>>[MaximumRank];
+            // Bucket index corresponds to the rank of the stored element
+            Bucket<LinkedListNode<HeapNode<TPriority, TItem>>> rankBucket = new Bucket<LinkedListNode<HeapNode<TPriority, TItem>>>();
 
-            LinkedListNode<HeapNode<TPriority, TItem>> walker = Trees.First;
+            // Iterate over each root tree
+            var walker = Trees.First;
             while (walker != null)
             {
+                // Save ref to next root, because walker is going to be overwritten when there is a conflict
                 var next = walker.Next;
 
-                // TODO: need to loop incase newly consolidated tree conflicts with another tree
+                // Are there root trees with the same rank?
                 int rank = walker.Value.Rank;
-                if (rankBucket[rank] != null)
+                while (rankBucket[rank] != null)
                 {
-                    walker = Consolidate(walker, rankBucket[rank]);
-                    rankBucket[rank] = null;
-                    rank = walker.Value.Rank;
-                    rankBucket[rank] = walker;
+                    
+                    walker = Consolidate(walker, rankBucket[rank]);     // Consolidate trees with same rank (also get ref to merged tree)
+                    rankBucket[rank] = null;                            // Remove ref to root tree that was consolidated
+                    rank = walker.Value.Rank;                           // Update rank
                 }
 
-                else
-                    rankBucket[rank] = walker;
+                // No conflicts, store in rank bucket
+                rankBucket[rank] = walker;
 
                 walker = next;
             }
         }
 
+        // Merge trees into one tree, maintaining heap property (every child is larger than parent)
         private LinkedListNode<HeapNode<TPriority, TItem>> Consolidate(LinkedListNode<HeapNode<TPriority, TItem>> node1, 
                                                                        LinkedListNode<HeapNode<TPriority, TItem>> node2)
         {
@@ -118,20 +185,8 @@ namespace Pathfinding
             }
 
             Trees.Remove(child);
-            Consolidate(root, child);
+            root.Value.AddChild(child.Value);
             return root;
-        }
-
-        // Make other a child of root
-        private void Consolidate(HeapNode<TPriority, TItem> root,
-                                 HeapNode<TPriority, TItem> other)
-        {
-            root.Children.Add(other);
-            other.Parent = null;
-
-            // Update rank if it's changed
-            if (other.Rank >= root.Rank)
-                root.Rank = other.Rank + 1;
         }
     }
 }
