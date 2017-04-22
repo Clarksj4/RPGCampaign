@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using FibonacciHeap;
 
 namespace Pathfinding
 {
@@ -10,8 +11,8 @@ namespace Pathfinding
     public static class Pathfind
     {
         private static HashSet<IPathNode> evaluated;
-        private static LinkedList<PathStep> toBeEvaluated;
-        private static Dictionary<IPathNode, LinkedListNode<PathStep>> nodeCatalogue;
+        private static FibonacciHeap<float, PathStep> toBeEvaluated;
+        private static Dictionary<IPathNode, HeapNode<float, PathStep>> nodeCatalogue;
 
         /// <summary>
         /// Finds all traversable nodes within cost of origin.
@@ -122,15 +123,15 @@ namespace Pathfinding
         public static IEnumerable<PathStep> Enumerate(IPathNode origin, float maximumCost, ITraversable traverser = null)
         {
             evaluated = new HashSet<IPathNode>();            // Nodes whose cost has been evaluated
-            toBeEvaluated = new LinkedList<PathStep>();    // Discovered nodes that have not yet been evaluated
-            nodeCatalogue = new Dictionary<IPathNode, LinkedListNode<PathStep>>();
+            toBeEvaluated = new FibonacciHeap<float, PathStep>();    // Discovered nodes that have not yet been evaluated
+            nodeCatalogue = new Dictionary<IPathNode, HeapNode<float, PathStep>>();
 
             // Add origin to collection and iterate
-            toBeEvaluated.AddFirst(new PathStep(origin, null, 0));
+            toBeEvaluated.Insert(0, new PathStep(origin, null, 0));
             while (toBeEvaluated.Count > 0)
             {
                 // Remove current from unevaluated and add to evaluated
-                PathStep current = toBeEvaluated.PopFirst();
+                PathStep current = toBeEvaluated.Pop();
                 evaluated.Add(current.Node);
 
                 // Don't bother evaluating nodes that are out of cost range
@@ -179,7 +180,7 @@ namespace Pathfinding
         {
             // Is adjacent a newly discovered node...?
             if (!nodeCatalogue.ContainsKey(adjacent))
-                InsertNodeByCost(adjacent, current, costToAdjacent);
+                InsertNode(adjacent, current, costToAdjacent);
 
             else
                 UpdateQueue(adjacent, current, costToAdjacent);
@@ -187,7 +188,7 @@ namespace Pathfinding
 
         private static void UpdateQueue(IPathNode node, PathStep previous, float costTo)
         {
-            LinkedListNode<PathStep> queueNode = nodeCatalogue[node];
+            HeapNode<float, PathStep> queueNode = nodeCatalogue[node];
 
             // Is the current path to this already discovered node a better path?
             if (costTo < queueNode.Value.CostTo)
@@ -197,54 +198,18 @@ namespace Pathfinding
                 queueNode.Value.CostTo = costTo;
 
                 // Update order of queue to reflect updated cost
-                UpdatePriority(queueNode);
+                toBeEvaluated.DecreasePriority(queueNode, costTo);
             }
         }
 
         /// <summary>
-        /// Inserts the given step into the list in order of cost
+        /// Inserts the given step into the queue in order of cost
         /// </summary>
-        private static void InsertNodeByCost(IPathNode node, PathStep previous, float costTo)
+        private static void InsertNode(IPathNode node, PathStep previous, float costTo)
         {
             PathStep step = new PathStep(node, previous, costTo);
-
-            // Iterate until finding a larger cost step, or running out of elements to iterate
-            LinkedListNode<PathStep> walker = toBeEvaluated.First;
-            while (walker != null && walker.Value.CostTo < step.CostTo)
-                walker = walker.Next;
-
-            LinkedListNode<PathStep> queueNode;
-
-            // If at end of list, step is largest cost step so add to end of list
-            if (walker == null)
-                queueNode = toBeEvaluated.AddLast(step);
-
-            // Otherwise, insert in order according to cost
-            else
-                queueNode = toBeEvaluated.AddBefore(walker, step);
-
+            HeapNode<float, PathStep> queueNode = toBeEvaluated.Insert(costTo, step);
             nodeCatalogue.Add(node, queueNode);
-        }
-
-        private static void UpdatePriority(LinkedListNode<PathStep> queueNode)
-        {
-            // Higher priority
-            while (queueNode.Previous != null &&
-                   queueNode.Value.CostTo < queueNode.Previous.Value.CostTo)
-            {
-                PathStep previous = queueNode.Previous.Value;
-                toBeEvaluated.Remove(queueNode.Previous);
-                toBeEvaluated.AddAfter(queueNode, previous);
-            }
-
-            // Lesser priority
-            while (queueNode.Next != null &&
-                   queueNode.Value.CostTo > queueNode.Next.Value.CostTo)
-            {
-                PathStep next = queueNode.Next.Value;
-                toBeEvaluated.Remove(queueNode.Next);
-                toBeEvaluated.AddAfter(queueNode, next);
-            }
         }
     }
 }
