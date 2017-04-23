@@ -5,11 +5,11 @@ namespace Pathfinding
     /// <summary>
     /// Interface for pathfinding node
     /// </summary>
-    public interface IPathNode
+    public interface IGraphNode
     {
         /// <summary>
         /// Nodes accessible from this one
         /// </summary>
-        IEnumerable<IPathNode> Nodes { get; }
+        IEnumerable<IGraphNode> Nodes { get; }
     }
 }

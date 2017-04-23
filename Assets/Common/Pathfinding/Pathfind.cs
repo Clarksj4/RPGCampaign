@@ -10,9 +10,9 @@ namespace Pathfinding
     /// </summary>
     public static class Pathfind
     {
-        private static HashSet<IPathNode> evaluated;
+        private static HashSet<IGraphNode> evaluated;
         private static FibonacciHeap<float, PathStep> toBeEvaluated;
-        private static Dictionary<IPathNode, HeapNode<float, PathStep>> nodeCatalogue;
+        private static Dictionary<IGraphNode, HeapNode<float, PathStep>> nodeCatalogue;
 
         /// <summary>
         /// Finds all traversable nodes within cost of origin.
@@ -21,7 +21,7 @@ namespace Pathfinding
         /// <param name="maximumCost">The maximum cost of traversing to any node in range</param>
         /// <param name="traverser">The ruleset for which nodes can be traversed and the cost of doing so</param>
         /// <returns> Steps that are traversable and within range of origin</returns>
-        public static ICollection<PathStep> Area(IPathNode origin, float maximumCost, ITraversable traverser)
+        public static ICollection<PathStep> Area(IGraphNode origin, float maximumCost, ITraversable traverser)
         {
             List<PathStep> inRange = new List<PathStep>();
 
@@ -41,7 +41,7 @@ namespace Pathfinding
         /// <param name="traverser">The ruleset for which nodes can be traversed and the cost for doing so</param>
         /// <returns>The cheapest path from origin to destination. Returns null if no path exists OR no path exists within the 
         /// given cost constraint</returns>
-        public static Path To(IPathNode origin, IPathNode destination, float maximumCost, ITraversable traverser = null)
+        public static Path To(IGraphNode origin, IGraphNode destination, float maximumCost, ITraversable traverser = null)
         {
             return To(origin,
                       s => s.Node == destination,       // Search until the returned step is the destination node
@@ -58,7 +58,7 @@ namespace Pathfinding
         /// <param name="traverser">The ruleset for which nodes can be traversed and the cost for doing so</param>
         /// <returns>The cheapest traversable path from origin to the first node that matches the given predicate. Returns null 
         /// if no path exists OR no path exists within the given cost constraint</returns>
-        public static Path To(IPathNode origin, Func<PathStep, bool> isTarget, float maximumCost, ITraversable traverser = null)
+        public static Path To(IGraphNode origin, Func<PathStep, bool> isTarget, float maximumCost, ITraversable traverser = null)
         {
             // Enumerate through nodes in cost order
             foreach (PathStep step in Enumerate(origin, maximumCost, traverser))
@@ -80,7 +80,7 @@ namespace Pathfinding
         /// <param name="traverser">The ruleset for which nodes can be traversed and the cost for doing so</param>
         /// <returns>The cheapest, traversable path from origin to any of the given nodes. Returns null if no path 
         /// exists</returns>
-        public static Path ToArea(IPathNode origin, IEnumerable<IPathNode> area, ITraversable traverser = null)
+        public static Path ToArea(IGraphNode origin, IEnumerable<IGraphNode> area, ITraversable traverser = null)
         {
             // Pathfind to cheapest of the nodes
             Path path = To(origin,
@@ -98,7 +98,7 @@ namespace Pathfinding
         /// <param name="maximumCost">The size of the range to check, measured in the cost to traverse from the origin</param>
         /// <param name="traverser">The ruleset for which nodes can be traversed and the cost for doing so</param>
         /// <returns>Whether the target node is within range of the origin</returns>
-        public static bool InRange(IPathNode origin, IPathNode target, float maximumCost, ITraversable traverser = null)
+        public static bool InRange(IGraphNode origin, IGraphNode target, float maximumCost, ITraversable traverser = null)
         {
             // Find path from origin to target
             Path path = To(origin,
@@ -120,11 +120,11 @@ namespace Pathfinding
         /// <param name="origin">The node to begin iterating from</param>
         /// <param name="maximumCost">The maximum cost of nodes</param>
         /// <param name="traverser">The ruleset for which nodes can be traversed and the cost for doing so</param>
-        public static IEnumerable<PathStep> Enumerate(IPathNode origin, float maximumCost, ITraversable traverser = null)
+        public static IEnumerable<PathStep> Enumerate(IGraphNode origin, float maximumCost, ITraversable traverser = null)
         {
-            evaluated = new HashSet<IPathNode>();            // Nodes whose cost has been evaluated
+            evaluated = new HashSet<IGraphNode>();            // Nodes whose cost has been evaluated
             toBeEvaluated = new FibonacciHeap<float, PathStep>();    // Discovered nodes that have not yet been evaluated
-            nodeCatalogue = new Dictionary<IPathNode, HeapNode<float, PathStep>>();
+            nodeCatalogue = new Dictionary<IGraphNode, HeapNode<float, PathStep>>();
 
             // Add origin to collection and iterate
             toBeEvaluated.Insert(0, new PathStep(origin, null, 0));
@@ -155,7 +155,7 @@ namespace Pathfinding
         private static void EvaluateAdjacent(PathStep current, ITraversable traverser)
         {
             // Evaluate all adjacent nodes
-            foreach (IPathNode adjacent in current.Node.Nodes)
+            foreach (IGraphNode adjacent in current.Node.Nodes)
             {
                 if (!evaluated.Contains(adjacent))        // Has adjacent already been evaluated?
                 {
@@ -176,7 +176,7 @@ namespace Pathfinding
         /// Adds adjacent to the queue of nodes to be evaluated OR updates its
         /// cost and path to information should it already exist in the queue.
         /// </summary>
-        private static void InsertOrUpdate(PathStep current, IPathNode adjacent, float costToAdjacent)
+        private static void InsertOrUpdate(PathStep current, IGraphNode adjacent, float costToAdjacent)
         {
             // Is adjacent a newly discovered node...?
             if (!nodeCatalogue.ContainsKey(adjacent))
@@ -186,7 +186,7 @@ namespace Pathfinding
                 UpdateQueue(adjacent, current, costToAdjacent);
         }
 
-        private static void UpdateQueue(IPathNode node, PathStep previous, float costTo)
+        private static void UpdateQueue(IGraphNode node, PathStep previous, float costTo)
         {
             HeapNode<float, PathStep> queueNode = nodeCatalogue[node];
 
@@ -205,7 +205,7 @@ namespace Pathfinding
         /// <summary>
         /// Inserts the given step into the queue in order of cost
         /// </summary>
-        private static void InsertNode(IPathNode node, PathStep previous, float costTo)
+        private static void InsertNode(IGraphNode node, PathStep previous, float costTo)
         {
             PathStep step = new PathStep(node, previous, costTo);
             HeapNode<float, PathStep> queueNode = toBeEvaluated.Insert(costTo, step);

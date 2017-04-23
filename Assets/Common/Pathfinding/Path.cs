@@ -12,12 +12,12 @@ namespace Pathfinding
         /// <summary>
         /// The first step in this path
         /// </summary>
-        public IPathNode Origin { get { return steps.First().Node; } }
+        public IGraphNode Origin { get { return steps.First().Node; } }
 
         /// <summary>
         /// The last step in this path
         /// </summary>
-        public IPathNode Destination { get { return steps.Last().Node; } }
+        public IGraphNode Destination { get { return steps.Last().Node; } }
 
         /// <summary>
         /// The total cost of moving along this path

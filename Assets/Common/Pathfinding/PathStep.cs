@@ -10,7 +10,7 @@ namespace Pathfinding
         /// <summary>
         /// The node being traversed
         /// </summary>
-        public IPathNode Node { get; set; }
+        public IGraphNode Node { get; set; }
 
         /// <summary>
         /// The node that was previously traversed
@@ -25,7 +25,7 @@ namespace Pathfinding
         /// <param name="node">The node being traversed</param>
         /// <param name="previous">The node that was previously traversed</param>
         /// <param name="costTo">The cost to traverse the path from beginning until and including this step</param>
-        public PathStep(IPathNode node, PathStep previous, float costTo)
+        public PathStep(IGraphNode node, PathStep previous, float costTo)
         {
             Node = node;
             Previous = previous;

@@ -58,7 +58,7 @@ public class HexMapTraverser : ITraversable
     /// <param name="from">The cell that the traversing object is moving from</param>
     /// <param name="direction">The direction that the traversing object is moving in</param>
     /// <returns>True if the traversing object is able to move in the given direction from the given cell</returns>
-    public bool IsTraversable(IPathNode cell, IPathNode neighbour)
+    public bool IsTraversable(IGraphNode cell, IGraphNode neighbour)
     {
         HexCell hexCell = (HexCell)cell;
         HexCell hexNeighbour = (HexCell)neighbour;
@@ -119,7 +119,7 @@ public class HexMapTraverser : ITraversable
     /// <param name="from">The cell that the traversing object is moving from</param>
     /// <param name="direction">The direction that the traversing object is moving in</param>
     /// <returns>The cost of moving from the given cell in the given direction</returns>
-    public float Cost(IPathNode cell, IPathNode neighbour)
+    public float Cost(IGraphNode cell, IGraphNode neighbour)
     {
         HexCell hexCell = (HexCell)cell;
         HexCell hexNeighbour = (HexCell)neighbour;
