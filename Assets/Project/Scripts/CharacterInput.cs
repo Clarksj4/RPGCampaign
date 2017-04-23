@@ -201,7 +201,7 @@ public class CharacterInput : MonoBehaviour
 
     private BehaviourTreeStatus HighlightPath()
     {
-        movementPath = Pathfind.To(Selected.Cell, targetCell, -1, Selected.Stats.Traverser);
+        movementPath = Pathfind.Between(Selected.Cell, targetCell, -1, Selected.Stats.Traverser);
         return BehaviourTreeStatus.Success;
     }
 

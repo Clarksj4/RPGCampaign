@@ -21,7 +21,7 @@ namespace Pathfinding
         /// <param name="maximumCost">The maximum cost of traversing to any node in range</param>
         /// <param name="traverser">The ruleset for which nodes can be traversed and the cost of doing so</param>
         /// <returns> Steps that are traversable and within range of origin</returns>
-        public static ICollection<PathStep> Area(IGraphNode origin, float maximumCost, ITraversable traverser)
+        public static ICollection<PathStep> Area(IGraphNode origin, float maximumCost, ITraversable traverser = null)
         {
             List<PathStep> inRange = new List<PathStep>();
 
@@ -41,9 +41,9 @@ namespace Pathfinding
         /// <param name="traverser">The ruleset for which nodes can be traversed and the cost for doing so</param>
         /// <returns>The cheapest path from origin to destination. Returns null if no path exists OR no path exists within the 
         /// given cost constraint</returns>
-        public static Path To(IGraphNode origin, IGraphNode destination, float maximumCost, ITraversable traverser = null)
+        public static Path Between(IGraphNode origin, IGraphNode destination, float maximumCost = -1, ITraversable traverser = null)
         {
-            return To(origin,
+            return Between(origin,
                       s => s.Node == destination,       // Search until the returned step is the destination node
                       maximumCost,
                       traverser);
@@ -58,7 +58,7 @@ namespace Pathfinding
         /// <param name="traverser">The ruleset for which nodes can be traversed and the cost for doing so</param>
         /// <returns>The cheapest traversable path from origin to the first node that matches the given predicate. Returns null 
         /// if no path exists OR no path exists within the given cost constraint</returns>
-        public static Path To(IGraphNode origin, Func<PathStep, bool> isTarget, float maximumCost, ITraversable traverser = null)
+        public static Path Between(IGraphNode origin, Func<PathStep, bool> isTarget, float maximumCost = -1, ITraversable traverser = null)
         {
             // Enumerate through nodes in cost order
             foreach (PathStep step in Enumerate(origin, maximumCost, traverser))
@@ -83,7 +83,7 @@ namespace Pathfinding
         public static Path ToArea(IGraphNode origin, IEnumerable<IGraphNode> area, ITraversable traverser = null)
         {
             // Pathfind to cheapest of the nodes
-            Path path = To(origin,
+            Path path = Between(origin,
                            s => area.Contains(s.Node),     // Search until the returned step is any of the nodes in the area
                            -1,                             // Cost doesn't matter
                            traverser);
@@ -101,7 +101,7 @@ namespace Pathfinding
         public static bool InRange(IGraphNode origin, IGraphNode target, float maximumCost, ITraversable traverser = null)
         {
             // Find path from origin to target
-            Path path = To(origin,
+            Path path = Between(origin,
                            s => s.Node == target,        // Search until the returned step is the target node
                            maximumCost,
                            traverser);
