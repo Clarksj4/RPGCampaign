@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using FibonacciHeap;
 
 namespace Pathfinding
 {
@@ -9,57 +10,60 @@ namespace Pathfinding
     /// </summary>
     public static class Pathfind
     {
+        private static HashSet<IGraphNode> evaluated;
+        private static FibonacciHeap<float, PathStep> toBeEvaluated;
+        private static Dictionary<IGraphNode, HeapNode<float, PathStep>> nodeCatalogue;
+
         /// <summary>
-        /// Finds all traversable cells within cost of the given cell.
+        /// Finds all traversable nodes within cost of origin.
         /// </summary>
-        /// <param name="target">The cell to find cells within range of.</param>
-        /// <param name="maximumCost">The maximum cost of traversing to any cell in range</param>
-        /// <param name="traverser">The ruleset for which tiles can be traversed and the cost of doing so</param>
+        /// <param name="target">The node to find nodes within range of</param>
+        /// <param name="maximumCost">The maximum cost of traversing to any node in range</param>
+        /// <param name="traverser">The ruleset for which nodes can be traversed and the cost of doing so</param>
         /// <returns> Steps that are traversable and within range of origin</returns>
-        public static ICollection<Step> Area(IPathNode origin, float maximumCost, ITraversable traverser)
+        public static ICollection<PathStep> Area(IGraphNode origin, float maximumCost, ITraversable traverser = null)
         {
-            List<Step> inRange = new List<Step>();
+            List<PathStep> inRange = new List<PathStep>();
 
             // Enumerate over each step that is in range, add it to the collection
-            foreach (Step step in Enumerate(origin, maximumCost, traverser))
+            foreach (PathStep step in Enumerate(origin, maximumCost, traverser))
                 inRange.Add(step);
 
             return inRange;
         }
 
         /// <summary>
-        /// Finds the cheapest, traversable path from origin to destination. Returns null if no path can be found within the given cost
+        /// Finds the cheapest, traversable path from origin to destination.
         /// </summary>
-        /// <param name="origin">The beginning cell of the path</param>
-        /// <param name="destination">The end cell of the path</param>
+        /// <param name="origin">The beginning node of the path</param>
+        /// <param name="destination">The end node of the path</param>
         /// <param name="maximumCost">The maximum cost allowed in order to find a path. -1 for no cost limit</param>
-        /// <param name="traverser">The ruleset for which cells can be crossed and the cost for doing so</param>
-        /// <returns>A collection of each step of the path from origin to destination OR null if no path could be found 
-        /// within the given parameters</returns>
-        public static Path To(IPathNode origin, IPathNode destination, float maximumCost, ITraversable traverser = null)
+        /// <param name="traverser">The ruleset for which nodes can be traversed and the cost for doing so</param>
+        /// <returns>The cheapest path from origin to destination. Returns null if no path exists OR no path exists within the 
+        /// given cost constraint</returns>
+        public static Path Between(IGraphNode origin, IGraphNode destination, float maximumCost = -1, ITraversable traverser = null)
         {
-            return To(origin,
-                      s => s.Node == destination,       // Search until the returned step is the destination cell
+            return Between(origin,
+                      s => s.Node == destination,       // Search until the returned step is the destination node
                       maximumCost,
                       traverser);
         }
 
         /// <summary>
-        /// Finds the cheapest, traversable path from the origin to the cell that matches the given criteria. Returns null if no cell matches
-        /// the criteria, or if no path can be found within cost
+        /// Finds the cheapest, traversable path from the origin to the first node that matches the given criteria.
         /// </summary>
-        /// <param name="origin">The cell to begin the search from</param>
-        /// <param name="isTarget">Predicate that determines which cell is the desired cell</param>
+        /// <param name="origin">The beginning node of the path</param>
+        /// <param name="isTarget">Predicate that determines the desired node</param>
         /// <param name="maximumCost">The maximum cost allowed in order to find a path. -1 for no cost limit</param>
-        /// <param name="traverser">The ruleset for which cells can be crossed and the cost for doing so</param>
-        /// <returns>The quickest traversable path from the origin to a cell within the given criteria and matches the given 
-        /// condition. Returns null if no such path exists</returns>
-        public static Path To(IPathNode origin, Func<Step, bool> isTarget, float maximumCost, ITraversable traverser = null)
+        /// <param name="traverser">The ruleset for which nodes can be traversed and the cost for doing so</param>
+        /// <returns>The cheapest traversable path from origin to the first node that matches the given predicate. Returns null 
+        /// if no path exists OR no path exists within the given cost constraint</returns>
+        public static Path Between(IGraphNode origin, Func<PathStep, bool> isTarget, float maximumCost = -1, ITraversable traverser = null)
         {
-            // Enumerate through cells that meet the criteria
-            foreach (Step step in Enumerate(origin, maximumCost, traverser))
+            // Enumerate through nodes in cost order
+            foreach (PathStep step in Enumerate(origin, maximumCost, traverser))
             {
-                // If the step matches the condition, return a path from origin to this cell
+                // If the step matches the condition, return a path from origin to this node
                 if (isTarget(step))
                     return new Path(step);
             }
@@ -69,37 +73,36 @@ namespace Pathfinding
         }
 
         /// <summary>
-        /// Finds the cheapest, traversable path from the origin to any cell in the collection of cells. Returns null if no path can be found
-        /// to any of the cells
+        /// Finds the cheapest, traversable path from origin to any of the given nodes.
         /// </summary>
-        /// <param name="origin">The cell to begin the search from</param>
-        /// <param name="area">The collection of cells to find a path to</param>
-        /// <param name="traverser">The ruleset for which cells can be crossed and the cost for doing so</param>
-        /// <returns>The cheapest, traversable path from the origin to any of the cells in the collection of cells. Returns null if
-        /// no such path exists</returns>
-        public static Path ToArea(IPathNode origin, IEnumerable<IPathNode> area, ITraversable traverser = null)
+        /// <param name="origin">The beginning node of the path</param>
+        /// <param name="area">The nodes to find a path to</param>
+        /// <param name="traverser">The ruleset for which nodes can be traversed and the cost for doing so</param>
+        /// <returns>The cheapest, traversable path from origin to any of the given nodes. Returns null if no path 
+        /// exists</returns>
+        public static Path ToArea(IGraphNode origin, IEnumerable<IGraphNode> area, ITraversable traverser = null)
         {
-            // Pathfind to cheapest of the cells
-            Path path = To(origin,
-                           s => area.Contains(s.Node),     // Search until the returned step is any of the cells in the area
+            // Pathfind to cheapest of the nodes
+            Path path = Between(origin,
+                           s => area.Contains(s.Node),     // Search until the returned step is any of the nodes in the area
                            -1,                             // Cost doesn't matter
                            traverser);
             return path;
         }
 
         /// <summary>
-        /// Checks if the origin cell is within range of the target cell
+        /// Checks if target is within range of origin
         /// </summary>
-        /// <param name="origin">The cell to check the range from</param>
-        /// <param name="target">The cell to check for inclusion within the range</param>
-        /// <param name="maximumCost">The size of the area to check</param>
-        /// <param name="traverser">The ruleset for which cell can be crossed and the cost for doing so from the origin</param>
-        /// <returns>Wether the target cell is within range of the target cell</returns>
-        public static bool InRange(IPathNode origin, IPathNode target, float maximumCost, ITraversable traverser = null)
+        /// <param name="origin">The node to check range from</param>
+        /// <param name="target">The node to check for inclusion within the range</param>
+        /// <param name="maximumCost">The size of the range to check, measured in the cost to traverse from the origin</param>
+        /// <param name="traverser">The ruleset for which nodes can be traversed and the cost for doing so</param>
+        /// <returns>Whether the target node is within range of the origin</returns>
+        public static bool InRange(IGraphNode origin, IGraphNode target, float maximumCost, ITraversable traverser = null)
         {
             // Find path from origin to target
-            Path path = To(origin,
-                           s => s.Node == target,        // Search until the returned step is the target cell
+            Path path = Between(origin,
+                           s => s.Node == target,        // Search until the returned step is the target node
                            maximumCost,
                            traverser);
 
@@ -112,105 +115,101 @@ namespace Pathfinding
         }
 
         /// <summary>
-        /// Iterates over all traversable cells beginning at the origin cell. Cells are traversed in order of cost
+        /// Iterates over affordable, traversable nodes in order of cost beginning at origin.
         /// </summary>
-        /// <param name="origin">The cell to begin iterating from</param>
-        /// <param name="maximumCost">The maximum cost</param>
-        /// <param name="traverser">The ruleset for which cells can be crossed and the cost for doing so</param>
-        public static IEnumerable<Step> Enumerate(IPathNode origin, float maximumCost, ITraversable traverser = null)
+        /// <param name="origin">The node to begin iterating from</param>
+        /// <param name="maximumCost">The maximum cost of nodes</param>
+        /// <param name="traverser">The ruleset for which nodes can be traversed and the cost for doing so</param>
+        public static IEnumerable<PathStep> Enumerate(IGraphNode origin, float maximumCost, ITraversable traverser = null)
         {
-            HashSet<Step> evaluated = new HashSet<Step>();                  // Cells whose cost has been evaluated
-            LinkedList<Step> toBeEvaluated = new LinkedList<Step>();        // Discovered cells that have not yet been evaluated
+            evaluated = new HashSet<IGraphNode>();            // Nodes whose cost has been evaluated
+            toBeEvaluated = new FibonacciHeap<float, PathStep>();    // Discovered nodes that have not yet been evaluated
+            nodeCatalogue = new Dictionary<IGraphNode, HeapNode<float, PathStep>>();
 
-            // Add origin cell to collection and iterate
-            toBeEvaluated.AddFirst(new Step(origin, null, 0));
+            // Add origin to collection and iterate
+            toBeEvaluated.Insert(0, new PathStep(origin, null, 0));
             while (toBeEvaluated.Count > 0)
             {
-                // Remove current cell from unevaluated cells and add to evaluated cells
-                Step current = toBeEvaluated.PopFirst();
-                evaluated.Add(current);
+                // Remove current from unevaluated and add to evaluated
+                PathStep current = toBeEvaluated.Pop();
+                evaluated.Add(current.Node);
 
-                // Don't bother evaluating cells that are out of cost range
+                // Don't bother evaluating nodes that are out of cost range
                 if (maximumCost < 0 || current.CostTo <= maximumCost)
                 {
                     yield return current;
 
-                    // Checks each cell adjacent to current, adds it to toBeEvaluated cells or updates it 
+                    // Checks each node adjacent to current, adds it to toBeEvaluated or updates it 
                     // if travelling through current is a better route
-                    EvaluateAdjacent(current, toBeEvaluated, evaluated, traverser);
+                    EvaluateAdjacent(current, traverser);
                 }
             }
         }
 
         /// <summary>
-        /// Finds each of the given cells neighbours, adding them to the queue of cells to be evaluated OR updating their
-        /// cost and path to information should they already exist in the queue.
+        /// Partitions current's neighbours, adding them to the queue of nodes to be evaluated OR updating their
+        /// cost and 'path to' information should they already exist in the queue.
         /// </summary>
-        /// <param name="current">The cell whose neighbous are to be checked</param>
-        /// <param name="toBeEvaluated">Queue of cells that are due to be evaluated</param>
-        /// <param name="evaluated">Set of cells that have already been evaluated</param>
-        /// <param name="traverser">The ruleset that defines which cells can be crossed and the cost for doing so</param>
-        private static void EvaluateAdjacent(Step current, LinkedList<Step> toBeEvaluated, HashSet<Step> evaluated, ITraversable traverser)
+        /// <param name="current">The node whose neighbous are to be checked</param>
+        /// <param name="traverser">The ruleset for which nodes can be traversed and the cost for doing so</param>
+        private static void EvaluateAdjacent(PathStep current, ITraversable traverser)
         {
-            foreach (IPathNode adjacent in current.Node.Nodes)
+            // Evaluate all adjacent nodes
+            foreach (IGraphNode adjacent in current.Node.Nodes)
             {
-                if (adjacent != null &&                                       // Is there an adjacent cell in the given direction?
-                    !evaluated.Select(s => s.Node).Contains(adjacent))        // Has the adjacent cell already been evaluated?
+                if (!evaluated.Contains(adjacent))        // Has adjacent already been evaluated?
                 {
-                    // Able to traverse to adjacent cell from current?
+                    // Able to traverse to adjacent from current?
                     bool traversable = traverser != null ? traverser.IsTraversable(current.Node, adjacent) : true;
-                    if (!traversable)
-                        continue;
+                    if (!traversable) continue;
 
-                    // Cost to move from origin to adjacent cell with current route
+                    // Cost to move from origin to adjacent with current route
                     float costIncrement = traverser != null ? traverser.Cost(current.Node, adjacent) : 1;
                     float costToAdjacent = current.CostTo + costIncrement;
 
-                    InsertOrUpdate(current, adjacent, toBeEvaluated, costToAdjacent);
+                    InsertOrUpdate(current, adjacent, costToAdjacent);
                 }
             }
         }
 
         /// <summary>
-        /// Adds the adjacent cell to the queue of cells to be evaluated OR updates its
+        /// Adds adjacent to the queue of nodes to be evaluated OR updates its
         /// cost and path to information should it already exist in the queue.
         /// </summary>
-        private static void InsertOrUpdate(Step current, IPathNode adjacent, LinkedList<Step> toBeEvaluated, float costToAdjacent)
+        private static void InsertOrUpdate(PathStep current, IGraphNode adjacent, float costToAdjacent)
         {
             // Is adjacent a newly discovered node...?
-            Step adjacentStep = toBeEvaluated.Where(s => s.Node == adjacent).SingleOrDefault();
-            if (adjacentStep == null)
-            {
-                adjacentStep = new Step(adjacent, current, costToAdjacent);
-                InsertStepByCost(toBeEvaluated, adjacentStep);
-            }
+            if (!nodeCatalogue.ContainsKey(adjacent))
+                InsertNode(adjacent, current, costToAdjacent);
+
+            else
+                UpdateQueue(adjacent, current, costToAdjacent);
+        }
+
+        private static void UpdateQueue(IGraphNode node, PathStep previous, float costTo)
+        {
+            HeapNode<float, PathStep> queueNode = nodeCatalogue[node];
 
             // Is the current path to this already discovered node a better path?
-            else if (costToAdjacent < adjacentStep.CostTo)
+            if (costTo < queueNode.Value.CostTo)
             {
                 // This path is best until now, record it.
-                adjacentStep.Previous = current;
-                adjacentStep.CostTo = costToAdjacent;
+                queueNode.Value.Previous = previous;
+                queueNode.Value.CostTo = costTo;
+
+                // Update order of queue to reflect updated cost
+                toBeEvaluated.DecreasePriority(queueNode, costTo);
             }
         }
 
         /// <summary>
-        /// Inserts the given step into the step list ordered based upon the cost to move to each step
+        /// Inserts the given step into the queue in order of cost
         /// </summary>
-        private static void InsertStepByCost(LinkedList<Step> toBeEvaluated, Step step)
+        private static void InsertNode(IGraphNode node, PathStep previous, float costTo)
         {
-            // Iterate until finding a larger cost step, or running out of elements to iterate
-            LinkedListNode<Step> walker = toBeEvaluated.First;
-            while (walker != null && walker.Value.CostTo < step.CostTo)
-                walker = walker.Next;
-
-            // If at end of list, step is largest cost step so add to end of list
-            if (walker == null)
-                toBeEvaluated.AddLast(step);
-
-            // Otherwise, insert in order according to cost
-            else
-                toBeEvaluated.AddBefore(walker, step);
+            PathStep step = new PathStep(node, previous, costTo);
+            HeapNode<float, PathStep> queueNode = toBeEvaluated.Insert(costTo, step);
+            nodeCatalogue.Add(node, queueNode);
         }
     }
 }

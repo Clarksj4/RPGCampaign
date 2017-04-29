@@ -16,7 +16,7 @@ public class CharacterInput : MonoBehaviour
     public string HexGridLayer = "HexGrid";
 
     private HexCell targetCell;
-    private ICollection<Step> movementRange;
+    private ICollection<PathStep> movementRange;
     private Path movementPath;
     private IBehaviourTreeNode behaviourTree;
     private Spell Spell { get { return Selected.Spells[0]; } }
@@ -102,7 +102,7 @@ public class CharacterInput : MonoBehaviour
         // Draw movementPath
         if (movementPath != null)
         {
-            foreach (Step step in movementPath)
+            foreach (PathStep step in movementPath)
             {
                 // Cell is green if in range
                 if (step.CostTo <= Selected.Stats.CurrentTimeUnits)
@@ -117,7 +117,7 @@ public class CharacterInput : MonoBehaviour
         // Draw all cells in range
         if (movementRange != null)
         {
-            foreach (Step step in movementRange)
+            foreach (PathStep step in movementRange)
                 DrawCell((HexCell)step.Node, Color.green);
         }
     }
@@ -201,7 +201,7 @@ public class CharacterInput : MonoBehaviour
 
     private BehaviourTreeStatus HighlightPath()
     {
-        movementPath = Pathfind.To(Selected.Cell, targetCell, -1, Selected.Stats.Traverser);
+        movementPath = Pathfind.Between(Selected.Cell, targetCell, -1, Selected.Stats.Traverser);
         return BehaviourTreeStatus.Success;
     }
 

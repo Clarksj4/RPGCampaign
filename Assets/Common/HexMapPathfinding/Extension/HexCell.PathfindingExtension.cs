@@ -1,11 +1,15 @@
 ﻿using System;
+using System.Linq;
 using System.Collections.Generic;
 using UnityEngine;
 using Pathfinding;
 
-public partial class HexCell : IPathNode
+public partial class HexCell : IGraphNode
 {
-    public IEnumerable<IPathNode> Nodes { get { return Array.ConvertAll(GetNeighbours(), n => (IPathNode)n); } }
+    /// <summary>
+    /// Adjacent cells that are not null, as nodes. Used for pathfinding.
+    /// </summary>
+    public IEnumerable<IGraphNode> Nodes { get { return GetNeighbours().Where(n => n != null).Select(n => (IGraphNode)n); } }
 
     /// <summary>
     /// Gets the 6 cells adjacent to this cell. Null is returned where there is no cell in a direction
