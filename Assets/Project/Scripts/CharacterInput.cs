@@ -15,13 +15,15 @@ public class CharacterInput : MonoBehaviour
     [Tooltip("The layer the hex grid is on. Used for raycasting")]
     public string HexGridLayer = "HexGrid";
 
+    private IBehaviourTreeNode behaviourTree;
+    private HexHighlighter highlighter;
+
+    // Behaviour tree variables
     private HexCell targetCell;
     private bool newCellTargeted;
     private ICollection<PathStep> movementRange;
     private Path movementPath;
-    private IBehaviourTreeNode behaviourTree;
     private Spell Spell { get { return Selected.Spells[0]; } }
-    private HexHighlighter highlighter;
 
     private void Start()
     {
