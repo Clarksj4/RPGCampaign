@@ -10,6 +10,9 @@ public class HumanPlayer : Player
     {
         base.Activate(actor);
 
+        // TODO: shouldn't need to know about input system. input system should know about it instead.
+
+
         InputSystem.Selected = actor;
         actor.FinishedMovement += Actor_FinishedMovement;
     }
