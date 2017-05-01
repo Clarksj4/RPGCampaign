@@ -8,12 +8,14 @@ using Pathfinding;
 
 public class CharacterInput : MonoBehaviour
 {
-    [Tooltip("The character being controlled by this input")]
-    public Character Selected;
+    [Tooltip("The player being controlled by this input")]
+    public Player Player;
     [Tooltip("The hex grid the character exists on")]
     public HexGrid HexGrid;
     [Tooltip("The layer the hex grid is on. Used for raycasting")]
     public string HexGridLayer = "HexGrid";
+
+    public Character CurrentCharacter { get { return Player.Current; } }
 
     private IBehaviourTreeNode behaviourTree;
     private HexHighlighter highlighter;
@@ -23,7 +25,7 @@ public class CharacterInput : MonoBehaviour
     private bool newCellTargeted;
     private ICollection<PathStep> movementRange;
     private Path movementPath;
-    private Spell Spell { get { return Selected.Spells[0]; } }
+    private Spell Spell { get { return Player.Current.Spells[0]; } }
 
     private void Start()
     {
@@ -116,7 +118,7 @@ public class CharacterInput : MonoBehaviour
             foreach (PathStep step in movementPath)
             {
                 // Cell is green if in range
-                if (step.CostTo <= Selected.Stats.CurrentTimeUnits)
+                if (step.CostTo <= CurrentCharacter.Stats.CurrentTimeUnits)
                     DrawCell((HexCell)step.Node, Color.green);
 
                 // Cell is red if out of range
@@ -230,11 +232,11 @@ public class CharacterInput : MonoBehaviour
     {
         BehaviourTreeStatus result = BehaviourTreeStatus.Failure;
 
-        movementPath = Pathfind.Between(Selected.Cell, targetCell, -1, Selected.Stats.Traverser);
+        movementPath = Pathfind.Between(CurrentCharacter.Cell, targetCell, -1, CurrentCharacter.Stats.Traverser);
 
         if (movementPath != null)
         {
-            highlighter.Highlight(movementPath, Selected.Stats.CurrentTimeUnits);
+            highlighter.Highlight(movementPath, CurrentCharacter.Stats.CurrentTimeUnits);
             result = BehaviourTreeStatus.Success;
         }
         
@@ -250,13 +252,13 @@ public class CharacterInput : MonoBehaviour
 
     private bool IsSelectedCharactersTurn()
     {
-        bool isTurn = Selected.Controller.IsTurn;
+        bool isTurn = CurrentCharacter.IsTurn;
         return isTurn;
     }
 
     private bool IsSelectedCharacterIdle()
     {
-        bool isIdle = Selected.IsIdle;
+        bool isIdle = CurrentCharacter.IsIdle;
         return isIdle;
     }
 
@@ -268,22 +270,22 @@ public class CharacterInput : MonoBehaviour
 
     private BehaviourTreeStatus Move()
     {
-        Path affordablePath = movementPath.Truncate(Selected.Stats.CurrentTimeUnits);
-        Selected.Move(affordablePath);
+        Path affordablePath = movementPath.Truncate(CurrentCharacter.Stats.CurrentTimeUnits);
+        CurrentCharacter.Move(affordablePath);
         return BehaviourTreeStatus.Success;
     }
 
     private BehaviourTreeStatus Cast()
     {
         // [PLACEHOLDER] TODO: pick spell to cast
-        Selected.Cast(Spell, targetCell);
+        CurrentCharacter.Cast(Spell, targetCell);
 
         return BehaviourTreeStatus.Success;
     }
 
     private bool EnoughTU(float cost)
     {
-        bool enoughTU = Selected.Stats.CurrentTimeUnits >= cost;
+        bool enoughTU = CurrentCharacter.Stats.CurrentTimeUnits >= cost;
         return enoughTU;
     }
 }

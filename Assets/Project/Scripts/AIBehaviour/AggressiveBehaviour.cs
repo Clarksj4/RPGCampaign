@@ -59,7 +59,7 @@ public class AggressiveBehaviour : IBehaviourStrategy
             .Build();
     }
 
-    public void Activate(Character current)
+    public void PawnStart(Character current)
     {
         this.current = current;
 

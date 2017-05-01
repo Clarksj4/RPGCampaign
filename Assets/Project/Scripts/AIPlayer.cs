@@ -4,6 +4,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using FluentBehaviourTree;
+using TurnBased;
 
 public class AIPlayer : Player
 {
@@ -25,12 +26,12 @@ public class AIPlayer : Player
         this.behaviour = behaviour;
     }
 
-    public override void Activate(Character actor)
+    public override void PawnStart(ITurnBasedPawn pawn)
     {
-        base.Activate(actor);
+        base.PawnStart(pawn);
 
         // Behaviour handler is notified that it's its turn
-        behaviour.Activate(actor);
+        behaviour.PawnStart((Character)pawn);
 
         // Traverse tree until tree fails or succeeds
         StartCoroutine(ProcessTurn());
@@ -56,6 +57,6 @@ public class AIPlayer : Player
         //yield return new WaitUntil(() => behaviour.Update() != BehaviourTreeStatus.Running);
 
         // End turn once the behaviour tree has completed its actions 
-        EndTurn();
+        turnSystem.EndTurn();
     }
 }

@@ -4,9 +4,10 @@ using UnityEngine;
 using System.Linq;
 using System;
 using Pathfinding;
+using TurnBased;
 
 [RequireComponent(typeof(Stats))]
-public class Character : MonoBehaviour
+public class Character : MonoBehaviour, ITurnBasedPawn
 {
     public event CharacterMovementEventHandler BeginMovement;
     public event CharacterMovementEventHandler FinishedMovement;
@@ -15,8 +16,6 @@ public class Character : MonoBehaviour
     public HexCell Cell;
     [Tooltip("The hex grid this character exists upon")]
     public HexGrid HexGrid;
-    [Tooltip("The player that controls this character")]
-    public Player Controller;
     [Tooltip("The spells this character can cast")]
     public Spell[] Spells;
     [Tooltip("The local position at which spells will spawn")]
@@ -28,12 +27,15 @@ public class Character : MonoBehaviour
 
     public Animator Animator { get { return animator; } }
     public Stats Stats { get { return stats; } }
+    public ITurnBasedController Controller { get; private set; }
     public bool IsCasting { get { return state.GetType() == typeof(CastBehaviour); } }
     public bool IsMoving { get { return state.GetType() == typeof(MoveBehaviour); } }
     public bool IsIdle { get { return state.GetType() == typeof(IdleBehaviour); } }
+    public bool IsTurn { get; private set; }
 
     private void Awake()
     {
+        Controller = GetComponentInParent<ITurnBasedController>();
         animator = GetComponentInChildren<Animator>();
         stats = GetComponent<Stats>();
     }
@@ -75,29 +77,6 @@ public class Character : MonoBehaviour
             BeginMovement(this, new CharacterMovementEventArgs(null));
     }
 
-    /// <summary>
-    /// Activate this character so it can have its turn. Returns true if this character is able to act.
-    /// </summary>
-    public bool BeginTurn()
-    {
-        state.BeginTurn();
-
-        // TODO: Stats.BeginTurn()
-        Stats.RefreshTimeUnits();
-
-        Controller.Activate(this);
-
-        // Return true because nothing can prevent the character from acting
-        return true;
-    }
-
-    public void EndTurn()
-    {
-        state.EndTurn();
-
-        // TODO: Stats.EndTurn()
-    }
-
     public void Cast(Spell spell, HexCell target)
     {
         if (spell == null || target == null)
@@ -113,5 +92,28 @@ public class Character : MonoBehaviour
     public void Move(Path path)
     {
         SetState(new MoveBehaviour(this, path));
+    }
+
+    public void TurnStart()
+    {
+        IsTurn = true;
+
+        state.BeginTurn();
+
+        // TODO: Stats.BeginTurn()
+        Stats.RefreshTimeUnits();
+    }
+
+    public void TurnEnd()
+    {
+        IsTurn = false;
+
+        state.EndTurn();
+    }
+
+    public int CompareTo(ITurnBasedPawn other)
+    {
+        Character otherCharacter = (Character)other;
+        return Stats.Initiative.CompareTo(otherCharacter.Stats.Initiative);
     }
 }
