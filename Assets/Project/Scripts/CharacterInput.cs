@@ -15,18 +15,25 @@ public class CharacterInput : MonoBehaviour
     [Tooltip("The layer the hex grid is on. Used for raycasting")]
     public string HexGridLayer = "HexGrid";
 
+    private IBehaviourTreeNode behaviourTree;
+    private HexHighlighter highlighter;
+
+    // Behaviour tree variables
     private HexCell targetCell;
+    private bool newCellTargeted;
     private ICollection<PathStep> movementRange;
     private Path movementPath;
-    private IBehaviourTreeNode behaviourTree;
     private Spell Spell { get { return Selected.Spells[0]; } }
 
     private void Start()
     {
+        highlighter = GetComponent<HexHighlighter>();
+
         // Set all cell to hex grid layer
         foreach (Transform child in HexGrid.GetComponentsInChildren<Transform>())
             child.gameObject.layer = LayerMask.NameToLayer(HexGridLayer);
 
+        // Input behaviour tree
         BehaviourTreeBuilder builder = new BehaviourTreeBuilder();
         behaviourTree = builder
             .Sequence("Sequence")
@@ -36,23 +43,28 @@ public class CharacterInput : MonoBehaviour
 
                 // Highlight AND do an action (cast or move)
                 .Parallel("Both", 2, 2)
-                    .Selector("Highlight")
 
-                        // Highlight the movement range of the character in the targeted cell
-                        .Sequence("Sequence")
-                            .Condition("Cell occupied?", t => CellOccupied())
-                            .Condition("Occupant stationary?", t => OccupantStationary())
-                            .Do("Highlight move range", t => HighlightArea())
-                        .End()
+                    .Sequence("Highlight")
+                        .Condition("New cell targeted?", t => newCellTargeted)
+                        .Do("Clear highlight", t => ClearHighlight())
+                        .Selector("Selector")
 
-                        // Highlight the movement path of the selected character
-                        .Sequence("Sequence")
-                            .Inverter("Not")
+                            // Highlight the movement range of the character in the targeted cell
+                            .Sequence("Sequence")
                                 .Condition("Cell occupied?", t => CellOccupied())
+                                .Condition("Occupant stationary?", t => OccupantStationary())
+                                .Do("Highlight move range", t => HighlightArea())
                             .End()
-                            .Condition("Selected character's turn?", t => IsSelectedCharactersTurn())
-                            .Condition("Selected character idle?", t => IsSelectedCharacterIdle())
-                            .Do("Highlight path", t => HighlightPath())
+
+                            // Highlight the movement path of the selected character
+                            .Sequence("Sequence")
+                                .Inverter("Not")
+                                    .Condition("Cell occupied?", t => CellOccupied())
+                                .End()
+                                .Condition("Selected character's turn?", t => IsSelectedCharactersTurn())
+                                .Condition("Selected character idle?", t => IsSelectedCharacterIdle())
+                                .Do("Highlight path", t => HighlightPath())
+                            .End()
                         .End()
                     .End()
                     .Sequence("Act")
@@ -65,14 +77,13 @@ public class CharacterInput : MonoBehaviour
 
                             // Move along the affordable section of the path
                             .Sequence("Sequence")
-                                .Inverter("Not")
-                                    .Condition("Cell occupied?", t => CellOccupied())
-                                .End()
-                                .Do("Move along path", t => Move())
+                                .Condition("Path exists", t => PathExists())
+                                .Do("Move along affordable section of path", t => Move())
                             .End()
 
                             // Cast spell at the targeted cell
                             .Sequence("Sequence")
+                                .Condition("Cell occupied?", t => CellOccupied())
                                 .Condition("Occupant stationary?", t => OccupantStationary())
                                 .Condition("Enough TU?", t => EnoughTU(Spell.Cost))
                                 .Do("Cast", t => Cast())
@@ -168,8 +179,17 @@ public class CharacterInput : MonoBehaviour
     {
         BehaviourTreeStatus result = BehaviourTreeStatus.Failure;
 
-        // Get the cell currently under the curosr
-        targetCell = GetCell();
+        // Get the cell currently under the cursor
+        HexCell current = GetCell();
+        if (current != targetCell)
+        {
+            newCellTargeted = true;
+            targetCell = current;
+        }
+
+        else
+            newCellTargeted = false;
+
 
         // If there is one, success!
         if (targetCell != null)
@@ -192,16 +212,39 @@ public class CharacterInput : MonoBehaviour
 
     private BehaviourTreeStatus HighlightArea()
     {
+        BehaviourTreeStatus result = BehaviourTreeStatus.Failure;
+
         Character occupant = targetCell.Occupant;
         movementRange = Pathfind.Area(targetCell, occupant.Stats.CurrentTimeUnits, occupant.Stats.Traverser);
 
-        // Always returns success
-        return BehaviourTreeStatus.Success;
+        if (movementRange.Count > 0)
+        {
+            highlighter.Highlight(movementRange);
+            result = BehaviourTreeStatus.Success;
+        }
+
+        return result;
     }
 
     private BehaviourTreeStatus HighlightPath()
     {
+        BehaviourTreeStatus result = BehaviourTreeStatus.Failure;
+
         movementPath = Pathfind.Between(Selected.Cell, targetCell, -1, Selected.Stats.Traverser);
+
+        if (movementPath != null)
+        {
+            highlighter.Highlight(movementPath, Selected.Stats.CurrentTimeUnits);
+            result = BehaviourTreeStatus.Success;
+        }
+        
+        return result;
+    }
+
+    private BehaviourTreeStatus ClearHighlight()
+    {
+        highlighter.Clear();
+
         return BehaviourTreeStatus.Success;
     }
 
@@ -215,6 +258,12 @@ public class CharacterInput : MonoBehaviour
     {
         bool isIdle = Selected.IsIdle;
         return isIdle;
+    }
+
+    private bool PathExists()
+    {
+        bool exists = movementPath != null;
+        return exists;
     }
 
     private BehaviourTreeStatus Move()
