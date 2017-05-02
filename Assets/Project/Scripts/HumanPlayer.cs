@@ -3,7 +3,7 @@ using TurnBased;
 
 public class HumanPlayer : Player
 {
-    public override void PawnStart(ITurnBasedPawn pawn)
+    public override void PawnStart(IPawn pawn)
     {
         base.PawnStart(pawn);
 

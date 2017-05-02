@@ -3,7 +3,7 @@ using UnityEngine;
 using System.Linq;
 using TurnBased;
 
-public abstract class Player : MonoBehaviour, ITurnBasedController
+public abstract class Player : MonoBehaviour, IPawnController
 {
     public Character Current { get; private set; }
     public List<Character> Allies { get; private set;}
@@ -31,7 +31,7 @@ public abstract class Player : MonoBehaviour, ITurnBasedController
         Allies.Remove(actor);
     }
 
-    public virtual void PawnStart(ITurnBasedPawn pawn)
+    public virtual void PawnStart(IPawn pawn)
     {
         Current = (Character)pawn;
     }

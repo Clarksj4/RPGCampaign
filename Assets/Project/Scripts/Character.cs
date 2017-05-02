@@ -7,7 +7,7 @@ using Pathfinding;
 using TurnBased;
 
 [RequireComponent(typeof(Stats))]
-public class Character : MonoBehaviour, ITurnBasedPawn
+public class Character : MonoBehaviour, IPawn
 {
     public event CharacterMovementEventHandler BeginMovement;
     public event CharacterMovementEventHandler FinishedMovement;
@@ -27,7 +27,7 @@ public class Character : MonoBehaviour, ITurnBasedPawn
 
     public Animator Animator { get { return animator; } }
     public Stats Stats { get { return stats; } }
-    public ITurnBasedController Controller { get; private set; }
+    public IPawnController Controller { get; private set; }
     public bool IsCasting { get { return state.GetType() == typeof(CastBehaviour); } }
     public bool IsMoving { get { return state.GetType() == typeof(MoveBehaviour); } }
     public bool IsIdle { get { return state.GetType() == typeof(IdleBehaviour); } }
@@ -35,7 +35,7 @@ public class Character : MonoBehaviour, ITurnBasedPawn
 
     private void Awake()
     {
-        Controller = GetComponentInParent<ITurnBasedController>();
+        Controller = GetComponentInParent<IPawnController>();
         animator = GetComponentInChildren<Animator>();
         stats = GetComponent<Stats>();
     }
@@ -111,7 +111,7 @@ public class Character : MonoBehaviour, ITurnBasedPawn
         state.EndTurn();
     }
 
-    public int CompareTo(ITurnBasedPawn other)
+    public int CompareTo(IPawn other)
     {
         Character otherCharacter = (Character)other;
         return Stats.Initiative.CompareTo(otherCharacter.Stats.Initiative);

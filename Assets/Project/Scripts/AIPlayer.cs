@@ -26,7 +26,7 @@ public class AIPlayer : Player
         this.behaviour = behaviour;
     }
 
-    public override void PawnStart(ITurnBasedPawn pawn)
+    public override void PawnStart(IPawn pawn)
     {
         base.PawnStart(pawn);
 
