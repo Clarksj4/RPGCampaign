@@ -24,7 +24,9 @@ public class Character : MonoBehaviour, IPawn
     private Animator animator;
     private Stats stats;
     private CharacterBehaviour state;
+    private AnimationEvents animEvents;
 
+    public AnimationEvents AnimEvents { get { return animEvents; } }
     public Animator Animator { get { return animator; } }
     public Stats Stats { get { return stats; } }
     public IPawnController Controller { get; private set; }
@@ -39,6 +41,7 @@ public class Character : MonoBehaviour, IPawn
         stats = GetComponent<Stats>();
 
         animator = GetComponentInChildren<Animator>();
+        animEvents = GetComponentInChildren<AnimationEvents>();
     }
 
     private void Start()
@@ -78,19 +81,9 @@ public class Character : MonoBehaviour, IPawn
             BeginMovement(this, new CharacterMovementEventArgs(null));
     }
 
-    public void Attack(Character target, float damage)
-    {
-        SetState(new AttackBehaviour(this, target, damage));
-    }
-
     public void UseAbility(Ability ability, HexCell target)
     {
-        ability.Use(this, target);
-    }
-
-    public void Cast(Character target, float damage)
-    {
-
+        SetState(new AbilityBehaviour(this, target, ability));
     }
 
     /// <summary>
@@ -108,12 +101,12 @@ public class Character : MonoBehaviour, IPawn
         animator.SetTrigger("Hurt");
     }
 
-    public void LookAt(Character target)
+    public void TurnTowards(Character target)
     {
-        LookAt(target.Cell);
+        TurnTowards(target.Cell);
     }
 
-    public void LookAt(HexCell target)
+    public void TurnTowards(HexCell target)
     {
         Vector3 lookPosition = target.transform.position;
         lookPosition.y = transform.position.y;

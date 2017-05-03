@@ -1,14 +1,21 @@
 ﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
 
 public class MeleeAttack : Ability
 {
     public float Damage;
 
-    public override void Use(Character user, HexCell target)
+    protected override void Activate()
     {
-        user.Attack(target.Occupant, Damage);
+        // Tell user to do attack animation
+        user.Animator.SetTrigger("Attack");
+
+        // Listen for when attack connects
+        user.AnimEvents.AttackApex += AnimEvents_AttackApex;
+    }
+
+    private void AnimEvents_AttackApex(object sender, EventArgs e)
+    {
+        target.Occupant.TakeDamage(Damage);
+        Destroy(gameObject);
     }
 }

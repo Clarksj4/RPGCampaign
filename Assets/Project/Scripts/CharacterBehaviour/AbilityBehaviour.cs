@@ -12,14 +12,16 @@ public class AbilityBehaviour : CharacterBehaviour
     {
         this.target = target;
 
-        // Create attack
+        // Subtract TU
+        character.Stats.CurrentTimeUnits -= ability.Cost;
+
+        // LookAt
+        character.TurnTowards(target);
+
+        // Use
         ability.Use(character, target);
 
-        character.transform.LookAt(target.Position);
-
-        if (Animator != null)
-            Animator.SetTrigger("Attack");
-
+        // TODO: [PLACEHOLDER] listen for end of animation
         StartCoroutine(DoIdleAfterDelay());
     }
 

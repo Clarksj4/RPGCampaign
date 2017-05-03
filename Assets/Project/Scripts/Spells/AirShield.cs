@@ -7,11 +7,8 @@ public class AirShield : Ability
 {
     private HexDirection direction;
 
-    public override void Use(Character user, HexCell target)
+    protected override void Activate()
     {
-        Ability instance = Instantiate(this, user.Cell.Position, Quaternion.identity) as Ability;
-        instance.user = user;
-        instance.target = target;
-        instance.transform.LookAt(target.Position);
+        transform.LookAt(target.Position);
     }
 }

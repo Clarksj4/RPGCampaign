@@ -279,7 +279,7 @@ public class CharacterInput : MonoBehaviour
     {
         // [PLACEHOLDER] TODO: pick spell to cast
         //CurrentCharacter.Cast(Spell, targetCell);
-        CurrentCharacter.Attack(targetCell.Occupant);
+        CurrentCharacter.UseAbility(Ability, targetCell);
 
         return BehaviourTreeStatus.Success;
     }

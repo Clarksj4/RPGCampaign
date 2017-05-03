@@ -3,16 +3,13 @@ using Pathfinding;
 
 public abstract class Ability : MonoBehaviour
 {
-    public string AbilityType;
     public float Cost;
     public int MinimumRange;
     public int MaximumRange;
     public HexMapTraverser Traverser = HexMapTraverser.RangedAttack();
 
-    [HideInInspector]
-    public Character user;
-    [HideInInspector]
-    public HexCell target;
+    protected Character user;
+    protected HexCell target;
 
     public virtual bool InRange(HexCell origin, HexCell target)
     {
@@ -21,5 +18,13 @@ public abstract class Ability : MonoBehaviour
                 Pathfind.InRange(origin, target, MaximumRange, Traverser);
     }
 
-    public abstract void Use(Character user, HexCell target);
+    public virtual void Use(Character user, HexCell target)
+    {
+        Ability instance = Instantiate(this, user.Cell.Position, transform.rotation) as Ability;
+        instance.user = user;
+        instance.target = target;
+        instance.Activate();
+    }
+
+    protected abstract void Activate();
 }
