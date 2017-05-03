@@ -13,11 +13,18 @@ public class MeleeAttack : Ability
 
         // Listen for when attack connects
         user.AnimEvents.AttackApex += AnimEvents_AttackApex;
+
+        // Listen for when the attack is complete
+        user.AnimEvents.AttackComplete += AnimEvents_AttackComplete;
     }
 
     private void AnimEvents_AttackApex(object sender, EventArgs e)
     {
         target.Occupant.TakeDamage(Damage);
+    }
+
+    private void AnimEvents_AttackComplete(object sender, EventArgs e)
+    {
         Deactivate();
     }
 }
