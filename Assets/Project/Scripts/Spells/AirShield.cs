@@ -3,18 +3,15 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class AirShield : Spell
+public class AirShield : Ability
 {
     private HexDirection direction;
 
-    public override void Cast(Character caster, HexCell target)
+    public override void Use(Character user, HexCell target)
     {
-        GameObject instance = Instantiate(gameObject, caster.Cell.Position, Quaternion.identity) as GameObject;
-
-        Spell spell = instance.GetComponent<Spell>();
-        spell.caster = caster;
-        spell.target = target;
-
-        spell.transform.LookAt(target.Position);
+        Ability instance = Instantiate(this, user.Cell.Position, Quaternion.identity) as Ability;
+        instance.user = user;
+        instance.target = target;
+        instance.transform.LookAt(target.Position);
     }
 }

@@ -205,7 +205,7 @@ public class HexFeatureManager : MonoBehaviour {
 			rightDirection.y = 0f;
 			towerInstance.transform.right = rightDirection;
 			towerInstance.SetParent(container, false);
-		}
+        }
 	}
 
 	void AddWallSegment (

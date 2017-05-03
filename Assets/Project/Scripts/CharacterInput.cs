@@ -25,7 +25,7 @@ public class CharacterInput : MonoBehaviour
     private bool newCellTargeted;
     private ICollection<PathStep> movementRange;
     private Path movementPath;
-    private Spell Spell { get { return Player.Current.Spells[0]; } }
+    private Ability Ability { get { return Player.Current.Abilities[0]; } }
 
     private void Start()
     {
@@ -87,7 +87,7 @@ public class CharacterInput : MonoBehaviour
                             .Sequence("Sequence")
                                 .Condition("Cell occupied?", t => CellOccupied())
                                 .Condition("Occupant stationary?", t => OccupantStationary())
-                                .Condition("Enough TU?", t => EnoughTU(Spell.Cost))
+                                .Condition("Enough TU?", t => EnoughTU(Ability.Cost))
                                 .Do("Cast", t => Cast())
                             .End()
                         .End()
@@ -278,7 +278,8 @@ public class CharacterInput : MonoBehaviour
     private BehaviourTreeStatus Cast()
     {
         // [PLACEHOLDER] TODO: pick spell to cast
-        CurrentCharacter.Cast(Spell, targetCell);
+        //CurrentCharacter.Cast(Spell, targetCell);
+        CurrentCharacter.Attack(targetCell.Occupant);
 
         return BehaviourTreeStatus.Success;
     }

@@ -1,28 +1,17 @@
 ﻿using System;
-using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
-using UnityEngine;
+using System.Text;
 
 public class CastBehaviour : CharacterBehaviour
 {
     private HexCell target;
 
-    public CastBehaviour(Character character, HexCell target, Spell spell)
+    public CastBehaviour(Character character, HexCell target) 
         : base(character)
     {
-        this.target = target;
+        character.LookAt(target);
 
-        // Create attack
-        spell.Cast(character, target);
-
-        StartCoroutine(DoIdleAfterDelay());
-    }
-
-    IEnumerator DoIdleAfterDelay()
-    {
-        yield return new WaitForSeconds(1);
-
-        // TODO: casting animation
-        SetState(new IdleBehaviour(character));
+        Animator.SetTrigger("Cast");
     }
 }

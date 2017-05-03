@@ -16,8 +16,8 @@ public class Character : MonoBehaviour, IPawn
     public HexCell Cell;
     [Tooltip("The hex grid this character exists upon")]
     public HexGrid HexGrid;
-    [Tooltip("The spells this character can cast")]
-    public Spell[] Spells;
+    [Tooltip("The abilities this character can use")]
+    public Ability[] Abilities;
     [Tooltip("The local position at which spells will spawn")]
     public Vector3 CastPosition;
 
@@ -28,7 +28,7 @@ public class Character : MonoBehaviour, IPawn
     public Animator Animator { get { return animator; } }
     public Stats Stats { get { return stats; } }
     public IPawnController Controller { get; private set; }
-    public bool IsCasting { get { return state.GetType() == typeof(CastBehaviour); } }
+    public bool IsUsingAbility { get { return state.GetType() == typeof(AbilityBehaviour); } }
     public bool IsMoving { get { return state.GetType() == typeof(MoveBehaviour); } }
     public bool IsIdle { get { return state.GetType() == typeof(IdleBehaviour); } }
     public bool IsTurn { get; private set; }
@@ -36,8 +36,9 @@ public class Character : MonoBehaviour, IPawn
     private void Awake()
     {
         Controller = GetComponentInParent<IPawnController>();
-        animator = GetComponentInChildren<Animator>();
         stats = GetComponent<Stats>();
+
+        animator = GetComponentInChildren<Animator>();
     }
 
     private void Start()
@@ -77,12 +78,19 @@ public class Character : MonoBehaviour, IPawn
             BeginMovement(this, new CharacterMovementEventArgs(null));
     }
 
-    public void Cast(Spell spell, HexCell target)
+    public void Attack(Character target, float damage)
     {
-        if (spell == null || target == null)
-           throw new ArgumentException("Invalid spell and / or target");
+        SetState(new AttackBehaviour(this, target, damage));
+    }
 
-        SetState(new CastBehaviour(this, target, spell));
+    public void UseAbility(Ability ability, HexCell target)
+    {
+        ability.Use(this, target);
+    }
+
+    public void Cast(Character target, float damage)
+    {
+
     }
 
     /// <summary>
@@ -92,6 +100,24 @@ public class Character : MonoBehaviour, IPawn
     public void Move(Path path)
     {
         SetState(new MoveBehaviour(this, path));
+    }
+
+    public void TakeDamage(float damage)
+    {
+        Stats.TakeDamage(damage);
+        animator.SetTrigger("Hurt");
+    }
+
+    public void LookAt(Character target)
+    {
+        LookAt(target.Cell);
+    }
+
+    public void LookAt(HexCell target)
+    {
+        Vector3 lookPosition = target.transform.position;
+        lookPosition.y = transform.position.y;
+        transform.LookAt(lookPosition);
     }
 
     public void TurnStart()

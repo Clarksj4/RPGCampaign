@@ -5,7 +5,7 @@ public static class HexMetrics {
 	public const float outerToInner = 0.866025404f;
 	public const float innerToOuter = 1f / outerToInner;
 
-	public const float outerRadius = 10f;
+	public const float outerRadius = 7.5f;
 
 	public const float innerRadius = outerRadius * outerToInner;
 
@@ -35,11 +35,11 @@ public static class HexMetrics {
 
 	public const float waterElevationOffset = -0.5f;
 
-	public const float wallHeight = 4f;
+	public const float wallHeight = 6f;
 
 	public const float wallYOffset = -1f;
 
-	public const float wallThickness = 0.75f;
+	public const float wallThickness = 1.5f;
 
 	public const float wallElevationOffset = verticalTerraceStepSize;
 

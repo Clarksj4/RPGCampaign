@@ -11,7 +11,7 @@ public class AggressiveBehaviour : IBehaviourStrategy
 
     private Character current;
     private Character target;
-    private Spell spell;
+    private Ability ability;
     private Path path;
     private bool setAlongPath = false;
     private bool toldToAttack = false;
@@ -50,7 +50,7 @@ public class AggressiveBehaviour : IBehaviourStrategy
 
                         // Cast the chosen spell / attack if enough TU
                         .Sequence("Cast spell")
-                            .Condition("Enough TU for attack?", t => current.Stats.CurrentTimeUnits >= spell.Cost)
+                            .Condition("Enough TU for attack?", t => current.Stats.CurrentTimeUnits >= ability.Cost)
                             .Do("Attack!", t => Cast())
                         .End()
                     .End()
@@ -65,7 +65,7 @@ public class AggressiveBehaviour : IBehaviourStrategy
 
         // Reset behaviour tree variables
         target = null;
-        spell = null;
+        ability = null;
         path = null;
         setAlongPath = false;
         toldToAttack = false;
@@ -85,9 +85,9 @@ public class AggressiveBehaviour : IBehaviourStrategy
         BehaviourTreeStatus result = BehaviourTreeStatus.Failure;
 
         // If the current character has atleast one attack, use the first one
-        if (current.Spells.Length > 0)
+        if (current.Abilities.Length > 0)
         {
-            spell = current.Spells[0];
+            ability = current.Abilities[0];
             result = BehaviourTreeStatus.Success;
         }
 
@@ -121,7 +121,7 @@ public class AggressiveBehaviour : IBehaviourStrategy
     /// <returns>True if the attack is currently in range</returns>
     private bool InRange()
     {
-        bool inRange = spell.InRange(current.Cell, target.Cell);
+        bool inRange = ability.InRange(current.Cell, target.Cell);
         return inRange;
     }
 
@@ -135,7 +135,7 @@ public class AggressiveBehaviour : IBehaviourStrategy
         BehaviourTreeStatus result = BehaviourTreeStatus.Failure;
 
         // Get area around target which would put AI character in range for attack
-        ICollection<PathStep> area = Pathfind.Area(target.Cell, spell.MaximumRange, spell.Traverser);
+        ICollection<PathStep> area = Pathfind.Area(target.Cell, ability.MaximumRange, ability.Traverser);
 
         // Find a path from the current characters cell to the quickest to reach cell that is in range of the target for 
         // the given attack
@@ -154,7 +154,7 @@ public class AggressiveBehaviour : IBehaviourStrategy
     /// <returns>True if the current character has enough time units to move and attack</returns>
     private bool WithinCost()
     {
-        bool withinCost = current.Stats.CurrentTimeUnits >= path.Cost + spell.Cost;
+        bool withinCost = current.Stats.CurrentTimeUnits >= path.Cost + ability.Cost;
         return withinCost;
     }
 
@@ -196,11 +196,11 @@ public class AggressiveBehaviour : IBehaviourStrategy
 
         if (!toldToAttack)
         {
-            current.Cast(spell, target.Cell);
+            current.UseAbility(ability, target.Cell);
             toldToAttack = true;
         }
 
-        else if (!current.IsCasting)
+        else if (!current.IsUsingAbility)
         {
             toldToAttack = false;
             result = BehaviourTreeStatus.Success;

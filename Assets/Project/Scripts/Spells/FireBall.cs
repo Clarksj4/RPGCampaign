@@ -3,21 +3,18 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class FireBall : Spell
+public class FireBall : Ability
 {
     public Vector3 DetonationPosition;
     public float Speed = 10;
     public float Damage = 1;
 
-    public override void Cast(Character caster, HexCell target)
+    public override void Use(Character caster, HexCell target)
     {
-        GameObject instance = Instantiate(gameObject, caster.transform.position + caster.CastPosition, Quaternion.identity) as GameObject;
-
-        Spell spell = instance.GetComponent<Spell>();
-        spell.caster = caster;
-        spell.target = target;
-
-        spell.transform.LookAt(target.Position);
+        Ability instance = Instantiate(this, caster.transform.position + caster.CastPosition, Quaternion.identity) as Ability;
+        instance.user = caster;
+        instance.target = target;
+        instance.transform.LookAt(target.Position);
     }
 
     void Update ()
@@ -34,6 +31,5 @@ public class FireBall : Spell
 
             Destroy(gameObject);
         }
-            
     }
 }
