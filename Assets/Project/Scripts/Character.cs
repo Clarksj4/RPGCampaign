@@ -18,14 +18,15 @@ public class Character : MonoBehaviour, IPawn
     public HexGrid HexGrid;
     [Tooltip("The abilities this character can use")]
     public Ability[] Abilities;
-    [Tooltip("The local position at which spells will spawn")]
-    public Vector3 CastPosition;
+    public Transform LeftHand;
+    public Transform RightHand;
 
     private Animator animator;
     private Stats stats;
     private CharacterBehaviour state;
     private AnimationEvents animEvents;
 
+    public Vector3 CastPosition { get; private set; }
     public AnimationEvents AnimEvents { get { return animEvents; } }
     public Animator Animator { get { return animator; } }
     public Stats Stats { get { return stats; } }
@@ -59,6 +60,9 @@ public class Character : MonoBehaviour, IPawn
 
     private void Update()
     {
+        if (LeftHand != null && RightHand != null)
+            CastPosition = (LeftHand.position + RightHand.position) / 2;
+
         state.Update();
     }
 

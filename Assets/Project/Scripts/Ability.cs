@@ -1,8 +1,12 @@
-﻿using UnityEngine;
+﻿using System;
+using System.Collections;
+using UnityEngine;
 using Pathfinding;
 
 public abstract class Ability : MonoBehaviour
 {
+    public event EventHandler AbilityComplete;
+
     public float Cost;
     public int MinimumRange;
     public int MaximumRange;
@@ -18,13 +22,15 @@ public abstract class Ability : MonoBehaviour
                 Pathfind.InRange(origin, target, MaximumRange, Traverser);
     }
 
-    public virtual void Use(Character user, HexCell target)
+    public virtual void Activate(Character user, HexCell target)
     {
-        Ability instance = Instantiate(this, user.Cell.Position, transform.rotation) as Ability;
-        instance.user = user;
-        instance.target = target;
-        instance.Activate();
+        this.user = user;
+        this.target = target;
     }
 
-    protected abstract void Activate();
+    protected virtual void Deactivate()
+    {
+        if (AbilityComplete != null)
+            AbilityComplete(this, new EventArgs());
+    }
 }

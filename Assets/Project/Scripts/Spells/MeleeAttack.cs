@@ -4,8 +4,10 @@ public class MeleeAttack : Ability
 {
     public float Damage;
 
-    protected override void Activate()
+    public override void Activate(Character user, HexCell target)
     {
+        base.Activate(user, target);
+
         // Tell user to do attack animation
         user.Animator.SetTrigger("Attack");
 
@@ -16,6 +18,6 @@ public class MeleeAttack : Ability
     private void AnimEvents_AttackApex(object sender, EventArgs e)
     {
         target.Occupant.TakeDamage(Damage);
-        Destroy(gameObject);
+        Deactivate();
     }
 }

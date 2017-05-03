@@ -9,8 +9,10 @@ public class FireBall : Ability
     public float Speed = 10;
     public float Damage = 1;
 
-    protected override void Activate()
+    public override void Activate(Character user, HexCell target)
     {
+        base.Activate(user, target);
+
         transform.LookAt(target.Position);
     }
 
@@ -26,6 +28,7 @@ public class FireBall : Ability
         {
             target.Occupant.TakeDamage(Damage);
 
+            Deactivate();
             Destroy(gameObject);
         }
     }

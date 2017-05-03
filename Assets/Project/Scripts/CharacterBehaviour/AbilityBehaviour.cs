@@ -5,31 +5,32 @@ using UnityEngine;
 
 public class AbilityBehaviour : CharacterBehaviour
 {
+    private Ability instance;
     private HexCell target;
 
-    public AbilityBehaviour(Character character, HexCell target, Ability ability)
+    public AbilityBehaviour(Character character, HexCell target, Ability abilityPrefab)
         : base(character)
     {
         this.target = target;
 
         // Subtract TU
-        character.Stats.CurrentTimeUnits -= ability.Cost;
+        character.Stats.CurrentTimeUnits -= abilityPrefab.Cost;
 
         // LookAt
         character.TurnTowards(target);
 
         // Use
-        ability.Use(character, target);
+        instance = GameObject.Instantiate(abilityPrefab, character.Cell.Position, abilityPrefab.transform.rotation) as Ability;
+        instance.Activate(character, target);
 
-        // TODO: [PLACEHOLDER] listen for end of animation
-        StartCoroutine(DoIdleAfterDelay());
+        // Listen for ability finished
+        instance.AbilityComplete += Ability_AbilityComplete;
     }
 
-    IEnumerator DoIdleAfterDelay()
+    private void Ability_AbilityComplete(object sender, EventArgs e)
     {
-        yield return new WaitForSeconds(1);
+        GameObject.Destroy(instance.gameObject);
 
-        // TODO: casting animation
         SetState(new IdleBehaviour(character));
     }
 }

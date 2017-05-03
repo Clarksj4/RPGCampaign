@@ -7,8 +7,10 @@ public class AirShield : Ability
 {
     private HexDirection direction;
 
-    protected override void Activate()
+    public override void Activate(Character user, HexCell target)
     {
+        base.Activate(user, target);
+
         transform.LookAt(target.Position);
     }
 }

@@ -8,7 +8,8 @@ public class AnimationEvents : MonoBehaviour
     public event EventHandler AttackBegun;
     public event EventHandler AttackApex;
     public event EventHandler AttackComplete;
-    public event EventHandler CastBegun;
+    public event EventHandler CastKneadingBegun;
+    public event EventHandler CastKneadingComplete;
     public event EventHandler CastApex;
     public event EventHandler CastComplete;
     public event EventHandler IdleBegun;
@@ -37,10 +38,16 @@ public class AnimationEvents : MonoBehaviour
             AttackComplete(this, new EventArgs());
     }
 
-    public void NotifyCastBegun()
+    public void NotifyCastKneadingBegun()
     {
-        if (CastBegun != null)
-            CastBegun(this, new EventArgs());
+        if (CastKneadingBegun != null)
+            CastKneadingBegun(this, new EventArgs());
+    }
+
+    public void NotifyCastKneadingComplete()
+    {
+        if (CastKneadingComplete != null)
+            CastKneadingComplete(this, new EventArgs());
     }
 
     public void NotifyCastApex()
