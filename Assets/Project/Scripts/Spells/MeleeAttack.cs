@@ -25,6 +25,9 @@ public class MeleeAttack : Ability
 
     private void AnimEvents_AttackComplete(object sender, EventArgs e)
     {
+        // Stop listening for when the attack is complete
+        user.AnimEvents.AttackComplete -= AnimEvents_AttackComplete;
+
         Deactivate();
     }
 }

@@ -1,25 +1,33 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using Pathfinding;
 
+/// <summary>
+/// Hexhighlighter with object pooling
+/// </summary>
 public class HexHighlighter : MonoBehaviour
 {
-    [Tooltip("Prefab for highlighting cells that are in range")]
-    public GameObject inRange;
-    [Tooltip("Prefab for highlighting cells that are out of range")]
-    public GameObject outOfRange;
+    public Material inRangeMaterial;
+    public Material outOfRangeMaterial;
+    public GameObject highlightPrefab;
     [Tooltip("The distance between the top of a highlighted cell and the highlight")]
     public float verticalOffset = 0.05f;
     [Tooltip("The size ratio between a hex cell and a highlight")]
     public float sizeRatio = 0.8f;
 
-    private List<GameObject> highlights;
+    // Object pools
+    private Queue<GameObject> activeHighlights;
+    private Queue<GameObject> inActiveHighlights;
 
-	void Start ()
+    void Start ()
     {
-        highlights = new List<GameObject>();
-	}
+        activeHighlights = new Queue<GameObject>();
+        inActiveHighlights = new Queue<GameObject>();
+
+        CreateHighlights(5);
+    }
 
     /// <summary>
     /// Highlight all cells in the given collection
@@ -28,7 +36,7 @@ public class HexHighlighter : MonoBehaviour
     {
         // Highlight each cell in collection
         foreach (PathStep step in cells)
-            CreateHighlight(inRange, ((HexCell)(step.Node)).Position);
+            ActivateHighlight(inRangeMaterial, ((HexCell)(step.Node)).Position);
     }
 
     /// <summary>
@@ -41,11 +49,11 @@ public class HexHighlighter : MonoBehaviour
         {
             // Use in range prefab
             if (step.CostTo <= distance)
-                CreateHighlight(inRange, ((HexCell)(step.Node)).Position);
+                ActivateHighlight(inRangeMaterial, ((HexCell)(step.Node)).Position);
 
             // Use out of range prefab
             else
-                CreateHighlight(outOfRange, ((HexCell)(step.Node)).Position);
+                ActivateHighlight(outOfRangeMaterial, ((HexCell)(step.Node)).Position);
         }
     }
 
@@ -54,22 +62,47 @@ public class HexHighlighter : MonoBehaviour
     /// </summary>
     public void Clear()
     {
-        foreach (var highlight in highlights)
-            Destroy(highlight);
+        for (int i = 0; i < activeHighlights.Count; i++)
+        {
+            // Pop
+            GameObject highlight = activeHighlights.Dequeue();
+
+            // Turn off
+            highlight.SetActive(false);
+
+            // Move to inactive
+            inActiveHighlights.Enqueue(highlight);
+        }
+    }
+
+    private void ActivateHighlight(Material material, Vector3 position)
+    {
+        if (inActiveHighlights.Count == 0)
+            CreateHighlights(1);
+
+        // Pop last item
+        GameObject current = inActiveHighlights.Dequeue();
+
+        // Activate
+        current.SetActive(true);
+        current.GetComponent<Renderer>().sharedMaterial = material;
+        current.transform.position = position + (Vector3.up * verticalOffset);
+        current.transform.localScale = Vector3.one * (HexMetrics.outerRadius + HexMetrics.innerRadius) * sizeRatio;
+
+        // Save ref
+        activeHighlights.Enqueue(current);
     }
 
     /// <summary>
     /// Creates a highlight at the given position offset by verticalOffset, sized by sizeRatio
     /// </summary>
-    private void CreateHighlight(GameObject highlight, Vector3 position)
+    private void CreateHighlights(int count)
     {
-        // Instantiate new prefab as child
-        GameObject current = Instantiate(highlight, position + (Vector3.up * verticalOffset), highlight.transform.rotation, transform);
-
-        // Size based on size ratio and cell size
-        current.transform.localScale = Vector3.one * (HexMetrics.outerRadius + HexMetrics.innerRadius) * sizeRatio;
-
-        // Remember ref to highlight (so can be deleted later)
-        highlights.Add(current);
+        for (int i = 0; i < count; i++)
+        {
+            GameObject current = Instantiate(highlightPrefab, transform);
+            current.SetActive(false);
+            inActiveHighlights.Enqueue(current);
+        }
     }
 }
