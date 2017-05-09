@@ -21,8 +21,8 @@ public class CharacterInput : MonoBehaviour
     private HexHighlighter highlighter;
 
     // Behaviour tree variables
+    private HexCell previousCell;
     private HexCell targetCell;
-    private bool newCellTargeted;
     private ICollection<PathStep> movementRange;
     private Path movementPath;
     private Ability Ability { get { return Player.Current.Abilities[0]; } }
@@ -41,15 +41,18 @@ public class CharacterInput : MonoBehaviour
             .Sequence("Sequence")
                 
                 // If the cursor isn't on a cell, then don't do anything
-                .Do("Get cell under cursor", t => GetCellBehaviour())
+                .Do("Update targeted cell", t => UpdateTargetCell())
+                .Inverter("Not")
+                    .Condition("Target cell is null", t => IsTargetNull())
+                .End()
 
                 // Highlight AND do an action (cast or move)
                 .Parallel("Both", 2, 2)
 
                     .Sequence("Highlight")
-                        .Condition("New cell targeted?", t => newCellTargeted)
+                        .Condition("New cell targeted?", t => IsNewCellTargeted())
                         .Do("Clear highlight", t => ClearHighlight())
-                        .Selector("Selector")
+                        .Selector("Highlight path or range")
 
                             // Highlight the movement range of the character in the targeted cell
                             .Sequence("Sequence")
@@ -99,10 +102,6 @@ public class CharacterInput : MonoBehaviour
 
     void Update()
     {
-        targetCell = null;
-        movementPath = null;
-        movementRange = null;
-
         behaviourTree.Tick(new TimeData(Time.deltaTime));
     }
 
@@ -177,27 +176,22 @@ public class CharacterInput : MonoBehaviour
         return null;
     }
 
-    private BehaviourTreeStatus GetCellBehaviour()
+    private BehaviourTreeStatus UpdateTargetCell()
     {
-        BehaviourTreeStatus result = BehaviourTreeStatus.Failure;
+        BehaviourTreeStatus result = BehaviourTreeStatus.Success;
 
         // Get the cell currently under the cursor
-        HexCell current = GetCell();
-        if (current != targetCell)
-        {
-            newCellTargeted = true;
-            targetCell = current;
-        }
+        previousCell = targetCell;
+        targetCell = GetCell();
 
-        else
-            newCellTargeted = false;
-
-
-        // If there is one, success!
-        if (targetCell != null)
-            result = BehaviourTreeStatus.Success;
-
+        // Always return success
         return result;
+    }
+
+    private bool IsTargetNull()
+    {
+        bool targetNull = targetCell == null;
+        return targetNull;
     }
 
     private bool CellOccupied()
@@ -288,5 +282,15 @@ public class CharacterInput : MonoBehaviour
     {
         bool enoughTU = CurrentCharacter.Stats.CurrentTimeUnits >= cost;
         return enoughTU;
+    }
+
+    private bool IsNewCellTargeted()
+    {
+        bool newCell = previousCell != targetCell;
+        if (newCell == false)
+        {
+            int i = 1;
+        }
+        return newCell;
     }
 }

@@ -45,7 +45,7 @@ public class HexHighlighter : MonoBehaviour
     public void Highlight(Path path, float distance)
     {
         // Highlight each step in path
-        foreach (PathStep step in path)
+        foreach (PathStep step in path.Skip(1))
         {
             // Use in range prefab
             if (step.CostTo <= distance)
@@ -62,7 +62,8 @@ public class HexHighlighter : MonoBehaviour
     /// </summary>
     public void Clear()
     {
-        for (int i = 0; i < activeHighlights.Count; i++)
+        int count = activeHighlights.Count;
+        for (int i = 0; i < count; i++)
         {
             // Pop
             GameObject highlight = activeHighlights.Dequeue();
