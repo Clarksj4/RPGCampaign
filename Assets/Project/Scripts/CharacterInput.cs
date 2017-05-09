@@ -12,8 +12,6 @@ public class CharacterInput : MonoBehaviour
     public Player Player;
     [Tooltip("The hex grid the character exists on")]
     public HexGrid HexGrid;
-    [Tooltip("The layer the hex grid is on. Used for raycasting")]
-    public string HexGridLayer = "HexGrid";
 
     public Character CurrentCharacter { get { return Player.Current; } }
 
@@ -31,10 +29,6 @@ public class CharacterInput : MonoBehaviour
     {
         highlighter = GetComponent<HexHighlighter>();
 
-        // Set all cell to hex grid layer
-        foreach (Transform child in HexGrid.GetComponentsInChildren<Transform>())
-            child.gameObject.layer = LayerMask.NameToLayer(HexGridLayer);
-
         // Input behaviour tree
         BehaviourTreeBuilder builder = new BehaviourTreeBuilder();
         behaviourTree = builder
@@ -45,37 +39,39 @@ public class CharacterInput : MonoBehaviour
                 .Inverter("Not")
                     .Condition("Target cell is null", t => IsTargetNull())
                 .End()
+                .Selector("Get path or range")
+                    .Sequence("Get Range")
+                        .Condition("Cell occupied?", t => CellOccupied())
+                        .Condition("Occupant stationary?", t => OccupantStationary())
+                        .Do("Get area", t => GetArea())
+                    .End()
+                    .Sequence("Get Path")
+                        .Inverter("Not")
+                            .Condition("Cell occupied?", t => CellOccupied())
+                        .End()
+                        .Condition("Selected character idle?", t => IsSelectedCharacterIdle())
+                        .Do("Get Path", t => GetPath())
+                    .End()
+                .End()
 
                 // Highlight AND do an action (cast or move)
                 .Parallel("Both", 2, 2)
 
+                    // Highlight range or path
                     .Sequence("Highlight")
                         .Condition("New cell targeted?", t => IsNewCellTargeted())
                         .Do("Clear highlight", t => ClearHighlight())
                         .Selector("Highlight path or range")
-
-                            // Highlight the movement range of the character in the targeted cell
-                            .Sequence("Sequence")
-                                .Condition("Cell occupied?", t => CellOccupied())
-                                .Condition("Occupant stationary?", t => OccupantStationary())
-                                .Do("Highlight move range", t => HighlightArea())
-                            .End()
-
-                            // Highlight the movement path of the selected character
-                            .Sequence("Sequence")
-                                .Inverter("Not")
-                                    .Condition("Cell occupied?", t => CellOccupied())
-                                .End()
-                                .Condition("Selected character's turn?", t => IsSelectedCharactersTurn())
-                                .Condition("Selected character idle?", t => IsSelectedCharacterIdle())
-                                .Do("Highlight path", t => HighlightPath())
-                            .End()
+                            .Do("Highlight move range", t => HighlightArea())
+                            .Do("Highlight path", t => HighlightPath())
                         .End()
                     .End()
+
+                    // Do a thing
                     .Sequence("Act")
 
                         // Do an action when the mouse is clicked
-                        .Condition("Left mouse clicked?", t => Input.GetMouseButtonDown(0))
+                        .Condition("Left mouse clicked?", t => MouseButtonClicked(0))
                         .Condition("Selected character's turn?", t => IsSelectedCharactersTurn())
                         .Condition("Selected character idle?", t => IsSelectedCharacterIdle())
                         .Selector("Move or Attack")
@@ -102,55 +98,10 @@ public class CharacterInput : MonoBehaviour
 
     void Update()
     {
+        movementPath = null;
+        movementRange = null;
+
         behaviourTree.Tick(new TimeData(Time.deltaTime));
-    }
-
-    private void OnDrawGizmos()
-    {
-        // Draw destination
-        if (targetCell != null)
-            DrawCell(targetCell, Color.white);
-
-        // Draw movementPath
-        if (movementPath != null)
-        {
-            foreach (PathStep step in movementPath)
-            {
-                // Cell is green if in range
-                if (step.CostTo <= CurrentCharacter.Stats.CurrentTimeUnits)
-                    DrawCell((HexCell)step.Node, Color.green);
-
-                // Cell is red if out of range
-                else
-                    DrawCell((HexCell)step.Node, Color.red);
-            }
-        }
-
-        // Draw all cells in range
-        if (movementRange != null)
-        {
-            foreach (PathStep step in movementRange)
-                DrawCell((HexCell)step.Node, Color.green);
-        }
-    }
-
-    /// <summary>
-    /// Draw a cell in the given colour with Gizmo lines
-    /// </summary>
-    private void DrawCell(HexCell cell, Color colour)
-    {
-        // Set colour, remember old colour
-        Color oldColour = Gizmos.color;
-        Gizmos.color = colour;
-
-        // Draw line from each vert to next vert
-        Vector3[] corners = cell.GetCorners();
-        for (int i = 0; i < corners.Length - 1; i++)
-            Gizmos.DrawLine(corners[i] + Vector3.up, corners[i + 1] + Vector3.up);
-        Gizmos.DrawLine(corners.Last() + Vector3.up, corners.First() + Vector3.up);
-
-        // Reset colour
-        Gizmos.color = oldColour;
     }
 
     /// <summary>
@@ -165,10 +116,8 @@ public class CharacterInput : MonoBehaviour
             Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
             RaycastHit hitInfo;
 
-            int layer = 1 << LayerMask.NameToLayer(HexGridLayer);
-
             // If there's a hit it must be the hexmesh
-            if (Physics.Raycast(ray, out hitInfo, layer))
+            if (Physics.Raycast(ray, out hitInfo))
                 return HexGrid.GetCell(hitInfo.point);
         }
 
@@ -206,7 +155,7 @@ public class CharacterInput : MonoBehaviour
         return stationary;
     }
 
-    private BehaviourTreeStatus HighlightArea()
+    private BehaviourTreeStatus GetArea()
     {
         BehaviourTreeStatus result = BehaviourTreeStatus.Failure;
 
@@ -214,6 +163,16 @@ public class CharacterInput : MonoBehaviour
         movementRange = Pathfind.Area(targetCell, occupant.Stats.CurrentTimeUnits, occupant.Stats.Traverser);
 
         if (movementRange.Count > 0)
+            result = BehaviourTreeStatus.Success;
+
+        return result;
+    }
+
+    private BehaviourTreeStatus HighlightArea()
+    {
+        BehaviourTreeStatus result = BehaviourTreeStatus.Failure;
+
+        if (movementRange != null)
         {
             highlighter.Highlight(movementRange);
             result = BehaviourTreeStatus.Success;
@@ -222,18 +181,29 @@ public class CharacterInput : MonoBehaviour
         return result;
     }
 
-    private BehaviourTreeStatus HighlightPath()
+    private BehaviourTreeStatus GetPath()
     {
         BehaviourTreeStatus result = BehaviourTreeStatus.Failure;
 
         movementPath = Pathfind.Between(CurrentCharacter.Cell, targetCell, -1, CurrentCharacter.Stats.Traverser);
 
         if (movementPath != null)
+            result = BehaviourTreeStatus.Success;
+
+        return result;
+    }
+
+    private BehaviourTreeStatus HighlightPath()
+    {
+        // Always return success
+        BehaviourTreeStatus result = BehaviourTreeStatus.Failure;
+
+        if (movementPath != null)
         {
             highlighter.Highlight(movementPath, CurrentCharacter.Stats.CurrentTimeUnits);
             result = BehaviourTreeStatus.Success;
         }
-        
+
         return result;
     }
 
@@ -242,6 +212,12 @@ public class CharacterInput : MonoBehaviour
         highlighter.Clear();
 
         return BehaviourTreeStatus.Success;
+    }
+
+    private bool MouseButtonClicked(int button)
+    {
+        bool pressed = Input.GetMouseButtonDown(button);
+        return pressed;
     }
 
     private bool IsSelectedCharactersTurn()
@@ -287,10 +263,54 @@ public class CharacterInput : MonoBehaviour
     private bool IsNewCellTargeted()
     {
         bool newCell = previousCell != targetCell;
-        if (newCell == false)
-        {
-            int i = 1;
-        }
         return newCell;
     }
+
+    //private void OnDrawGizmos()
+    //{
+    //    // Draw destination
+    //    if (targetCell != null)
+    //        DrawCell(targetCell, Color.white);
+
+    //    // Draw movementPath
+    //    if (movementPath != null)
+    //    {
+    //        foreach (PathStep step in movementPath)
+    //        {
+    //            // Cell is green if in range
+    //            if (step.CostTo <= CurrentCharacter.Stats.CurrentTimeUnits)
+    //                DrawCell((HexCell)step.Node, Color.green);
+
+    //            // Cell is red if out of range
+    //            else
+    //                DrawCell((HexCell)step.Node, Color.red);
+    //        }
+    //    }
+
+    //    // Draw all cells in range
+    //    if (movementRange != null)
+    //    {
+    //        foreach (PathStep step in movementRange)
+    //            DrawCell((HexCell)step.Node, Color.green);
+    //    }
+    //}
+
+    ///// <summary>
+    ///// Draw a cell in the given colour with Gizmo lines
+    ///// </summary>
+    //private void DrawCell(HexCell cell, Color colour)
+    //{
+    //    // Set colour, remember old colour
+    //    Color oldColour = Gizmos.color;
+    //    Gizmos.color = colour;
+
+    //    // Draw line from each vert to next vert
+    //    Vector3[] corners = cell.GetCorners();
+    //    for (int i = 0; i < corners.Length - 1; i++)
+    //        Gizmos.DrawLine(corners[i] + Vector3.up, corners[i + 1] + Vector3.up);
+    //    Gizmos.DrawLine(corners.Last() + Vector3.up, corners.First() + Vector3.up);
+
+    //    // Reset colour
+    //    Gizmos.color = oldColour;
+    //}
 }

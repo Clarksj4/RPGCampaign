@@ -48,9 +48,6 @@ public class MoveBehaviour : CharacterBehaviour
         character.transform.LookAt(iTween.PointOnPath(points, t));
         iTween.PutOnPath(character.gameObject, points, t);
 
-        // Update the character's animation
-        UpdateAnimator();
-
         // If reached destination
         if (t >= 1.0f)
         {
