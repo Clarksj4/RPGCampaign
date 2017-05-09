@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using DigitalRuby.PyroParticles;
 
 public class FireBall : Ability
 {
@@ -11,6 +12,9 @@ public class FireBall : Ability
     public Vector3 DetonationPosition;
     public float Speed = 10;
     public float Damage = 1;
+
+    private GameObject kneadingInstance;
+    private GameObject projectileInstance;
 
     public override void Activate(Character user, HexCell target)
     {
@@ -27,18 +31,32 @@ public class FireBall : Ability
     private void AnimEvents_CastKneadingBegun(object sender, EventArgs e)
     {
         // Create Kneading particle effect and make it go!
+        kneadingInstance = Instantiate(KneadingParticleEffect, user.CastPosition, Quaternion.identity);
+        StartCoroutine(CastInHands());
     }
 
     private void AnimEvents_CastKneadingComplete(object sender, EventArgs e)
     {
         // Kill kneading particle effect
+        Destroy(kneadingInstance);
     }
 
     private void AnimEvents_CastApex(object sender, EventArgs e)
     {
         // Create projectile, move towards target
+        projectileInstance = Instantiate(ProjectileParticleEffect, user.CastPosition, Quaternion.identity);
+        projectileInstance.transform.LookAt(target.Occupant.transform.position + DetonationPosition);
 
         // Deactivate upon reaching target!
+    }
+
+    IEnumerator CastInHands()
+    {
+        while (kneadingInstance != null)
+        {
+            kneadingInstance.transform.position = user.CastPosition;
+            yield return null;
+        }
     }
 
     IEnumerator ProjectileMoveTowards()

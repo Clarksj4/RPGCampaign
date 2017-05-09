@@ -18,7 +18,7 @@ public abstract class Ability : MonoBehaviour
     public virtual bool InRange(HexCell origin, HexCell target)
     {
         // Target is NOT within minimum range, and is within maximum range
-        return !Pathfind.InRange(origin, target, MinimumRange, Traverser) &&
+        return !Pathfind.InRange(origin, target, MinimumRange - 1, Traverser) &&
                 Pathfind.InRange(origin, target, MaximumRange, Traverser);
     }
 

@@ -87,6 +87,7 @@ public class CharacterInput : MonoBehaviour
                                 .Condition("Cell occupied?", t => CellOccupied())
                                 .Condition("Occupant stationary?", t => OccupantStationary())
                                 .Condition("Enough TU?", t => EnoughTU(Ability.Cost))
+                                .Condition("In range for ability", t => InRangeForAbility())
                                 .Do("Cast", t => Cast())
                             .End()
                         .End()
@@ -264,6 +265,12 @@ public class CharacterInput : MonoBehaviour
     {
         bool newCell = previousCell != targetCell;
         return newCell;
+    }
+
+    private bool InRangeForAbility()
+    {
+        bool inRange = Ability.InRange(CurrentCharacter.Cell, targetCell);
+        return inRange;
     }
 
     //private void OnDrawGizmos()
