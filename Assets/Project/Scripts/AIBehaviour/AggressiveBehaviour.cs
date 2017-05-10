@@ -37,13 +37,8 @@ public class AggressiveBehaviour : IBehaviourStrategy
                             // Move into range if enough TU 
                             .Sequence("Get in range")
 
-                                // Find a path to a cell that is within range of the chosen attack
+                                // Find a path to a cell that is within range of the chosen attack, move towards it
                                 .Do("Find path to in range position", t => FindPath())
-
-                                // Enough TU to move AND attack
-                                .Condition("Enough TU for move and attack?", t => WithinCost())
-
-                                // Do the move
                                 .Do("Move into range", t => FollowPath())
                             .End()
                         .End()
@@ -154,7 +149,7 @@ public class AggressiveBehaviour : IBehaviourStrategy
     /// <returns>True if the current character has enough time units to move and attack</returns>
     private bool WithinCost()
     {
-        bool withinCost = current.Stats.CurrentTimeUnits >= path.Cost + ability.Cost;
+        bool withinCost = current.Stats.CurrentTimeUnits >= path.Cost;
         return withinCost;
     }
 
@@ -171,7 +166,7 @@ public class AggressiveBehaviour : IBehaviourStrategy
         if (!setAlongPath)
         {
             // Move character
-            current.Move(path);
+            current.Move(path.Truncate(current.Stats.CurrentTimeUnits));
             setAlongPath = true;
         }
 
