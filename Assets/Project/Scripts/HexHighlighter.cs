@@ -45,7 +45,7 @@ public class HexHighlighter : MonoBehaviour
     public void Highlight(Path path, float distance)
     {
         // Highlight each step in path
-        foreach (PathStep step in path.Skip(1))
+        foreach (PathStep step in path)
         {
             // Use in range prefab
             if (step.CostTo <= distance)
@@ -106,4 +106,52 @@ public class HexHighlighter : MonoBehaviour
             inActiveHighlights.Enqueue(current);
         }
     }
+
+    //private void OnDrawGizmos()
+    //{
+    //    // Draw destination
+    //    if (targetCell != null)
+    //        DrawCell(targetCell, Color.white);
+
+    //    // Draw movementPath
+    //    if (movementPath != null)
+    //    {
+    //        foreach (PathStep step in movementPath)
+    //        {
+    //            // Cell is green if in range
+    //            if (step.CostTo <= CurrentCharacter.Stats.CurrentTimeUnits)
+    //                DrawCell((HexCell)step.Node, Color.green);
+
+    //            // Cell is red if out of range
+    //            else
+    //                DrawCell((HexCell)step.Node, Color.red);
+    //        }
+    //    }
+
+    //    // Draw all cells in range
+    //    if (movementRange != null)
+    //    {
+    //        foreach (PathStep step in movementRange)
+    //            DrawCell((HexCell)step.Node, Color.green);
+    //    }
+    //}
+
+    ///// <summary>
+    ///// Draw a cell in the given colour with Gizmo lines
+    ///// </summary>
+    //private void DrawCell(HexCell cell, Color colour)
+    //{
+    //    // Set colour, remember old colour
+    //    Color oldColour = Gizmos.color;
+    //    Gizmos.color = colour;
+
+    //    // Draw line from each vert to next vert
+    //    Vector3[] corners = cell.GetCorners();
+    //    for (int i = 0; i < corners.Length - 1; i++)
+    //        Gizmos.DrawLine(corners[i] + Vector3.up, corners[i + 1] + Vector3.up);
+    //    Gizmos.DrawLine(corners.Last() + Vector3.up, corners.First() + Vector3.up);
+
+    //    // Reset colour
+    //    Gizmos.color = oldColour;
+    //}
 }
