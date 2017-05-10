@@ -20,6 +20,8 @@ public class MeleeAttack : Ability
 
     private void AnimEvents_AttackApex(object sender, EventArgs e)
     {
+        user.AnimEvents.AttackApex -= AnimEvents_AttackApex;
+
         target.Occupant.TakeDamage(Damage);
     }
 
