@@ -5,12 +5,12 @@ namespace TurnBased
     /// <summary>
     /// Interface for object that operates in a turn based manner
     /// </summary>
-    public interface IPawn : IComparable<IPawn>
+    public interface IPawn<T> where T : IComparable<T>
     {
         /// <summary>
-        /// The object that controls this pawn
+        /// The pawn's priority in the turn order
         /// </summary>
-        IPawnController Controller { get; }
+        T Priority { get; }
 
         /// <summary>
         /// The pawn's turn is starting
@@ -21,5 +21,7 @@ namespace TurnBased
         /// The pawn's turn is ending
         /// </summary>
         void TurnEnd();
+
+
     }
 }

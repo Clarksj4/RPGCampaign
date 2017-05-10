@@ -6,12 +6,12 @@ using TurnBased;
 
 public class TurnSystem : MonoBehaviour
 {
-    public TurnOrder Order { get; private set; }
+    public TurnOrder<float> Order { get; private set; }
     public Character Current { get { return (Character)Order.Current; } }
 
     void Awake()
     {
-        Order = new TurnOrder();
+        Order = new TurnOrder<float>();
 
         Character[] characters = FindObjectsOfType<Character>();
         foreach (Character character in characters)

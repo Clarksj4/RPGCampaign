@@ -6,14 +6,14 @@ using System.Linq;
 namespace TurnBased
 {
     /// <summary>
-    /// Stores and cycles pawns in priority order based upon their implementation of the IComparable interface
+    /// Stores and cycles pawns in priority order
     /// </summary>
-    public class TurnOrder : IEnumerable<IPawn>
+    public class TurnOrder<T> : IEnumerable<IPawn<T>> where T : IComparable<T>
     {
         /// <summary>
-        /// The whose turn it currently is. Returns null if the current pawn was removed from the order
+        /// The pawn whose turn it currently is. Returns null if the current pawn was removed from the order
         /// </summary>
-        public IPawn Current
+        public IPawn<T> Current
         {
             get
             {
@@ -26,8 +26,8 @@ namespace TurnBased
             }
         }
 
-        private LinkedList<IPawn> pawns;
-        private LinkedListNode<IPawn> currentNode;
+        private LinkedList<IPawn<T>> pawns;
+        private LinkedListNode<IPawn<T>> currentNode;
         private bool currentToBeRemoved;
 
         /// <summary>
@@ -35,15 +35,15 @@ namespace TurnBased
         /// </summary>
         public TurnOrder()
         {
-            pawns = new LinkedList<IPawn>();
+            pawns = new LinkedList<IPawn<T>>();
             currentNode = null;
             currentToBeRemoved = false;
         }
 
         /// <summary>
-        /// Inserts the pawn into the turn order based upon its associated IComparable
+        /// Inserts the pawn in order based upon its priority
         /// </summary>
-        public void Insert(IPawn pawn)
+        public void Insert(IPawn<T> pawn)
         {
             // Can't insert null pawn
             if (pawn == null)
@@ -63,7 +63,7 @@ namespace TurnBased
 
                 // Walk until finding a smaller node
                 while (walker != null &&
-                       pawn.CompareTo(walker.Value) < 0)
+                       pawn.Priority.CompareTo(walker.Value.Priority) < 0)
                     walker = walker.Next;
 
                 // Add to end of order
@@ -79,14 +79,14 @@ namespace TurnBased
         /// <summary>
         /// Removes the pawn from the turn order
         /// </summary>
-        public bool Remove(IPawn pawn)
+        public bool Remove(IPawn<T> pawn)
         {
             // Can't remove null pawn
             if (pawn == null)
                 throw new ArgumentNullException("Pawn cannot be null");
 
             // Find pawn's node incase its the current node
-            LinkedListNode<IPawn> node = pawns.Find(pawn);
+            LinkedListNode<IPawn<T>> node = pawns.Find(pawn);
 
             if (node == null)
                 return false;
@@ -102,9 +102,9 @@ namespace TurnBased
         }
 
         /// <summary>
-        /// Updates the pawns position in the turn order based upon its associated IComparable. 
+        /// Updates the pawn's position in the turn order based upon its priority
         /// </summary>
-        public void UpdatePriority(IPawn pawn)
+        public void UpdatePriority(IPawn<T> pawn)
         {
             // Can't update pawn marked for removal
             if (currentToBeRemoved && currentNode.Value == pawn)
@@ -147,7 +147,7 @@ namespace TurnBased
             return isMore;
         }
 
-        public IEnumerator<IPawn> GetEnumerator()
+        public IEnumerator<IPawn<T>> GetEnumerator()
         {
             // Don't return the node that is marked for removal
             if (currentToBeRemoved)
@@ -194,19 +194,13 @@ namespace TurnBased
         }
 
         /// <summary>
-        /// Inform current pawn and controller that its their turn
+        /// Inform current pawn that its their turn
         /// </summary>
         void StartCurrent()
         {
+            // Activate current pawn...
             if (Current != null)
-            {
-                // Activate current pawn...
                 Current.TurnStart();
-
-                // ...THEN tell controller pawn is active
-                if (Current.Controller != null)
-                    Current.Controller.PawnStart(Current);
-            }
         }
 
         IEnumerator IEnumerable.GetEnumerator()
