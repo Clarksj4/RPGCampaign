@@ -24,6 +24,8 @@ public class CharacterInput : MonoBehaviour
     private ICollection<PathStep> movementRange;
     private Path movementPath;
     private Ability Ability { get { return Player.Current.Abilities[0]; } }
+    private bool isSelectedTurn;
+    private bool newTurn;
 
     private void Start()
     {
@@ -59,7 +61,9 @@ public class CharacterInput : MonoBehaviour
 
                     // Highlight range or path
                     .Sequence("Highlight")
-                        .Condition("New cell targeted?", t => IsNewCellTargeted())
+                        .Inverter("Not")
+                            .Condition("Highlight valid?", t => IsHighlightValid())
+                        .End()
                         .Do("Clear highlight", t => ClearHighlight())
                         .Selector("Highlight path or range")
                             .Do("Highlight move range", t => HighlightArea())
@@ -99,6 +103,12 @@ public class CharacterInput : MonoBehaviour
 
     void Update()
     {
+        if (isSelectedTurn != CurrentCharacter.IsTurn)
+            newTurn = true;
+        else
+            newTurn = false;
+
+        isSelectedTurn = CurrentCharacter.IsTurn;
         movementPath = null;
         movementRange = null;
 
@@ -273,51 +283,9 @@ public class CharacterInput : MonoBehaviour
         return inRange;
     }
 
-    //private void OnDrawGizmos()
-    //{
-    //    // Draw destination
-    //    if (targetCell != null)
-    //        DrawCell(targetCell, Color.white);
-
-    //    // Draw movementPath
-    //    if (movementPath != null)
-    //    {
-    //        foreach (PathStep step in movementPath)
-    //        {
-    //            // Cell is green if in range
-    //            if (step.CostTo <= CurrentCharacter.Stats.CurrentTimeUnits)
-    //                DrawCell((HexCell)step.Node, Color.green);
-
-    //            // Cell is red if out of range
-    //            else
-    //                DrawCell((HexCell)step.Node, Color.red);
-    //        }
-    //    }
-
-    //    // Draw all cells in range
-    //    if (movementRange != null)
-    //    {
-    //        foreach (PathStep step in movementRange)
-    //            DrawCell((HexCell)step.Node, Color.green);
-    //    }
-    //}
-
-    ///// <summary>
-    ///// Draw a cell in the given colour with Gizmo lines
-    ///// </summary>
-    //private void DrawCell(HexCell cell, Color colour)
-    //{
-    //    // Set colour, remember old colour
-    //    Color oldColour = Gizmos.color;
-    //    Gizmos.color = colour;
-
-    //    // Draw line from each vert to next vert
-    //    Vector3[] corners = cell.GetCorners();
-    //    for (int i = 0; i < corners.Length - 1; i++)
-    //        Gizmos.DrawLine(corners[i] + Vector3.up, corners[i + 1] + Vector3.up);
-    //    Gizmos.DrawLine(corners.Last() + Vector3.up, corners.First() + Vector3.up);
-
-    //    // Reset colour
-    //    Gizmos.color = oldColour;
-    //}
+    private bool IsHighlightValid()
+    {
+        bool valid = !newTurn && !IsNewCellTargeted();
+        return valid;
+    }
 }
