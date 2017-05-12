@@ -18,6 +18,8 @@ public class Character : MonoBehaviour, IPawn<float>
     public HexGrid HexGrid;
     [Tooltip("The abilities this character can use")]
     public Ability[] Abilities;
+    public Transform Head;
+    public Transform Torso;
     public Transform LeftHand;
     public Transform RightHand;
 

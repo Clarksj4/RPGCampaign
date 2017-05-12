@@ -7,14 +7,12 @@ using DigitalRuby.PyroParticles;
 public class FireBall : Ability
 {
     public GameObject KneadingParticleEffect;
-    public GameObject ProjectileParticleEffect;
-    public GameObject DetonationParticleEffect;
-    public Vector3 DetonationPosition;
+    public FireBallParticle ProjectileParticleEffect;
     public float Speed = 10;
     public float Damage = 1;
 
     private GameObject kneadingInstance;
-    private GameObject projectileInstance;
+    private FireBallParticle projectileInstance;
 
     public override void Activate(Character user, HexCell target)
     {
@@ -30,6 +28,8 @@ public class FireBall : Ability
 
     private void AnimEvents_CastKneadingBegun(object sender, EventArgs e)
     {
+        user.AnimEvents.CastKneadingBegun -= AnimEvents_CastKneadingBegun;
+
         // Create Kneading particle effect and make it go!
         kneadingInstance = Instantiate(KneadingParticleEffect, user.CastPosition, Quaternion.identity);
         StartCoroutine(CastInHands());
@@ -37,17 +37,29 @@ public class FireBall : Ability
 
     private void AnimEvents_CastKneadingComplete(object sender, EventArgs e)
     {
+        user.AnimEvents.CastKneadingComplete -= AnimEvents_CastKneadingComplete;
+
         // Kill kneading particle effect
         Destroy(kneadingInstance);
     }
 
     private void AnimEvents_CastApex(object sender, EventArgs e)
     {
+        user.AnimEvents.CastApex -= AnimEvents_CastApex;
+
         // Create projectile, move towards target
         projectileInstance = Instantiate(ProjectileParticleEffect, user.CastPosition, Quaternion.identity);
-        projectileInstance.transform.LookAt(target.Occupant.transform.position + DetonationPosition);
+        projectileInstance.MoveToDetonate(target.Occupant.Torso, Speed, () => OnMoveComplete(), () => OnExplosionComplete());
+    }
 
-        // Deactivate upon reaching target!
+    private void OnMoveComplete()
+    {
+        target.Occupant.TakeDamage(Damage);
+    }
+
+    private void OnExplosionComplete()
+    {
+        Deactivate();
     }
 
     IEnumerator CastInHands()
@@ -57,30 +69,5 @@ public class FireBall : Ability
             kneadingInstance.transform.position = user.CastPosition;
             yield return null;
         }
-    }
-
-    IEnumerator ProjectileMoveTowards()
-    {
-        Vector3 destination = target.Position + DetonationPosition;
-        while (transform.position != destination)
-        {
-            Vector3 movementSpeed = Vector3.MoveTowards(transform.position, destination, Speed * Time.deltaTime);
-            transform.position = movementSpeed;
-
-            yield return null;
-        }
-
-        target.Occupant.TakeDamage(Damage);
-
-        yield return StartCoroutine(Detonate());
-    }
-
-    IEnumerator Detonate()
-    {
-        // Create detonation effect
-
-        yield return null;
-
-        Deactivate();
     }
 }

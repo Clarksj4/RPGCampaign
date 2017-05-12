@@ -53,10 +53,6 @@ namespace DigitalRuby.PyroParticles
         private IEnumerator SendCollisionAfterDelay()
         {
             yield return new WaitForSeconds(ProjectileColliderDelay);
-
-            Vector3 dir = ProjectileDirection * ProjectileColliderSpeed;
-            dir = ProjectileColliderObject.transform.rotation * dir;
-            ProjectileColliderObject.GetComponent<Rigidbody>().velocity = dir;
         }
 
         protected override void Start()
@@ -64,6 +60,28 @@ namespace DigitalRuby.PyroParticles
             base.Start();
 
             StartCoroutine(SendCollisionAfterDelay());
+        }
+
+        public void Detonate()
+        {
+            // stop the projectile
+            collided = true;
+            Stop();
+
+            foreach (ParticleSystem p in ProjectileDestroyParticleSystemsOnCollision)
+            {
+                GameObject.Destroy(p, 0.1f);
+            }
+
+            // play collision sound
+            if (ProjectileCollisionSound != null)
+            {
+                ProjectileCollisionSound.Play();
+            }
+
+            //play the collision particle system
+            ProjectileExplosionParticleSystem.Play();
+            FireBaseScript.CreateExplosion(transform.position, ProjectileExplosionRadius, ProjectileExplosionForce);
         }
 
         public void HandleCollision(GameObject obj, Collision c)
