@@ -29,6 +29,7 @@ namespace Pathfinding
         /// </summary>
         public int Count { get { return steps.Count; } }
 
+        public LinkedList<PathStep> Steps { get { return steps; } }
         private LinkedList<PathStep> steps;
 
         /// <summary>

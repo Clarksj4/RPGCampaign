@@ -42,19 +42,31 @@ public class HexHighlighter : MonoBehaviour
     /// <summary>
     /// Highlight all cells in the path according to whether they are within range of the given distance or not
     /// </summary>
-    public void Highlight(Path path, float distance)
+    public void Highlight(Path path, float distance, float timeUnitsToSpend)
     {
-        // Highlight each step in path
-        foreach (PathStep step in path)
-        {
-            // Use in range prefab
-            if (step.CostTo <= distance)
-                ActivateHighlight(inRangeMaterial, ((HexCell)(step.Node)).Position);
+        GameObject withinCostHighlight = null;
+        float withinCost = 0;
 
-            // Use out of range prefab
+        var walker = path.Steps.First;
+        while (walker != null)
+        {
+            PathStep step = walker.Value;
+
+            if (step.CostTo <= distance)
+            {
+                withinCostHighlight = ActivateHighlight(inRangeMaterial, ((HexCell)(step.Node)).Position);
+                withinCost = step.CostTo;
+            }
+
             else
                 ActivateHighlight(outOfRangeMaterial, ((HexCell)(step.Node)).Position);
+
+            walker = walker.Next;
         }
+
+        TextMesh textMesh = withinCostHighlight.GetComponentInChildren<TextMesh>(true);
+        textMesh.text = (timeUnitsToSpend - withinCost).ToString();
+        textMesh.gameObject.SetActive(true);
     }
 
     /// <summary>
@@ -69,6 +81,7 @@ public class HexHighlighter : MonoBehaviour
             GameObject highlight = activeHighlights.Dequeue();
 
             // Turn off
+            highlight.transform.GetChild(0).gameObject.SetActive(false);
             highlight.SetActive(false);
 
             // Move to inactive
@@ -76,7 +89,7 @@ public class HexHighlighter : MonoBehaviour
         }
     }
 
-    private void ActivateHighlight(Material material, Vector3 position)
+    private GameObject ActivateHighlight(Material material, Vector3 position, string text = null)
     {
         if (inActiveHighlights.Count == 0)
             CreateHighlights(1);
@@ -90,8 +103,13 @@ public class HexHighlighter : MonoBehaviour
         current.transform.position = position + (Vector3.up * verticalOffset);
         current.transform.localScale = Vector3.one * (HexMetrics.outerRadius + HexMetrics.innerRadius) * sizeRatio;
 
+        if (text != null)
+            current.GetComponentInChildren<TextMesh>().text = text;
+
         // Save ref
         activeHighlights.Enqueue(current);
+
+        return current;
     }
 
     /// <summary>

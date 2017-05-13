@@ -211,7 +211,7 @@ public class CharacterInput : MonoBehaviour
 
         if (movementPath != null)
         {
-            highlighter.Highlight(movementPath, CurrentCharacter.Stats.CurrentTimeUnits);
+            highlighter.Highlight(movementPath, CurrentCharacter.Stats.CurrentTimeUnits, CurrentCharacter.Stats.CurrentTimeUnits);
             result = BehaviourTreeStatus.Success;
         }
 
