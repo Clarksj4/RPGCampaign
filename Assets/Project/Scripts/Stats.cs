@@ -29,7 +29,6 @@ public class Stats : MonoBehaviour
     [Header("Time Units")]
     public float CurrentTimeUnits;
     public float MaxTimeUnits;
-    public float TimeUnitsPerTurn;
 
     /// <summary>
     /// The capacity and current level of each of this characters elements
@@ -50,9 +49,7 @@ public class Stats : MonoBehaviour
 
     public void RefreshTimeUnits()
     {
-        CurrentTimeUnits += TimeUnitsPerTurn;
-        if (CurrentTimeUnits > MaxTimeUnits)
-            CurrentTimeUnits = MaxTimeUnits;
+        CurrentTimeUnits = MaxTimeUnits;
     }
 
     /// <summary>

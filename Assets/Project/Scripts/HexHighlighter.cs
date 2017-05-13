@@ -1,25 +1,33 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using Pathfinding;
 
+/// <summary>
+/// Hexhighlighter with object pooling
+/// </summary>
 public class HexHighlighter : MonoBehaviour
 {
-    [Tooltip("Prefab for highlighting cells that are in range")]
-    public GameObject inRange;
-    [Tooltip("Prefab for highlighting cells that are out of range")]
-    public GameObject outOfRange;
+    public Material inRangeMaterial;
+    public Material outOfRangeMaterial;
+    public GameObject highlightPrefab;
     [Tooltip("The distance between the top of a highlighted cell and the highlight")]
     public float verticalOffset = 0.05f;
     [Tooltip("The size ratio between a hex cell and a highlight")]
     public float sizeRatio = 0.8f;
 
-    private List<GameObject> highlights;
+    // Object pools
+    private Queue<GameObject> activeHighlights;
+    private Queue<GameObject> inActiveHighlights;
 
-	void Start ()
+    void Start ()
     {
-        highlights = new List<GameObject>();
-	}
+        activeHighlights = new Queue<GameObject>();
+        inActiveHighlights = new Queue<GameObject>();
+
+        CreateHighlights(5);
+    }
 
     /// <summary>
     /// Highlight all cells in the given collection
@@ -28,25 +36,37 @@ public class HexHighlighter : MonoBehaviour
     {
         // Highlight each cell in collection
         foreach (PathStep step in cells)
-            CreateHighlight(inRange, ((HexCell)(step.Node)).Position);
+            ActivateHighlight(inRangeMaterial, ((HexCell)(step.Node)).Position);
     }
 
     /// <summary>
     /// Highlight all cells in the path according to whether they are within range of the given distance or not
     /// </summary>
-    public void Highlight(Path path, float distance)
+    public void Highlight(Path path, float distance, float timeUnitsToSpend)
     {
-        // Highlight each step in path
-        foreach (PathStep step in path)
-        {
-            // Use in range prefab
-            if (step.CostTo <= distance)
-                CreateHighlight(inRange, ((HexCell)(step.Node)).Position);
+        GameObject withinCostHighlight = null;
+        float withinCost = 0;
 
-            // Use out of range prefab
+        var walker = path.Steps.First;
+        while (walker != null)
+        {
+            PathStep step = walker.Value;
+
+            if (step.CostTo <= distance)
+            {
+                withinCostHighlight = ActivateHighlight(inRangeMaterial, ((HexCell)(step.Node)).Position);
+                withinCost = step.CostTo;
+            }
+
             else
-                CreateHighlight(outOfRange, ((HexCell)(step.Node)).Position);
+                ActivateHighlight(outOfRangeMaterial, ((HexCell)(step.Node)).Position);
+
+            walker = walker.Next;
         }
+
+        TextMesh textMesh = withinCostHighlight.GetComponentInChildren<TextMesh>(true);
+        textMesh.text = (timeUnitsToSpend - withinCost).ToString();
+        textMesh.gameObject.SetActive(true);
     }
 
     /// <summary>
@@ -54,22 +74,102 @@ public class HexHighlighter : MonoBehaviour
     /// </summary>
     public void Clear()
     {
-        foreach (var highlight in highlights)
-            Destroy(highlight);
+        int count = activeHighlights.Count;
+        for (int i = 0; i < count; i++)
+        {
+            // Pop
+            GameObject highlight = activeHighlights.Dequeue();
+
+            // Turn off
+            highlight.transform.GetChild(0).gameObject.SetActive(false);
+            highlight.SetActive(false);
+
+            // Move to inactive
+            inActiveHighlights.Enqueue(highlight);
+        }
+    }
+
+    private GameObject ActivateHighlight(Material material, Vector3 position, string text = null)
+    {
+        if (inActiveHighlights.Count == 0)
+            CreateHighlights(1);
+
+        // Pop last item
+        GameObject current = inActiveHighlights.Dequeue();
+
+        // Activate
+        current.SetActive(true);
+        current.GetComponent<Renderer>().sharedMaterial = material;
+        current.transform.position = position + (Vector3.up * verticalOffset);
+        current.transform.localScale = Vector3.one * (HexMetrics.outerRadius + HexMetrics.innerRadius) * sizeRatio;
+
+        if (text != null)
+            current.GetComponentInChildren<TextMesh>().text = text;
+
+        // Save ref
+        activeHighlights.Enqueue(current);
+
+        return current;
     }
 
     /// <summary>
     /// Creates a highlight at the given position offset by verticalOffset, sized by sizeRatio
     /// </summary>
-    private void CreateHighlight(GameObject highlight, Vector3 position)
+    private void CreateHighlights(int count)
     {
-        // Instantiate new prefab as child
-        GameObject current = Instantiate(highlight, position + (Vector3.up * verticalOffset), highlight.transform.rotation, transform);
-
-        // Size based on size ratio and cell size
-        current.transform.localScale = Vector3.one * (HexMetrics.outerRadius + HexMetrics.innerRadius) * sizeRatio;
-
-        // Remember ref to highlight (so can be deleted later)
-        highlights.Add(current);
+        for (int i = 0; i < count; i++)
+        {
+            GameObject current = Instantiate(highlightPrefab, transform);
+            current.SetActive(false);
+            inActiveHighlights.Enqueue(current);
+        }
     }
+
+    //private void OnDrawGizmos()
+    //{
+    //    // Draw destination
+    //    if (targetCell != null)
+    //        DrawCell(targetCell, Color.white);
+
+    //    // Draw movementPath
+    //    if (movementPath != null)
+    //    {
+    //        foreach (PathStep step in movementPath)
+    //        {
+    //            // Cell is green if in range
+    //            if (step.CostTo <= CurrentCharacter.Stats.CurrentTimeUnits)
+    //                DrawCell((HexCell)step.Node, Color.green);
+
+    //            // Cell is red if out of range
+    //            else
+    //                DrawCell((HexCell)step.Node, Color.red);
+    //        }
+    //    }
+
+    //    // Draw all cells in range
+    //    if (movementRange != null)
+    //    {
+    //        foreach (PathStep step in movementRange)
+    //            DrawCell((HexCell)step.Node, Color.green);
+    //    }
+    //}
+
+    ///// <summary>
+    ///// Draw a cell in the given colour with Gizmo lines
+    ///// </summary>
+    //private void DrawCell(HexCell cell, Color colour)
+    //{
+    //    // Set colour, remember old colour
+    //    Color oldColour = Gizmos.color;
+    //    Gizmos.color = colour;
+
+    //    // Draw line from each vert to next vert
+    //    Vector3[] corners = cell.GetCorners();
+    //    for (int i = 0; i < corners.Length - 1; i++)
+    //        Gizmos.DrawLine(corners[i] + Vector3.up, corners[i + 1] + Vector3.up);
+    //    Gizmos.DrawLine(corners.Last() + Vector3.up, corners.First() + Vector3.up);
+
+    //    // Reset colour
+    //    Gizmos.color = oldColour;
+    //}
 }

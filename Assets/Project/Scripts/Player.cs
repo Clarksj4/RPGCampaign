@@ -1,50 +1,38 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 using System.Linq;
+using TurnBased;
 
 public abstract class Player : MonoBehaviour
 {
-    protected Character current;
-    protected List<Character> characters;
+    public Character Current { get; private set; }
+    public List<Character> Allies { get; private set;}
+    public bool IsTurn { get { return turnSystem.Current.Controller == this; } }
 
-    public List<Character> Characters { get { return characters; } }
-    public Character Current { get { return current; } }
-    public bool IsTurn { get { return turnSystem.CurrentPlayer == this; } }
-
-    private TurnSystem turnSystem;
+    protected TurnSystem turnSystem;
 
     protected virtual void Awake()
     {
         turnSystem = FindObjectOfType<TurnSystem>();
 
         // Get list of all characters this player controls
-        characters = GetComponentsInChildren<Character>().ToList();
+        Allies = GetComponentsInChildren<Character>().ToList();
+
+        Current = Allies[0];
     }
 
-    protected virtual void Start()
+    public void AddAlly(Character actor)
     {
-        foreach (Character actor in characters)
-            actor.Controller = this;
+        Allies.Add(actor);
     }
 
-    public void Add(Character actor)
+    public void RemoveAlly(Character actor)
     {
-        characters.Add(actor);
+        Allies.Remove(actor);
     }
 
-    public void Remove(Character actor)
+    public virtual void PawnStart(IPawn<float> pawn)
     {
-        characters.Remove(actor);
-    }
-
-    public virtual void Activate(Character actor)
-    {
-        current = actor;
-    }
-
-    public virtual void EndTurn()
-    {
-        turnSystem.EndTurn();
+        Current = (Character)pawn;
     }
 }

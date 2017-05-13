@@ -6,5 +6,5 @@ using FluentBehaviourTree;
 public interface IBehaviourStrategy
 {
     BehaviourTreeStatus Update();
-    void Activate(Character current);
+    void PawnStart(Character current);
 }

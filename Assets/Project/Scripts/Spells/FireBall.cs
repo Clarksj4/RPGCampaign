@@ -2,38 +2,72 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using DigitalRuby.PyroParticles;
 
-public class FireBall : Spell
+public class FireBall : Ability
 {
-    public Vector3 DetonationPosition;
+    public GameObject KneadingParticleEffect;
+    public FireBallParticle ProjectileParticleEffect;
     public float Speed = 10;
     public float Damage = 1;
 
-    public override void Cast(Character caster, HexCell target)
+    private GameObject kneadingInstance;
+    private FireBallParticle projectileInstance;
+
+    public override void Activate(Character user, HexCell target)
     {
-        GameObject instance = Instantiate(gameObject, caster.transform.position + caster.CastPosition, Quaternion.identity) as GameObject;
+        base.Activate(user, target);
 
-        Spell spell = instance.GetComponent<Spell>();
-        spell.caster = caster;
-        spell.target = target;
+        // Tell user to do attack animation
+        user.Animator.SetTrigger("Cast");
 
-        spell.transform.LookAt(target.Position);
+        user.AnimEvents.CastKneadingBegun += AnimEvents_CastKneadingBegun;
+        user.AnimEvents.CastKneadingComplete += AnimEvents_CastKneadingComplete;
+        user.AnimEvents.CastApex += AnimEvents_CastApex;
     }
 
-    void Update ()
+    private void AnimEvents_CastKneadingBegun(object sender, EventArgs e)
     {
-        Vector3 destination = target.Position + DetonationPosition;
+        user.AnimEvents.CastKneadingBegun -= AnimEvents_CastKneadingBegun;
 
-        Vector3 movementSpeed = Vector3.MoveTowards(transform.position, destination, Speed * Time.deltaTime);
-        transform.position = movementSpeed;
+        // Create Kneading particle effect and make it go!
+        kneadingInstance = Instantiate(KneadingParticleEffect, user.CastPosition, Quaternion.identity);
+        StartCoroutine(CastInHands());
+    }
 
-        // TODO: Destroy upon arriving at destination
-        if (transform.position == destination)
+    private void AnimEvents_CastKneadingComplete(object sender, EventArgs e)
+    {
+        user.AnimEvents.CastKneadingComplete -= AnimEvents_CastKneadingComplete;
+
+        // Kill kneading particle effect
+        Destroy(kneadingInstance);
+    }
+
+    private void AnimEvents_CastApex(object sender, EventArgs e)
+    {
+        user.AnimEvents.CastApex -= AnimEvents_CastApex;
+
+        // Create projectile, move towards target
+        projectileInstance = Instantiate(ProjectileParticleEffect, user.CastPosition, Quaternion.identity);
+        projectileInstance.MoveToDetonate(target.Occupant.Torso, Speed, () => OnMoveComplete(), () => OnExplosionComplete());
+    }
+
+    private void OnMoveComplete()
+    {
+        target.Occupant.TakeDamage(Damage);
+    }
+
+    private void OnExplosionComplete()
+    {
+        Deactivate();
+    }
+
+    IEnumerator CastInHands()
+    {
+        while (kneadingInstance != null)
         {
-            target.Occupant.Stats.TakeDamage(Damage);
-
-            Destroy(gameObject);
+            kneadingInstance.transform.position = user.CastPosition;
+            yield return null;
         }
-            
     }
 }

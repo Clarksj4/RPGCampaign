@@ -31,6 +31,9 @@ public class MoveBehaviour : CharacterBehaviour
             eta = distance / character.Stats.Speed;
             time = 0;
             t = 0;
+
+            if (Animator != null)
+                Animator.SetBool("Moving", true);
         }
     }
 
@@ -45,17 +48,21 @@ public class MoveBehaviour : CharacterBehaviour
         character.transform.LookAt(iTween.PointOnPath(points, t));
         iTween.PutOnPath(character.gameObject, points, t);
 
-        // Update the character's animation
-        UpdateAnimator();
-
         // If reached destination
         if (t >= 1.0f)
         {
+            Vector3 lookPosition = character.transform.position + character.transform.forward;
+            lookPosition.y = character.transform.position.y;
+            character.transform.LookAt(lookPosition);
+
             // Pay for movement
             character.Stats.CurrentTimeUnits -= path.Cost;
 
             // Update reference to the currently occupied cell
             UpdateOccupiedCellFinal();
+
+            if (Animator != null)
+                Animator.SetBool("Moving", false);
 
             SetState(new IdleBehaviour(character));
         }
@@ -102,32 +109,32 @@ public class MoveBehaviour : CharacterBehaviour
 
     private void UpdateAnimator()
     {
-        if (Animator != null)
-        {
-            float t = time / eta;
-            if (t >= 1f)
-            {
-                Animator.SetFloat("Speed", 0f);
-                Animator.SetFloat("Direction", 0f);
-            }
+        //if (Animator != null)
+        //{
+        //    float t = time / eta;
+        //    if (t >= 1f)
+        //    {
+        //        Animator.SetFloat("Speed", 0f);
+        //        Animator.SetFloat("Direction", 0f);
+        //    }
 
-            else
-            {
-                // Speed
-                Animator.SetFloat("Speed", 1f);
+        //    else
+        //    {
+        //        // Speed
+        //        Animator.SetFloat("Speed", 1f);
 
-                // Focus point for model looking is 4 updates ahead of current position on path
-                Vector3 focalPoint = iTween.PointOnPath(points, (time + 4 * Time.smoothDeltaTime) / eta);
+        //        // Focus point for model looking is 4 updates ahead of current position on path
+        //        Vector3 focalPoint = iTween.PointOnPath(points, (time + 4 * Time.smoothDeltaTime) / eta);
 
-                // Calculate direction then angle of focal point
-                Vector3 lookDir = (focalPoint - Transform.position).normalized;
-                float lookAngle = Vector3.Angle(Transform.forward, lookDir);
+        //        // Calculate direction then angle of focal point
+        //        Vector3 lookDir = (focalPoint - Transform.position).normalized;
+        //        float lookAngle = Vector3.Angle(Transform.forward, lookDir);
 
-                // If the angle to the left or right?
-                float leftOrRight = MathExtension.AngleDir(Transform.forward, lookDir.normalized, Transform.up);
+        //        // If the angle to the left or right?
+        //        float leftOrRight = MathExtension.AngleDir(Transform.forward, lookDir.normalized, Transform.up);
 
-                Animator.SetFloat("Direction", (lookAngle / 20f) * leftOrRight);
-            }
-        }
+        //        Animator.SetFloat("Direction", (lookAngle / 20f) * leftOrRight);
+        //    }
+        //}
     }
 }

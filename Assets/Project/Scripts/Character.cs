@@ -4,9 +4,10 @@ using UnityEngine;
 using System.Linq;
 using System;
 using Pathfinding;
+using TurnBased;
 
 [RequireComponent(typeof(Stats))]
-public class Character : MonoBehaviour
+public class Character : MonoBehaviour, IPawn<float>
 {
     public event CharacterMovementEventHandler BeginMovement;
     public event CharacterMovementEventHandler FinishedMovement;
@@ -15,27 +16,36 @@ public class Character : MonoBehaviour
     public HexCell Cell;
     [Tooltip("The hex grid this character exists upon")]
     public HexGrid HexGrid;
-    [Tooltip("The player that controls this character")]
-    public Player Controller;
-    [Tooltip("The spells this character can cast")]
-    public Spell[] Spells;
-    [Tooltip("The local position at which spells will spawn")]
-    public Vector3 CastPosition;
+    [Tooltip("The abilities this character can use")]
+    public Ability[] Abilities;
+    public Transform Head;
+    public Transform Torso;
+    public Transform LeftHand;
+    public Transform RightHand;
 
     private Animator animator;
     private Stats stats;
     private CharacterBehaviour state;
+    private AnimationEvents animEvents;
 
+    public Vector3 CastPosition { get; private set; }
+    public AnimationEvents AnimEvents { get { return animEvents; } }
     public Animator Animator { get { return animator; } }
     public Stats Stats { get { return stats; } }
-    public bool IsCasting { get { return state.GetType() == typeof(CastBehaviour); } }
+    public Player Controller { get; private set; }
+    public float Priority { get { return Stats.Initiative; } }
+    public bool IsUsingAbility { get { return state.GetType() == typeof(AbilityBehaviour); } }
     public bool IsMoving { get { return state.GetType() == typeof(MoveBehaviour); } }
     public bool IsIdle { get { return state.GetType() == typeof(IdleBehaviour); } }
+    public bool IsTurn { get; private set; }
 
     private void Awake()
     {
-        animator = GetComponentInChildren<Animator>();
+        Controller = GetComponentInParent<Player>();
         stats = GetComponent<Stats>();
+
+        animator = GetComponentInChildren<Animator>();
+        animEvents = GetComponentInChildren<AnimationEvents>();
     }
 
     private void Start()
@@ -53,6 +63,9 @@ public class Character : MonoBehaviour
 
     private void Update()
     {
+        if (LeftHand != null && RightHand != null)
+            CastPosition = (LeftHand.position + RightHand.position) / 2;
+
         state.Update();
     }
 
@@ -75,35 +88,9 @@ public class Character : MonoBehaviour
             BeginMovement(this, new CharacterMovementEventArgs(null));
     }
 
-    /// <summary>
-    /// Activate this character so it can have its turn. Returns true if this character is able to act.
-    /// </summary>
-    public bool BeginTurn()
+    public void UseAbility(Ability ability, HexCell target)
     {
-        state.BeginTurn();
-
-        // TODO: Stats.BeginTurn()
-        Stats.RefreshTimeUnits();
-
-        Controller.Activate(this);
-
-        // Return true because nothing can prevent the character from acting
-        return true;
-    }
-
-    public void EndTurn()
-    {
-        state.EndTurn();
-
-        // TODO: Stats.EndTurn()
-    }
-
-    public void Cast(Spell spell, HexCell target)
-    {
-        if (spell == null || target == null)
-           throw new ArgumentException("Invalid spell and / or target");
-
-        SetState(new CastBehaviour(this, target, spell));
+        SetState(new AbilityBehaviour(this, target, ability));
     }
 
     /// <summary>
@@ -113,5 +100,42 @@ public class Character : MonoBehaviour
     public void Move(Path path)
     {
         SetState(new MoveBehaviour(this, path));
+    }
+
+    public void TakeDamage(float damage)
+    {
+        Stats.TakeDamage(damage);
+        animator.SetTrigger("Hurt");
+    }
+
+    public void TurnTowards(Character target)
+    {
+        TurnTowards(target.Cell);
+    }
+
+    public void TurnTowards(HexCell target)
+    {
+        Vector3 lookPosition = target.transform.position;
+        lookPosition.y = transform.position.y;
+        transform.LookAt(lookPosition);
+    }
+
+    public void TurnStart()
+    {
+        IsTurn = true;
+
+        state.BeginTurn();
+
+        // TODO: Stats.BeginTurn()
+        Stats.RefreshTimeUnits();
+
+        Controller.PawnStart(this);
+    }
+
+    public void TurnEnd()
+    {
+        IsTurn = false;
+
+        state.EndTurn();
     }
 }
