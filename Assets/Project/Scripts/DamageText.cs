@@ -5,7 +5,7 @@ using UnityEngine;
 public class DamageText : MonoBehaviour
 {
     public GameObject TextPrefab;
-    public Vector3 Movement = Vector3.one;
+    public float Speed = 10;
     public float VerticalOffset = 5;
     public float DisplayTime = 5;
 
@@ -21,8 +21,9 @@ public class DamageText : MonoBehaviour
         float t = 0;
         while (t < DisplayTime)
         {
-            Vector3 step = Movement * Time.deltaTime;
-            transform.Translate(step);
+            transform.forward = Camera.main.transform.forward;
+            Vector3 step = transform.up * Speed * Time.deltaTime;
+            transform.Translate(step, Space.World);
 
             t += Time.deltaTime;
             yield return null;
