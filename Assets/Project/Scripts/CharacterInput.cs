@@ -23,9 +23,11 @@ public class CharacterInput : MonoBehaviour
     private HexCell targetCell;
     private ICollection<PathStep> movementRange;
     private Path movementPath;
-    private Ability Ability { get { return Player.Current.Abilities[0]; } }
+    private Ability Ability { get { return Player.Current.Abilities[abilityIndex]; } }
     private bool isSelectedTurn;
     private bool newTurn;
+    private int abilityIndex = 0;
+    private bool endTurn = false;
 
     private void Start()
     {
@@ -103,6 +105,9 @@ public class CharacterInput : MonoBehaviour
 
     void Update()
     {
+        if (Input.GetKeyDown(KeyCode.Space))
+            SetAbility((abilityIndex + 1) % CurrentCharacter.Abilities.Length);
+
         if (isSelectedTurn != CurrentCharacter.IsTurn)
             newTurn = true;
         else
@@ -113,6 +118,16 @@ public class CharacterInput : MonoBehaviour
         movementRange = null;
 
         behaviourTree.Tick(new TimeData(Time.deltaTime));
+    }
+
+    public void SetAbility(int index)
+    {
+        abilityIndex = index;
+    }
+
+    public void EndTurn()
+    {
+        endTurn = true;
     }
 
     /// <summary>
@@ -287,5 +302,12 @@ public class CharacterInput : MonoBehaviour
     {
         bool valid = !newTurn && !IsNewCellTargeted();
         return valid;
+    }
+
+    private void DoEndTurn()
+    {
+        endTurn = false;
+
+        // Tell turn system to end turn
     }
 }
