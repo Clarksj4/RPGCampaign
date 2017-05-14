@@ -51,6 +51,7 @@ public class HumanPlayer : Player
         IBehaviourTreeNode tree = builder
             .Sequence("End turn")
                 .Condition("End turn button clicked?", t => endTurn)
+                .Condition("Is current character idle?", t => IsCurrentCharacterIdle())
                 .Do("End turn", t => DoEndTurn())
             .End()
         .Build();
