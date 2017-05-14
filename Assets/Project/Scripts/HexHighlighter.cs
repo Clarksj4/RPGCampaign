@@ -64,9 +64,13 @@ public class HexHighlighter : MonoBehaviour
             walker = walker.Next;
         }
 
-        TextMesh textMesh = withinCostHighlight.GetComponentInChildren<TextMesh>(true);
-        textMesh.text = (timeUnitsToSpend - withinCost).ToString();
-        textMesh.gameObject.SetActive(true);
+        // If the text isn't going to be written on the cell under the character
+        if (activeHighlights.Peek() != withinCostHighlight)
+        {
+            TextMesh textMesh = withinCostHighlight.GetComponentInChildren<TextMesh>(true);
+            textMesh.text = (timeUnitsToSpend - withinCost).ToString();
+            textMesh.gameObject.SetActive(true);
+        }
     }
 
     /// <summary>
