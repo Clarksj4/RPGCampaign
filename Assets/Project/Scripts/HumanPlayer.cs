@@ -95,7 +95,9 @@ public class HumanPlayer : Player
 
         IBehaviourTreeNode tree = builder
             .Sequence("Highlight")
-                .Condition("Is current highlight valid?", t => IsHighlightValid())
+                .Inverter("[not]")
+                    .Condition("Is current highlight [not] valid?", t => IsHighlightValid())
+                .End()
                 .Do("Clear highlight", t => ClearHighlight())
                 .Selector("Highlight area or path")
                     .Do("Highlight area", t => HighlightArea())
