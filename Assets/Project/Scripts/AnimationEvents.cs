@@ -14,6 +14,11 @@ public class AnimationEvents : MonoBehaviour
     public event EventHandler CastComplete;
     public event EventHandler IdleBegun;
 
+    private void TestMethod()
+    {
+        print("Test method called!");
+    }
+
     public void NotifyIdle()
     {
         if (IdleBegun != null)
