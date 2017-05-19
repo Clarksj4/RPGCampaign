@@ -105,7 +105,6 @@ public class Character : MonoBehaviour, IPawn<float>
     public void TakeDamage(float damage)
     {
         Stats.TakeDamage(damage);
-        GetComponent<DamageText>().Display((-damage).ToString());
         animator.SetTrigger("Hurt");
     }
 
