@@ -80,7 +80,7 @@ public class Character : MonoBehaviour, IPawn<float>
     public void Hurt(float damage, Action hurtComplete = null)
     {
         Model.Hurt(hurtComplete);
-        Stats.TakeDamage(damage);
+        Stats.CurrentHP -= damage;
     }
 
     public void TurnTowards(HexCell target)
@@ -96,8 +96,7 @@ public class Character : MonoBehaviour, IPawn<float>
 
         state.BeginTurn();
 
-        // TODO: Stats.BeginTurn()
-        Stats.RefreshTimeUnits();
+        Stats.CurrentTimeUnits = Stats.MaxTimeUnits;
 
         Controller.PawnStart(this);
     }

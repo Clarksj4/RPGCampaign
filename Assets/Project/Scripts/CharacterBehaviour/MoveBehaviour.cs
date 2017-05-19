@@ -28,7 +28,7 @@ public class MoveBehaviour : CharacterBehaviour
         else
         {
             distance = iTween.PathLength(points);
-            eta = distance / character.Stats.Speed;
+            eta = distance / character.Model.Speed;
             time = 0;
             t = 0;
 
@@ -55,7 +55,7 @@ public class MoveBehaviour : CharacterBehaviour
             character.transform.LookAt(lookPosition);
 
             // Pay for movement
-            character.Stats.SpendTimeUnits(path.Cost);
+            character.Stats.CurrentTimeUnits -= path.Cost;
 
             // Update reference to the currently occupied cell
             UpdateOccupiedCellFinal();

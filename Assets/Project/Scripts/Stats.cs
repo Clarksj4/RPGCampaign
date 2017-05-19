@@ -5,104 +5,70 @@ using Pathfinding;
 
 public class Stats : MonoBehaviour
 {
-    /// <summary>
-    /// The current value of one of this character's elements has changed
-    /// </summary>
-    public event ElementMeterEventHandler ElementValueChanged;
-
-    /// <summary>
-    /// The capacity of one of this character's elements has changed
-    /// </summary>
-    public event ElementMeterEventHandler ElementCapacityChanged;
-
-    public float CurrentHP;
-    public float MaxHP;
     [Tooltip("The element that this character is spec'd in. Determines the capacity this character has for each of the elements, as well " +
-             "as which elements are strong against this character.")]
+         "as which elements are strong against this character.")]
     public ElementType Element;
+
     [Tooltip("Determines how quickly this character acts in combat")]
-    public float Initiative = 25;
-    [Tooltip("The speed at which this character moves")]
-    public float Speed;
+    [SerializeField]
+    private float initiative = 25;
+
+    [Header("Health")]
+    [SerializeField]
+    private float currentHP;
+    [SerializeField]
+    private float maxHP;
+
+    [Header("Time Units")]
+    [SerializeField]
+    private float currentTimeUnits;
+    [SerializeField]
+    private float maxTimeUnits;
+
     [Tooltip("Which cells can be crossed by this character and the cost of doing so")]
     public HexMapTraverser Traverser = HexMapTraverser.Walking();
-    [Header("Time Units")]
-    public float CurrentTimeUnits;
-    public float MaxTimeUnits;
 
     [Header("Events")]
     public ResourceEvent HealthChanged;
     public ResourceEvent TimeUnitsChanged;
 
-    /// <summary>
-    /// The capacity and current level of each of this characters elements
-    /// </summary>
-    public Range[] Elements { get; private set; }
-
-    private void Awake()
+    public float CurrentHP
     {
-        Elements = new Range[4];
-        for (int i = 0; i < Elements.Length; i++)
-            Elements[i] = new Range();
+        get { return currentHP; }
+        set
+        {
+            float change = value - currentHP;
+            currentHP = value;
+            HealthChanged.Invoke(this, change);
+        }
     }
 
-    public void TakeDamage(float damage)
+    public float MaxHP
     {
-        CurrentHP -= damage;
-
-        HealthChanged.Invoke(this, -damage);
+        get { return maxHP; }
+        set { maxHP = value; }
     }
 
-    public void RefreshTimeUnits()
+    public float CurrentTimeUnits
     {
-        float deficit = MaxTimeUnits - CurrentTimeUnits;
-        CurrentTimeUnits = MaxTimeUnits;
-
-        TimeUnitsChanged.Invoke(this, deficit);
+        get { return currentTimeUnits; }
+        set
+        {
+            float change = value - currentTimeUnits;
+            currentTimeUnits = value;
+            TimeUnitsChanged.Invoke(this, change);
+        }
     }
 
-    public void SpendTimeUnits(float amount)
+    public float MaxTimeUnits
     {
-        CurrentTimeUnits -= amount;
-
-        TimeUnitsChanged.Invoke(this, -amount);
+        get { return maxTimeUnits; }
+        set { maxTimeUnits = value; }
     }
 
-    /// <summary>
-    /// Get this character's capacity for the given element
-    /// </summary>
-    public float GetElementCapacity(ElementType type)
+    public float Initiative
     {
-        return Elements[(int)type].Max;
-    }
-
-    /// <summary>
-    /// Get this character's current level of the given element
-    /// </summary>
-    public float GetElementValue(ElementType type)
-    {
-        return Elements[(int)type].Current;
-    }
-
-    /// <summary>
-    /// Set this character's capacity for the given element type
-    /// </summary>
-    public void SetElementCapacity(ElementType type, float capacity)
-    {
-        Elements[(int)type].Max = capacity;
-
-        if (ElementCapacityChanged != null)
-            ElementCapacityChanged(this, new ElementMeterEventArgs(type));
-    }
-
-    /// <summary>
-    /// Set this character's current level of the given element type
-    /// </summary>
-    public void SetElementValue(ElementType type, float value)
-    {
-        Elements[(int)type].Current = value;
-
-        if (ElementValueChanged != null)
-            ElementValueChanged(this, new ElementMeterEventArgs(type));
+        get { return initiative; }
+        set { initiative = value; }
     }
 }

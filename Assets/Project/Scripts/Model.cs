@@ -5,6 +5,10 @@ using UnityEngine;
 
 public class Model : MonoBehaviour
 {
+    [Tooltip("The speed at which this character moves")]
+    public float Speed;
+
+    [Header("Body Locations")]
     public Transform Head;
     public Transform Torso;
     public Transform LeftHand;
