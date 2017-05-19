@@ -6,7 +6,6 @@ using UnityEngine;
 
 public class CharacterBehaviour
 {
-    public Animator Animator { get { return character.Animator; } }
     public HexGrid HexGrid { get { return character.HexGrid; } }
     public Transform Transform { get { return character.transform; } }
     public HexCell Cell

@@ -13,7 +13,7 @@ public class FireBallParticle : MonoBehaviour
 
     public float DestinationProximity = 0.1f;
 
-    public void MoveToDetonate(Transform target, float speed, Action moveComplete, Action explosionComplete)
+    public void MoveToDetonate(Transform target, float speed, Action moveComplete = null, Action explosionComplete = null)
     {
         StartCoroutine(DoMoveToDetonate(target, speed, moveComplete, explosionComplete));
     }

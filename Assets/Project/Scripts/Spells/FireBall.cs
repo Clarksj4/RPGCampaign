@@ -14,60 +14,59 @@ public class FireBall : Ability
     private GameObject kneadingInstance;
     private FireBallParticle projectileInstance;
 
+    private bool castComplete;
+    private bool moveComplete;
+
     public override void Activate(Character user, HexCell target)
     {
         base.Activate(user, target);
 
-        // Tell user to do attack animation
-        user.Animator.SetTrigger("Cast");
-
-        user.AnimEvents.CastKneadingBegun += AnimEvents_CastKneadingBegun;
-        user.AnimEvents.CastKneadingComplete += AnimEvents_CastKneadingComplete;
-        user.AnimEvents.CastApex += AnimEvents_CastApex;
+        // Tell model to do casting animation
+        user.Model.KneadingCast(KneadingBegun, KneadingComplete, CastApex, CastComplete);
     }
 
-    private void AnimEvents_CastKneadingBegun(object sender, EventArgs e)
+    private void KneadingBegun()
     {
-        user.AnimEvents.CastKneadingBegun -= AnimEvents_CastKneadingBegun;
-
         // Create Kneading particle effect and make it go!
-        kneadingInstance = Instantiate(KneadingParticleEffect, user.CastPosition, Quaternion.identity);
-        StartCoroutine(CastInHands());
+        kneadingInstance = Instantiate(KneadingParticleEffect, user.Model.CastSpawn.position, Quaternion.identity, user.Model.CastSpawn);
     }
 
-    private void AnimEvents_CastKneadingComplete(object sender, EventArgs e)
+    private void KneadingComplete()
     {
-        user.AnimEvents.CastKneadingComplete -= AnimEvents_CastKneadingComplete;
-
         // Kill kneading particle effect
         Destroy(kneadingInstance);
     }
 
-    private void AnimEvents_CastApex(object sender, EventArgs e)
+    private void CastApex()
     {
-        user.AnimEvents.CastApex -= AnimEvents_CastApex;
-
         // Create projectile, move towards target
-        projectileInstance = Instantiate(ProjectileParticleEffect, user.CastPosition, Quaternion.identity);
-        projectileInstance.MoveToDetonate(target.Occupant.Torso, Speed, () => OnMoveComplete(), () => OnExplosionComplete());
+        projectileInstance = Instantiate(ProjectileParticleEffect, user.Model.CastSpawn.position, Quaternion.identity);
+        projectileInstance.MoveToDetonate(target.Occupant.Model.Torso, Speed, OnMoveComplete);
+    }
+
+    private void CastComplete()
+    {
+        castComplete = true;
+        CheckExpired();
     }
 
     private void OnMoveComplete()
     {
-        target.Occupant.TakeDamage(Damage);
+        target.Occupant.Hurt(Damage);
+
+        moveComplete = true;
+        CheckExpired();
     }
 
-    private void OnExplosionComplete()
+    private void CheckExpired()
     {
-        Deactivate();
-    }
-
-    IEnumerator CastInHands()
-    {
-        while (kneadingInstance != null)
+        // Don't destroy until cast animation is complete AND fireball has reached destination
+        if (castComplete && moveComplete)
         {
-            kneadingInstance.transform.position = user.CastPosition;
-            yield return null;
+            castComplete = false;
+            moveComplete = false;
+
+            Deactivate();
         }
     }
 }

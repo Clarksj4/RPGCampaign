@@ -9,29 +9,17 @@ using TurnBased;
 [RequireComponent(typeof(Stats))]
 public class Character : MonoBehaviour, IPawn<float>
 {
-    public event CharacterMovementEventHandler BeginMovement;
-    public event CharacterMovementEventHandler FinishedMovement;
-
     public HexDirection Facing;
     public HexCell Cell;
     [Tooltip("The hex grid this character exists upon")]
     public HexGrid HexGrid;
     [Tooltip("The abilities this character can use")]
     public Ability[] Abilities;
-    public Transform Head;
-    public Transform Torso;
-    public Transform LeftHand;
-    public Transform RightHand;
 
-    private Animator animator;
-    private Stats stats;
     private CharacterBehaviour state;
-    private AnimationEvents animEvents;
 
-    public Vector3 CastPosition { get; private set; }
-    public AnimationEvents AnimEvents { get { return animEvents; } }
-    public Animator Animator { get { return animator; } }
-    public Stats Stats { get { return stats; } }
+    public Stats Stats { get; private set; }
+    public Model Model { get; private set; }
     public Player Controller { get; private set; }
     public float Priority { get { return Stats.Initiative; } }
     public bool IsUsingAbility { get { return state.GetType() == typeof(AbilityBehaviour); } }
@@ -42,10 +30,8 @@ public class Character : MonoBehaviour, IPawn<float>
     private void Awake()
     {
         Controller = GetComponentInParent<Player>();
-        stats = GetComponent<Stats>();
-
-        animator = GetComponentInChildren<Animator>();
-        animEvents = GetComponentInChildren<AnimationEvents>();
+        Stats = GetComponent<Stats>();
+        Model = GetComponentInChildren<Model>();
     }
 
     private void Start()
@@ -63,9 +49,6 @@ public class Character : MonoBehaviour, IPawn<float>
 
     private void Update()
     {
-        if (LeftHand != null && RightHand != null)
-            CastPosition = (LeftHand.position + RightHand.position) / 2;
-
         state.Update();
     }
 
@@ -77,15 +60,7 @@ public class Character : MonoBehaviour, IPawn<float>
         newState.Init();
 
         if (oldState != null)
-        {
             oldState.Closing();
-
-            if (oldState is MoveBehaviour && FinishedMovement != null)
-                FinishedMovement(this, new CharacterMovementEventArgs(null));
-        }
-
-        if (state is MoveBehaviour && BeginMovement != null)
-            BeginMovement(this, new CharacterMovementEventArgs(null));
     }
 
     public void UseAbility(Ability ability, HexCell target)
@@ -102,15 +77,10 @@ public class Character : MonoBehaviour, IPawn<float>
         SetState(new MoveBehaviour(this, path));
     }
 
-    public void TakeDamage(float damage)
+    public void Hurt(float damage, Action hurtComplete = null)
     {
+        Model.Hurt(hurtComplete);
         Stats.TakeDamage(damage);
-        animator.SetTrigger("Hurt");
-    }
-
-    public void TurnTowards(Character target)
-    {
-        TurnTowards(target.Cell);
     }
 
     public void TurnTowards(HexCell target)

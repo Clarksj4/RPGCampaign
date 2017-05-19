@@ -9,6 +9,7 @@ public class Model : MonoBehaviour
     public Transform Torso;
     public Transform LeftHand;
     public Transform RightHand;
+    public Transform CastSpawn;
 
     private Animator animator;
     private Dictionary<string, Action> eventActions = new Dictionary<string, Action>();
@@ -28,7 +29,7 @@ public class Model : MonoBehaviour
         animator.SetBool("Running", active);
     }
 
-    public void Hurt(Action hurtComplete)
+    public void Hurt(Action hurtComplete = null)
     {
         AddEventAction("HurtComplete", hurtComplete);
 
@@ -77,7 +78,8 @@ public class Model : MonoBehaviour
     private void AddEventAction(string key, Action action)
     {
         eventActions.Remove(key);
-        eventActions.Add(key, action);
+        if (action != null)
+            eventActions.Add(key, action);
     }
 
     private void NotifyAnimationEvent(string eventName)
