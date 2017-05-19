@@ -6,7 +6,8 @@ using UnityEngine;
 public class Model : MonoBehaviour
 {
     [Tooltip("The speed at which this character moves")]
-    public float Speed;
+    public float WalkSpeed;
+    public float RunSpeed;
 
     [Header("Body Locations")]
     public Transform Head;

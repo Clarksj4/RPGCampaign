@@ -27,12 +27,24 @@ public class MoveBehaviour : CharacterBehaviour
 
         else
         {
+            // Pay for movement
+            character.Stats.CurrentTimeUnits -= path.Cost;
+
             distance = iTween.PathLength(points);
-            eta = distance / character.Model.Speed;
             time = 0;
             t = 0;
 
-            character.Model.Walk(true);
+            if (path.Count > 4)
+            {
+                eta = distance / character.Model.RunSpeed;
+                character.Model.Run(true);
+            }
+                
+            else
+            {
+                eta = distance / character.Model.WalkSpeed;
+                character.Model.Walk(true);
+            }
         }
     }
 
@@ -49,22 +61,23 @@ public class MoveBehaviour : CharacterBehaviour
 
         // If reached destination
         if (t >= 1.0f)
-        {
-            Vector3 lookPosition = character.transform.position + character.transform.forward;
-            lookPosition.y = character.transform.position.y;
-            character.transform.LookAt(lookPosition);
+            DestinationReached();
+    }
 
-            // Pay for movement
-            character.Stats.CurrentTimeUnits -= path.Cost;
+    private void DestinationReached()
+    {
+        Vector3 lookPosition = character.transform.position + character.transform.forward;
+        lookPosition.y = character.transform.position.y;
+        character.transform.LookAt(lookPosition);
 
-            // Update reference to the currently occupied cell
-            UpdateOccupiedCellFinal();
+        // Update reference to the currently occupied cell
+        UpdateOccupiedCellFinal();
 
-            // Stop walking
-            character.Model.Walk(false);
+        // Stop walking
+        character.Model.Walk(false);
+        character.Model.Run(false);
 
-            SetState(new IdleBehaviour(character));
-        }
+        SetState(new IdleBehaviour(character));
     }
 
     private void UpdateOccupiedCellFinal()
