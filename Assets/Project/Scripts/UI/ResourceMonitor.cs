@@ -12,17 +12,21 @@ public class ResourceMonitor : MonoBehaviour
     public ResourceBar TimeUnitsBar;
     public FloatingText Text;
 
-    public void UpdateHealthLevel(float newPercent, float changeInUnits)
+    public void UpdateHealthLevel(object sender, float changeInUnits)
     {
-        HealthBar.Level = newPercent;
+        Stats stats = (Stats)sender;
+
+        HealthBar.Level = stats.CurrentHP / stats.MaxHP;
 
         Color colour = changeInUnits < 0 ? DamageColour : HealColour;
         Text.Display(changeInUnits.ToString(), colour);
     }
 
-    public void UpdateTimeUnitsLevel(float newPercent, float changeInUnits)
+    public void UpdateTimeUnitsLevel(object sender, float changeInUnits)
     {
-        TimeUnitsBar.Level = newPercent;
+        Stats stats = (Stats)sender;
+
+        TimeUnitsBar.Level = stats.CurrentTimeUnits / stats.MaxTimeUnits;
 
         Text.Display(changeInUnits.ToString(), TimeUnitsColour);
     }

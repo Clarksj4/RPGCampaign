@@ -15,9 +15,6 @@ public class Stats : MonoBehaviour
     /// </summary>
     public event ElementMeterEventHandler ElementCapacityChanged;
 
-    public FloatEvent HealthChanged;
-    public FloatEvent TimeUnitsChanged;
-
     public float CurrentHP;
     public float MaxHP;
     [Tooltip("The element that this character is spec'd in. Determines the capacity this character has for each of the elements, as well " +
@@ -32,6 +29,10 @@ public class Stats : MonoBehaviour
     [Header("Time Units")]
     public float CurrentTimeUnits;
     public float MaxTimeUnits;
+
+    [Header("Events")]
+    public ResourceEvent HealthChanged;
+    public ResourceEvent TimeUnitsChanged;
 
     /// <summary>
     /// The capacity and current level of each of this characters elements
@@ -49,7 +50,7 @@ public class Stats : MonoBehaviour
     {
         CurrentHP -= damage;
 
-        HealthChanged.Invoke(CurrentHP / MaxHP, -damage);
+        HealthChanged.Invoke(this, -damage);
     }
 
     public void RefreshTimeUnits()
@@ -57,14 +58,14 @@ public class Stats : MonoBehaviour
         float deficit = MaxTimeUnits - CurrentTimeUnits;
         CurrentTimeUnits = MaxTimeUnits;
 
-        TimeUnitsChanged.Invoke(1f, deficit);
+        TimeUnitsChanged.Invoke(this, deficit);
     }
 
     public void SpendTimeUnits(float amount)
     {
         CurrentTimeUnits -= amount;
 
-        TimeUnitsChanged.Invoke(CurrentTimeUnits / MaxTimeUnits, -amount);
+        TimeUnitsChanged.Invoke(this, -amount);
     }
 
     /// <summary>

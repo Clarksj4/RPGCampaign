@@ -14,6 +14,7 @@ public class MeleeAttack : Ability
 
     private void AttackApex()
     {
+        // Deal damage to target
         target.Occupant.Hurt(Damage);
     }
 

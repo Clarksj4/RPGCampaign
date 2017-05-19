@@ -6,6 +6,6 @@ using UnityEngine;
 using UnityEngine.Events;
 
 [Serializable]
-public class FloatEvent : UnityEvent<float, float>
+public class ResourceEvent : UnityEvent<object, float>
 {
 }
