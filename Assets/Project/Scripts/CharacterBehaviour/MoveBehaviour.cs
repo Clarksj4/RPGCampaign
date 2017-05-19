@@ -56,7 +56,7 @@ public class MoveBehaviour : CharacterBehaviour
             character.transform.LookAt(lookPosition);
 
             // Pay for movement
-            character.Stats.CurrentTimeUnits -= path.Cost;
+            character.Stats.SpendTimeUnits(path.Cost);
 
             // Update reference to the currently occupied cell
             UpdateOccupiedCellFinal();

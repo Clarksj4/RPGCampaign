@@ -14,7 +14,7 @@ public class AbilityBehaviour : CharacterBehaviour
         this.target = target;
 
         // Subtract TU
-        character.Stats.CurrentTimeUnits -= abilityPrefab.Cost;
+        character.Stats.SpendTimeUnits(abilityPrefab.Cost);
 
         // LookAt
         character.TurnTowards(target);
