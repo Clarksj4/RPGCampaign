@@ -3,6 +3,7 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using TurnBased;
 using FluentBehaviourTree;
+using TileMap;
 
 using Pathfinding;
 
@@ -12,8 +13,8 @@ public class HumanPlayer : Player
     private HexHighlighter highlighter;
 
     // Behaviour tree variables
-    private HexCell previousCell;
-    private HexCell targetCell;
+    private ITile<Character> previousCell;
+    private ITile<Character> targetCell;
     private ICollection<PathStep> movementRange;
     private Path movementPath;
     private Ability Ability { get { return Current.Abilities[abilityIndex]; } }
@@ -164,23 +165,23 @@ public class HumanPlayer : Player
     }
 
     /// <summary>
-    /// Get the hex cell the mouse is currently over
+    /// Get the tile cell the mouse is currently over
     /// </summary>
-    private HexCell GetCell()
+    private ITile<Character> GetCell()
     {
         // If mouse not over UI
         if (!EventSystem.current.IsPointerOverGameObject())
         {
-            // Raycast onto hexmesh (because it's the only thing in the scene
+            // Raycast onto tileMap (because it's the only thing with a collider in the scene)
             Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
             RaycastHit hitInfo;
 
-            // If there's a hit it must be the hexmesh
+            // If there's a hit it must be the tileMap
             if (Physics.Raycast(ray, out hitInfo))
-                return grid.GetCell(hitInfo.point);
+                return grid.GetTile(hitInfo.point);
         }
 
-        // No cell clicked
+        // No tile clicked
         return null;
     }
 

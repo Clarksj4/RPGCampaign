@@ -2,6 +2,7 @@
 using UnityEngine;
 using System.Linq;
 using TurnBased;
+using TileMap;
 
 public abstract class Player : MonoBehaviour
 {
@@ -10,7 +11,7 @@ public abstract class Player : MonoBehaviour
     public bool IsTurn { get { return turnSystem.Current.Controller == this; } }
 
     protected TurnSystem turnSystem;
-    protected HexGrid grid;
+    protected ITileMap<Character> grid;
 
     protected virtual void Awake()
     {
