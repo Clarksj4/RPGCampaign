@@ -116,7 +116,7 @@ public class AggressiveBehaviour : IBehaviourStrategy
     /// <returns>True if the attack is currently in range</returns>
     private bool InRange()
     {
-        bool inRange = ability.InRange(current.Cell, target.Cell);
+        bool inRange = ability.InRange(current.Tile, target.Tile);
         return inRange;
     }
 
@@ -130,11 +130,11 @@ public class AggressiveBehaviour : IBehaviourStrategy
         BehaviourTreeStatus result = BehaviourTreeStatus.Failure;
 
         // Get area around target which would put AI character in range for attack
-        ICollection<PathStep> area = Pathfind.Area(target.Cell, ability.MaximumRange, ability.Traverser);
+        ICollection<PathStep> area = Pathfind.Area(target.Tile, ability.MaximumRange, ability.Traverser);
 
         // Find a path from the current characters cell to the quickest to reach cell that is in range of the target for 
         // the given attack
-        path = Pathfind.ToArea(current.Cell, area.Select(s => s.Node), current.Stats.Traverser);
+        path = Pathfind.ToArea(current.Tile, area.Select(s => s.Node), current.Stats.Traverser);
 
         // Is the path legit?
         if (path != null && path.Count >= 2)
@@ -191,7 +191,7 @@ public class AggressiveBehaviour : IBehaviourStrategy
 
         if (!toldToAttack)
         {
-            current.UseAbility(ability, target.Cell);
+            current.UseAbility(ability, target.Tile);
             toldToAttack = true;
         }
 

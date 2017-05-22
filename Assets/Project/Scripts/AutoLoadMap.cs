@@ -11,5 +11,16 @@ public class AutoLoadMap : MonoBehaviour
     void Start ()
     {
         Loader.Load(Application.dataPath + "/" + filename + ".map");
-	}
+
+        HexGrid grid = FindObjectOfType<HexGrid>();
+        foreach (Character character in FindObjectsOfType<Character>())
+        {
+            HexCell cell = grid.GetCell(character.transform.position);
+            character.Tile = cell;
+            cell.Contents = character;
+
+            character.transform.position = cell.Position;
+            character.transform.LookAt(character.Facing);
+        }
+    }
 }

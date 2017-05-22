@@ -3,13 +3,19 @@ using System.Linq;
 using System.Collections.Generic;
 using UnityEngine;
 using Pathfinding;
+using TileMap;
 
-public partial class HexCell : IGraphNode
+public partial class HexCell : ITile<Character>
 {
     /// <summary>
     /// Adjacent cells that are not null, as nodes. Used for pathfinding.
     /// </summary>
     public IEnumerable<IGraphNode> Nodes { get { return GetNeighbours().Where(n => n != null).Select(n => (IGraphNode)n); } }
+
+    /// <summary>
+    /// The character occupying the cell
+    /// </summary>
+    public Character Contents { get; set; }
 
     /// <summary>
     /// Gets the 6 cells adjacent to this cell. Null is returned where there is no cell in a direction
@@ -44,28 +50,6 @@ public partial class HexCell : IGraphNode
             return directions[index];
         }
 
-        return GetDirection(other.Position);
-    }
-
-    /// <summary>
-    /// Gets the direction that the point lies in from this cell
-    /// </summary>
-    public HexDirection GetDirection(Vector3 point)
-    {
-        throw new NotImplementedException("Method needs bug fixing!");
-
-        HexDirection[] directions = (HexDirection[])Enum.GetValues(typeof(HexDirection));
-
-        // Ignore cell height so that angle is based on x and z only
-        Vector3 cellNoHeightPosition = Position;
-        cellNoHeightPosition.y = 0;
-        point.y = 0;
-
-        // Angle from forward vector  converted to an index
-        float angle = Vector3.Angle(Vector3.forward, point - cellNoHeightPosition);
-        int index = (int)(angle / 60);
-
-        HexDirection direction = directions[index];
-        return direction;
+        throw new ArgumentException("HexCell is not a neighbour");
     }
 }

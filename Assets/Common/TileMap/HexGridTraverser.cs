@@ -7,7 +7,7 @@ using System.Linq;
 /// Default implementation of the rules for which cells can be crossed and the cost for doing so
 /// </summary>
 [Serializable]
-public class HexMapTraverser : ITraversable
+public class HexGridTraverser : ITraversable
 {
     [Header("Obstacles")]
     public bool blockedByWater = false;
@@ -26,9 +26,9 @@ public class HexMapTraverser : ITraversable
     /// <summary>
     /// Default ruleset for a walking traverser 
     /// </summary>
-    public static HexMapTraverser Walking()
+    public static HexGridTraverser Walking()
     {
-        HexMapTraverser traverser = new HexMapTraverser();
+        HexGridTraverser traverser = new HexGridTraverser();
         traverser.blockedByWater = true;
         traverser.blockedByWall = true;
         traverser.blockedByCharacters = true;
@@ -47,9 +47,9 @@ public class HexMapTraverser : ITraversable
     /// <summary>
     /// Default ruleset for a ranged attack
     /// </summary>
-    public static HexMapTraverser RangedAttack()
+    public static HexGridTraverser RangedAttack()
     {
-        return new HexMapTraverser();
+        return new HexGridTraverser();
     }
 
     /// <summary>
@@ -69,7 +69,7 @@ public class HexMapTraverser : ITraversable
         if (blockedByCharacters)
         {
             // Check if there is a character in the next cell
-            if (hexNeighbour.Occupant != null)
+            if (hexNeighbour.Contents != null)
                 return false;
         }
 

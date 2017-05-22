@@ -26,7 +26,7 @@ public class Stats : MonoBehaviour
     private float maxTimeUnits;
 
     [Tooltip("Which cells can be crossed by this character and the cost of doing so")]
-    public HexMapTraverser Traverser = HexMapTraverser.Walking();
+    public HexGridTraverser Traverser = HexGridTraverser.Walking();
 
     [Header("Events")]
     public ResourceEvent HealthChanged;

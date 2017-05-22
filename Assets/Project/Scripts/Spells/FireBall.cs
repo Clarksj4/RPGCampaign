@@ -2,7 +2,8 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using DigitalRuby.PyroParticles;
+using Pathfinding;
+using TileMap;
 
 public class FireBall : Ability
 {
@@ -17,7 +18,7 @@ public class FireBall : Ability
     private bool castComplete;
     private bool moveComplete;
 
-    public override void Activate(Character user, HexCell target)
+    public override void Activate(Character user, ITile<Character> target)
     {
         base.Activate(user, target);
 
@@ -41,7 +42,7 @@ public class FireBall : Ability
     {
         // Create projectile, move towards target
         projectileInstance = Instantiate(ProjectileParticleEffect, user.Model.CastSpawn.position, Quaternion.identity);
-        projectileInstance.MoveToDetonate(target.Occupant.Model.Torso, Speed, OnMoveComplete);
+        projectileInstance.MoveToDetonate(target.Contents.Model.Torso, Speed, OnMoveComplete);
     }
 
     private void CastComplete()
@@ -52,7 +53,7 @@ public class FireBall : Ability
 
     private void OnMoveComplete()
     {
-        target.Occupant.Hurt(Damage);
+        target.Contents.Hurt(Damage);
 
         moveComplete = true;
         CheckExpired();

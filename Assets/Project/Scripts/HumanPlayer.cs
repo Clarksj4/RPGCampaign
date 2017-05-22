@@ -204,13 +204,13 @@ public class HumanPlayer : Player
 
     private bool IsTargetCellOccupied()
     {
-        bool occupied = targetCell.Occupant != null;
+        bool occupied = targetCell.Contents != null;
         return occupied;
     }
 
     private bool IsTargetedCellOccupantStationary()
     {
-        bool stationary = !targetCell.Occupant.IsMoving;
+        bool stationary = !targetCell.Contents.IsMoving;
         return stationary;
     }
 
@@ -218,7 +218,7 @@ public class HumanPlayer : Player
     {
         BehaviourTreeStatus result = BehaviourTreeStatus.Failure;
 
-        Character occupant = targetCell.Occupant;
+        Character occupant = targetCell.Contents;
         movementRange = Pathfind.Area(targetCell, occupant.Stats.CurrentTimeUnits, occupant.Stats.Traverser);
 
         if (movementRange.Count > 0)
@@ -244,7 +244,7 @@ public class HumanPlayer : Player
     {
         BehaviourTreeStatus result = BehaviourTreeStatus.Failure;
 
-        movementPath = Pathfind.Between(Current.Cell, targetCell, -1, Current.Stats.Traverser);
+        movementPath = Pathfind.Between(Current.Tile, targetCell, -1, Current.Stats.Traverser);
 
         if (movementPath != null)
             result = BehaviourTreeStatus.Success;
@@ -326,7 +326,7 @@ public class HumanPlayer : Player
 
     private bool InRangeForAbility()
     {
-        bool inRange = Ability.InRange(Current.Cell, targetCell);
+        bool inRange = Ability.InRange(Current.Tile, targetCell);
         return inRange;
     }
 
