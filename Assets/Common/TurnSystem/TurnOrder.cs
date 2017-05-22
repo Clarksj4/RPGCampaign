@@ -8,12 +8,12 @@ namespace TurnBased
     /// <summary>
     /// Stores and cycles pawns in priority order
     /// </summary>
-    public class TurnOrder<T> : IEnumerable<IPawn<T>> where T : IComparable<T>
+    public class TurnOrder<T> : IEnumerable<ITurnBased<T>> where T : IComparable<T>
     {
         /// <summary>
         /// The pawn whose turn it currently is. Returns null if the current pawn was removed from the order
         /// </summary>
-        public IPawn<T> Current
+        public ITurnBased<T> Current
         {
             get
             {
@@ -26,8 +26,8 @@ namespace TurnBased
             }
         }
 
-        private LinkedList<IPawn<T>> pawns;
-        private LinkedListNode<IPawn<T>> currentNode;
+        private LinkedList<ITurnBased<T>> pawns;
+        private LinkedListNode<ITurnBased<T>> currentNode;
         private bool currentToBeRemoved;
 
         /// <summary>
@@ -35,7 +35,7 @@ namespace TurnBased
         /// </summary>
         public TurnOrder()
         {
-            pawns = new LinkedList<IPawn<T>>();
+            pawns = new LinkedList<ITurnBased<T>>();
             currentNode = null;
             currentToBeRemoved = false;
         }
@@ -43,7 +43,7 @@ namespace TurnBased
         /// <summary>
         /// Inserts the pawn in order based upon its priority
         /// </summary>
-        public void Insert(IPawn<T> pawn)
+        public void Insert(ITurnBased<T> pawn)
         {
             // Can't insert null pawn
             if (pawn == null)
@@ -79,14 +79,14 @@ namespace TurnBased
         /// <summary>
         /// Removes the pawn from the turn order
         /// </summary>
-        public bool Remove(IPawn<T> pawn)
+        public bool Remove(ITurnBased<T> pawn)
         {
             // Can't remove null pawn
             if (pawn == null)
                 throw new ArgumentNullException("Pawn cannot be null");
 
             // Find pawn's node incase its the current node
-            LinkedListNode<IPawn<T>> node = pawns.Find(pawn);
+            LinkedListNode<ITurnBased<T>> node = pawns.Find(pawn);
 
             if (node == null)
                 return false;
@@ -104,7 +104,7 @@ namespace TurnBased
         /// <summary>
         /// Updates the pawn's position in the turn order based upon its priority
         /// </summary>
-        public void UpdatePriority(IPawn<T> pawn)
+        public void UpdatePriority(ITurnBased<T> pawn)
         {
             // Can't update pawn marked for removal
             if (currentToBeRemoved && currentNode.Value == pawn)
@@ -147,7 +147,7 @@ namespace TurnBased
             return isMore;
         }
 
-        public IEnumerator<IPawn<T>> GetEnumerator()
+        public IEnumerator<ITurnBased<T>> GetEnumerator()
         {
             // Don't return the node that is marked for removal
             if (currentToBeRemoved)

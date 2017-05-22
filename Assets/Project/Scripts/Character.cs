@@ -5,14 +5,13 @@ using System.Linq;
 using System;
 using Pathfinding;
 using TurnBased;
+using TileMap;
 
 [RequireComponent(typeof(Stats))]
-public class Character : MonoBehaviour, IPawn<float>
+public class Character : MonoBehaviour, ITurnBased<float>
 {
     public HexDirection Facing;
-    public HexCell Cell;
-    [Tooltip("The hex grid this character exists upon")]
-    public HexGrid HexGrid;
+    public ITile<Character> Tile;
     [Tooltip("The abilities this character can use")]
     public Ability[] Abilities;
 
@@ -36,13 +35,13 @@ public class Character : MonoBehaviour, IPawn<float>
 
     private void Start()
     {
-        if (HexGrid != null)
-        {
-            Cell = HexGrid.GetCell(transform.position);
-            Cell.Occupant = this;
-            transform.position = Cell.Position;
-            transform.LookAt(Facing);
-        }
+        //if (HexGrid != null)
+        //{
+        //    Node = HexGrid.GetCell(transform.position);
+        //    Node.Occupant = this;
+        //    transform.position = Node.Position;
+        //    transform.LookAt(Facing);
+        //}
 
         SetState(new IdleBehaviour(this));
     }
@@ -63,7 +62,7 @@ public class Character : MonoBehaviour, IPawn<float>
             oldState.Closing();
     }
 
-    public void UseAbility(Ability ability, HexCell target)
+    public void UseAbility(Ability ability, ITile<Character> target)
     {
         SetState(new AbilityBehaviour(this, target, ability));
     }
@@ -83,9 +82,9 @@ public class Character : MonoBehaviour, IPawn<float>
         Stats.CurrentHP -= damage;
     }
 
-    public void TurnTowards(HexCell target)
+    public void TurnTowards(ITile<Character> target)
     {
-        Vector3 lookPosition = target.transform.position;
+        Vector3 lookPosition = target.Position;
         lookPosition.y = transform.position.y;
         transform.LookAt(lookPosition);
     }

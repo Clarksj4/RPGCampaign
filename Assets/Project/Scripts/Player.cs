@@ -33,7 +33,7 @@ public abstract class Player : MonoBehaviour
         Allies.Remove(actor);
     }
 
-    public virtual void PawnStart(IPawn<float> pawn)
+    public virtual void PawnStart(ITurnBased<float> pawn)
     {
         Current = (Character)pawn;
     }

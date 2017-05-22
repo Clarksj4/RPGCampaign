@@ -5,7 +5,7 @@ namespace TurnBased
     /// <summary>
     /// Interface for object that operates in a turn based manner
     /// </summary>
-    public interface IPawn<T> where T : IComparable<T>
+    public interface ITurnBased<T> where T : IComparable<T>
     {
         /// <summary>
         /// The pawn's priority in the turn order
