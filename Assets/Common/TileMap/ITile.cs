@@ -12,6 +12,4 @@ namespace TileMap
         Vector3 Position { get; }
         T Contents { get; set; }
     }
-
-
 }

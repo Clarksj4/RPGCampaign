@@ -35,14 +35,6 @@ public class Character : MonoBehaviour, ITurnBased<float>
 
     private void Start()
     {
-        //if (HexGrid != null)
-        //{
-        //    Node = HexGrid.GetCell(transform.position);
-        //    Node.Occupant = this;
-        //    transform.position = Node.Position;
-        //    transform.LookAt(Facing);
-        //}
-
         SetState(new IdleBehaviour(this));
     }
 
@@ -67,10 +59,6 @@ public class Character : MonoBehaviour, ITurnBased<float>
         SetState(new AbilityBehaviour(this, target, ability));
     }
 
-    /// <summary>
-    /// Moves the character along the given path regardless of its time units. Returns true if the character moves atleast one cell along
-    /// the path
-    /// </summary>
     public void Move(Path path)
     {
         SetState(new MoveBehaviour(this, path));
