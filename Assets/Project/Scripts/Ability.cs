@@ -8,6 +8,7 @@ public abstract class Ability : MonoBehaviour
 {
     public event EventHandler AbilityComplete;
 
+    public float Damage;
     public float Cost;
     public int MinimumRange;
     public int MaximumRange;

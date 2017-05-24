@@ -4,8 +4,6 @@ using TileMap;
 
 public class MeleeAttack : Ability
 {
-    public float Damage;
-
     public override void Activate(Character user, ITile<Character> target)
     {
         base.Activate(user, target);

@@ -10,13 +10,12 @@ public class FireBall : Ability
     public GameObject KneadingParticleEffect;
     public FireBallParticle ProjectileParticleEffect;
     public float Speed = 10;
-    public float Damage = 1;
 
     private GameObject kneadingInstance;
     private FireBallParticle projectileInstance;
 
-    private bool castComplete;
-    private bool moveComplete;
+    private bool castComplete = false;
+    private bool moveComplete = false;
 
     public override void Activate(Character user, ITile<Character> target)
     {

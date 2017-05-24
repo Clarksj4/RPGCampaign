@@ -60,6 +60,22 @@ namespace FluentBehaviourTree
         }
 
         /// <summary>
+        /// Create a repeater node that repeats execution of its child node until it fails
+        /// </summary>
+        public BehaviourTreeBuilder Repeater(string name)
+        {
+            var repeaterNode = new RepeaterNode(name);
+
+            if (parentNodeStack.Count > 0)
+            {
+                parentNodeStack.Peek().AddChild(repeaterNode);
+            }
+
+            parentNodeStack.Push(repeaterNode);
+            return this;
+        }
+
+        /// <summary>
         /// Create a sequence node.
         /// </summary>
         public BehaviourTreeBuilder Sequence(string name)
