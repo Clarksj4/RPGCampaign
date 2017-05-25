@@ -121,6 +121,8 @@ public class AggressiveBehaviour : IBehaviourStrategy
         target = null;
         path = null;
         abilityIndex = 0;
+        moveOrderGiven = false;
+        abilityOrderGiven = false;
 
         return result;
     }
