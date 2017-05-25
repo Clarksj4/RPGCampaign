@@ -16,7 +16,7 @@ public class AggressiveBehaviour : IBehaviourStrategy
     private Character target;
     private Ability ChosenAbility { get { return prioritizedAbilites[abilityIndex]; } }
     private List<Ability> prioritizedAbilites;
-    private int abilityIndex = -1;
+    private int abilityIndex = 0;
     private Path path;
     private bool moveOrderGiven = false;
     private bool abilityOrderGiven = false;
@@ -26,6 +26,7 @@ public class AggressiveBehaviour : IBehaviourStrategy
         BehaviourTreeBuilder builder = new BehaviourTreeBuilder();
         behaviourTree = builder
             .Sequence("Sequence")
+                .Condition("Is Idle?", t => IsIdle())
                 .Selector("Choose action")
                     .Splice(ActTree())
                     .Splice(MoveTree())
@@ -51,13 +52,11 @@ public class AggressiveBehaviour : IBehaviourStrategy
         BehaviourTreeBuilder builder = new BehaviourTreeBuilder();
         IBehaviourTreeNode actTree = builder
             .Sequence("Act")
-                .Condition("Is Idle?", t => IsIdle())
                 .Do("Select closest enemy", t => FindTarget())
                 .Do("Prioritize abilities", t => PrioritizeAbilities())
                 .Repeater("Repeat")
-                    .Sequence("Use ability")
-                        .Do("Get next ability", t => GetNextAbility())
-                        .Inverter("NOT")
+                    .Selector("Try abilities")
+                        .Repeater("Repeat")
                             .Sequence("Try ability")
                                 .Selector("Range find")
                                     .Condition("In range?", t => InRange())
@@ -73,6 +72,7 @@ public class AggressiveBehaviour : IBehaviourStrategy
                                 .End()
                             .End()
                         .End()
+                        .Do("Get next ability", t => GetNextAbility())
                     .End()
                 .End()
             .End()
@@ -86,7 +86,6 @@ public class AggressiveBehaviour : IBehaviourStrategy
         BehaviourTreeBuilder builder = new BehaviourTreeBuilder();
         IBehaviourTreeNode moveTree = builder
             .Sequence("Move")
-                .Condition("Is Idle?", t => IsIdle())
                 .Do("Select highest priority ability", t => SelectHighestPriorityAbility())
                 .Do("Find path", t => FindPath())
                 .Do("Move towards enemy", t => FollowPath())
@@ -101,7 +100,6 @@ public class AggressiveBehaviour : IBehaviourStrategy
         BehaviourTreeBuilder builder = new BehaviourTreeBuilder();
         IBehaviourTreeNode endTurnTree = builder
             .Sequence("End Turn")
-                .Condition("Is Idle?", t => IsIdle())
                 .Do("Reset parameters", t => ResetParameters())
             .End()
         .Build();
@@ -122,7 +120,7 @@ public class AggressiveBehaviour : IBehaviourStrategy
         // Reset behaviour tree variables
         target = null;
         path = null;
-        abilityIndex = -1;
+        abilityIndex = 0;
 
         return result;
     }
@@ -268,10 +266,21 @@ public class AggressiveBehaviour : IBehaviourStrategy
     /// </summary>
     private BehaviourTreeStatus UseAbility()
     {
-        // Result by default is SUCCESS rather than failure
-        BehaviourTreeStatus result = BehaviourTreeStatus.Success;
+        // Result by default is RUNNING rather than failure
+        BehaviourTreeStatus result = BehaviourTreeStatus.Running;
 
-        current.UseAbility(ChosenAbility, target.Tile);
+        if (abilityOrderGiven
+            && IsIdle())
+        {
+            abilityOrderGiven = false;
+            result = BehaviourTreeStatus.Success;
+        }
+
+        else
+        {
+            current.UseAbility(ChosenAbility, target.Tile);
+            abilityOrderGiven = true;
+        }
 
         return result;
     }
