@@ -18,6 +18,8 @@ public class AggressiveBehaviour : IBehaviourStrategy
     private List<Ability> prioritizedAbilites;
     private int abilityIndex = -1;
     private Path path;
+    private bool moveOrderGiven = false;
+    private bool abilityOrderGiven = false;
 
     public AggressiveBehaviour()
     {
@@ -52,24 +54,22 @@ public class AggressiveBehaviour : IBehaviourStrategy
                 .Condition("Is Idle?", t => IsIdle())
                 .Do("Select closest enemy", t => FindTarget())
                 .Do("Prioritize abilities", t => PrioritizeAbilities())
-                .Inverter("NOT")
-                    .Repeater("Repeat")
-                        .Sequence("Use ability")
-                            .Do("Get next ability", t => GetNextAbility())
-                            .Inverter("NOT")
-                                .Sequence("Try ability")
-                                    .Selector("Range find")
-                                        .Condition("In range?", t => InRange())
-                                        .Sequence("Advance")
-                                            .Do("Get path", t => FindPath())
-                                            .Condition("Enough TU for move AND ability?", t => MoveAndAbilityWithinCost())
-                                            .Do("Move into range", t => FollowPath())
-                                        .End()
+                .Repeater("Repeat")
+                    .Sequence("Use ability")
+                        .Do("Get next ability", t => GetNextAbility())
+                        .Inverter("NOT")
+                            .Sequence("Try ability")
+                                .Selector("Range find")
+                                    .Condition("In range?", t => InRange())
+                                    .Sequence("Advance")
+                                        .Do("Get path", t => FindPath())
+                                        .Condition("Enough TU for move AND ability?", t => MoveAndAbilityWithinCost())
+                                        .Do("Move into range", t => FollowPath())
                                     .End()
-                                    .Sequence("Ability")
-                                        .Condition("Enough TU for ability?", t => AbilityWithinCost())
-                                        .Do("Use ability", t => UseAbility())
-                                    .End()
+                                .End()
+                                .Sequence("Ability")
+                                    .Condition("Enough TU for ability?", t => AbilityWithinCost())
+                                    .Do("Use ability", t => UseAbility())
                                 .End()
                             .End()
                         .End()
@@ -245,9 +245,20 @@ public class AggressiveBehaviour : IBehaviourStrategy
     private BehaviourTreeStatus FollowPath()
     {
         // Result by default is RUNNING rather than failure
-        BehaviourTreeStatus result = BehaviourTreeStatus.Success;
+        BehaviourTreeStatus result = BehaviourTreeStatus.Running;
 
-        current.Move(path.Truncate(current.Stats.CurrentTimeUnits));
+        if (moveOrderGiven
+            && IsIdle())
+        {
+            moveOrderGiven = false;
+            result = BehaviourTreeStatus.Success;
+        }
+
+        else
+        {
+            current.Move(path.Truncate(current.Stats.CurrentTimeUnits));
+            moveOrderGiven = true;
+        }
 
         return result;
     }

@@ -46,7 +46,7 @@ public class AIPlayer : Player
         BehaviourTreeStatus status = behaviour.Update();
 
         // Continuously update the behaviour tree until it reports that it is done
-        while (status == BehaviourTreeStatus.Running)
+        while (status != BehaviourTreeStatus.Success)
         {
             yield return null;
 
