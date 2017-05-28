@@ -63,7 +63,7 @@ public class Model : MonoBehaviour
     {
         AddEventAction("DeathComplete", deathComplete);
 
-        animator.SetTrigger("Dead");
+        animator.SetBool("Dead", true);
     }
 
     public void Victory(Action victoryComplete)

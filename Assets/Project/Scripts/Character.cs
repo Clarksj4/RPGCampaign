@@ -66,8 +66,12 @@ public class Character : MonoBehaviour, ITurnBased<float>
 
     public void Hurt(float damage, Action hurtComplete = null)
     {
-        Model.Hurt(hurtComplete);
-        Stats.CurrentHP -= damage;
+        bool alive = Stats.ReceiveDamage(damage);
+        if (alive)
+            Model.Hurt(hurtComplete);
+
+        else
+            Model.Die(null);
     }
 
     public void TurnTowards(ITile<Character> target)

@@ -23,6 +23,17 @@ public class HumanPlayer : Player
     private int abilityIndex = 0;
     private bool endTurn = false;
 
+    public void SetAbility(int index)
+    {
+        abilityIndex = index;
+    }
+
+    public void EndTurn()
+    {
+        if (IsCurrentCharactersTurn())
+            endTurn = true;
+    }
+
     protected override void Awake()
     {
         base.Awake();
@@ -51,6 +62,7 @@ public class HumanPlayer : Player
 
         IBehaviourTreeNode tree = builder
             .Sequence("End turn")
+                .Condition("Is current character's turn?", t => IsCurrentCharactersTurn())
                 .Condition("End turn button clicked?", t => endTurn)
                 .Condition("Is current character idle?", t => IsCurrentCharacterIdle())
                 .Do("End turn", t => DoEndTurn())
@@ -152,16 +164,6 @@ public class HumanPlayer : Player
         movementRange = null;
 
         behaviourTree.Tick(new TimeData(Time.deltaTime));
-    }
-
-    public void SetAbility(int index)
-    {
-        abilityIndex = index;
-    }
-
-    public void EndTurn()
-    {
-        endTurn = true;
     }
 
     /// <summary>

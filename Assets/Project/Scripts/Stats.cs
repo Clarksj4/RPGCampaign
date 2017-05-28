@@ -70,4 +70,25 @@ public class Stats : MonoBehaviour
         get { return initiative; }
         set { initiative = value; }
     }
+
+    /// <summary>
+    /// Reduces currentHP by the given amount. Returns true if currentHP is above zero after the reduction.
+    /// </summary>
+    /// <param name="amount">The amount to reduce HP by.</param>
+    public bool ReceiveDamage(float amount)
+    {
+        bool alive = true;
+
+        // TODO: damage calculation including armour and such things
+        float change = -amount;
+
+        currentHP -= amount;
+        HealthChanged.Invoke(this, change);
+
+        // Still have some HP remaining?
+        if (currentHP <= 0)
+            alive = false;
+
+        return alive;
+    }
 }
