@@ -6,6 +6,7 @@ using FluentBehaviourTree;
 using TileMap;
 
 using Pathfinding;
+using System;
 
 public class HumanPlayer : Player
 {
@@ -34,11 +35,17 @@ public class HumanPlayer : Player
             endTurn = true;
     }
 
+    public override void PawnDie(Character pawn)
+    {
+        throw new NotImplementedException();
+    }
+
     protected override void Awake()
     {
         base.Awake();
 
         highlighter = GetComponent<HexHighlighter>();
+        Current = Allies[0];
 
         // Input behaviour tree
         BehaviourTreeBuilder builder = new BehaviourTreeBuilder();

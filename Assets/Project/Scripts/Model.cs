@@ -5,6 +5,8 @@ using UnityEngine;
 
 public class Model : MonoBehaviour
 {
+    public float FadeDuration = 1;
+
     [Tooltip("The speed at which this character moves")]
     public float WalkSpeed;
     public float RunSpeed;
@@ -18,6 +20,7 @@ public class Model : MonoBehaviour
 
     private Animator animator;
     private Dictionary<string, Action> eventActions = new Dictionary<string, Action>();
+    private Coroutine fade;
 
     private void Awake()
     {
@@ -79,6 +82,14 @@ public class Model : MonoBehaviour
 
         animator.SetTrigger("Defeat");
     }
+
+    public void Fade(Action fadeComplete)
+    {
+        AddEventAction("Fade", fadeComplete);
+
+        if (fade == null)
+            fade = StartCoroutine(DoFade());
+    }
     
     private void AddEventAction(string key, Action action)
     {
@@ -91,5 +102,27 @@ public class Model : MonoBehaviour
     {
         eventActions[eventName]();
         eventActions.Remove(eventName);
+    }
+
+    private IEnumerator DoFade()
+    {
+        Renderer renderer = GetComponentInChildren<Renderer>();
+        Material material = renderer.material;
+        Color color = material.color;
+        Color endColor = color;
+        endColor.a = 0;
+
+        float time = 0;
+        while (time < FadeDuration)
+        {
+            float t = time / FadeDuration;
+            material.color = Color.Lerp(color, endColor, t);
+
+            time += Time.deltaTime;
+            yield return null;
+        }
+
+        fade = null;
+        NotifyAnimationEvent("Fade");
     }
 }

@@ -71,7 +71,7 @@ public class Character : MonoBehaviour, ITurnBased<float>
             Model.Hurt(hurtComplete);
 
         else
-            Model.Die(null);
+            Model.Die(() => Controller.PawnDie(this));
     }
 
     public void TurnTowards(ITile<Character> target)

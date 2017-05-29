@@ -6,8 +6,8 @@ using TileMap;
 
 public abstract class Player : MonoBehaviour
 {
-    public Character Current { get; private set; }
-    public List<Character> Allies { get; private set;}
+    public Character Current { get; protected set; }
+    public List<Character> Allies { get; protected set;}
     public bool IsTurn { get { return turnSystem.Current.Controller == this; } }
 
     protected TurnSystem turnSystem;
@@ -21,7 +21,7 @@ public abstract class Player : MonoBehaviour
         // Get list of all characters this player controls
         Allies = GetComponentsInChildren<Character>().ToList();
 
-        Current = Allies[0];
+        //Current = Allies[0];
     }
 
     public void AddAlly(Character actor)
@@ -38,4 +38,6 @@ public abstract class Player : MonoBehaviour
     {
         Current = (Character)pawn;
     }
+
+    public abstract void PawnDie(Character pawn);
 }

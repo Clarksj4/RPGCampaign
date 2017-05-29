@@ -37,6 +37,22 @@ public class AIPlayer : Player
         StartCoroutine(ProcessTurn());
     }
 
+    public override void PawnDie(Character pawn)
+    {
+        // Fade out
+        pawn.Model.Fade(() => CleanUpPawn(pawn));
+    }
+
+    private void CleanUpPawn(Character pawn)
+    {
+        turnSystem.Remove(pawn);
+        Destroy(pawn.gameObject);
+
+        // If it was the pawns turn, go to next turn 
+        if (Current == pawn)
+            turnSystem.EndTurn();
+    }
+
     IEnumerator ProcessTurn()
     {
         // Think for a second
