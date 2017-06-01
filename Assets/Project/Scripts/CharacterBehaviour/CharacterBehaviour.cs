@@ -6,14 +6,6 @@ using UnityEngine;
 
 public class CharacterBehaviour
 {
-    public HexGrid HexGrid { get { return character.HexGrid; } }
-    public Transform Transform { get { return character.transform; } }
-    public HexCell Cell
-    {
-        get { return character.Cell; }
-        set { character.Cell = value; }
-    }
-
     protected Character character;
 
     public CharacterBehaviour(Character character)

@@ -1,14 +1,13 @@
 ﻿using System;
-using System.Collections;
-using System.Linq;
 using UnityEngine;
+using TileMap;
 
 public class AbilityBehaviour : CharacterBehaviour
 {
     private Ability instance;
-    private HexCell target;
+    private ITile<Character> target;
 
-    public AbilityBehaviour(Character character, HexCell target, Ability abilityPrefab)
+    public AbilityBehaviour(Character character, ITile<Character> target, Ability abilityPrefab)
         : base(character)
     {
         this.target = target;
@@ -20,7 +19,7 @@ public class AbilityBehaviour : CharacterBehaviour
         character.TurnTowards(target);
 
         // Use
-        instance = GameObject.Instantiate(abilityPrefab, character.Cell.Position, abilityPrefab.transform.rotation) as Ability;
+        instance = GameObject.Instantiate(abilityPrefab, character.Tile.Position, abilityPrefab.transform.rotation) as Ability;
         instance.Activate(character, target);
 
         // Listen for ability finished

@@ -9,61 +9,37 @@ public class AggressiveBehaviour : IBehaviourStrategy
 {
     private IBehaviourTreeNode behaviourTree;
 
+    private Character[] Characters { get { return GameObject.FindObjectsOfType<Character>(); } }
+    private AIPlayer Player { get { return GameObject.FindObjectOfType<AIPlayer>(); } }
+
     private Character current;
     private Character target;
-    private Ability ability;
+    private Ability ChosenAbility { get { return prioritizedAbilites[abilityIndex]; } }
+    private List<Ability> prioritizedAbilites;
+    private int abilityIndex = 0;
     private Path path;
-    private bool setAlongPath = false;
-    private bool toldToAttack = false;
+    private bool moveOrderGiven = false;
+    private bool abilityOrderGiven = false;
 
     public AggressiveBehaviour()
     {
         BehaviourTreeBuilder builder = new BehaviourTreeBuilder();
         behaviourTree = builder
             .Sequence("Sequence")
-
-                // TODO: subtree more intelligently picks a spell for the situation
-                .Do("Pick spell", t => PickSpell())
-                .Sequence("Sequence")
-
-                    // TODO: subtree more intelligently picks a target
-                    .Do("Find target", t => FindTarget())
-                    .Sequence("Sequence")
-                        .Selector("Range")
-
-                            // If not in range
-                            .Condition("In range?", t => InRange())
-
-                            // Move into range if enough TU 
-                            .Sequence("Get in range")
-
-                                // Find a path to a cell that is within range of the chosen attack, move towards it
-                                .Do("Find path to in range position", t => FindPath())
-                                .Do("Move into range", t => FollowPath())
-                            .End()
-                        .End()
-
-                        // Cast the chosen spell / attack if enough TU
-                        .Sequence("Cast spell")
-                            .Condition("Enough TU for attack?", t => current.Stats.CurrentTimeUnits >= ability.Cost)
-                            .Do("Attack!", t => Cast())
-                        .End()
-                    .End()
+                .Condition("Is Idle?", t => IsIdle())
+                .Selector("Choose action")
+                    .Splice(ActTree())
+                    .Splice(MoveTree())
+                    .Splice(EndTurnTree())
                 .End()
+                .Splice(EndTurnTree())
             .End()
-            .Build();
+        .Build();
     }
 
     public void PawnStart(Character current)
     {
         this.current = current;
-
-        // Reset behaviour tree variables
-        target = null;
-        ability = null;
-        path = null;
-        setAlongPath = false;
-        toldToAttack = false;
     }
 
     public BehaviourTreeStatus Update()
@@ -71,22 +47,117 @@ public class AggressiveBehaviour : IBehaviourStrategy
         return behaviourTree.Tick(new TimeData(Time.deltaTime));
     }
 
-    /// <summary>
-    /// Picks the first spell of the current character's spells.
-    /// </summary>
-    /// <returns>Success if the character has atleast one spell, failure otherwise</returns>
-    private BehaviourTreeStatus PickSpell()
+    private IBehaviourTreeNode ActTree()
+    {
+        BehaviourTreeBuilder builder = new BehaviourTreeBuilder();
+        IBehaviourTreeNode actTree = builder
+            .Sequence("Act")
+                .Do("Select closest enemy", t => FindTarget())
+                .Do("Prioritize abilities", t => PrioritizeAbilities())
+                .Repeater("Repeat")
+                    .Selector("Try abilities")
+                        .Repeater("Repeat")
+                            .Sequence("Try ability")
+                                .Selector("Range find")
+                                    .Condition("In range?", t => InRange())
+                                    .Sequence("Advance")
+                                        .Do("Get path", t => FindPath())
+                                        .Condition("Enough TU for move AND ability?", t => MoveAndAbilityWithinCost())
+                                        .Do("Move into range", t => FollowPath())
+                                    .End()
+                                .End()
+                                .Sequence("Ability")
+                                    .Condition("Enough TU for ability?", t => AbilityWithinCost())
+                                    .Do("Use ability", t => UseAbility())
+                                .End()
+                            .End()
+                        .End()
+                        .Do("Get next ability", t => GetNextAbility())
+                    .End()
+                .End()
+            .End()
+        .Build();
+
+        return actTree;
+    }
+
+    private IBehaviourTreeNode MoveTree()
+    {
+        BehaviourTreeBuilder builder = new BehaviourTreeBuilder();
+        IBehaviourTreeNode moveTree = builder
+            .Sequence("Move")
+                .Do("Select highest priority ability", t => SelectHighestPriorityAbility())
+                .Do("Find path", t => FindPath())
+                .Do("Move towards enemy", t => FollowPath())
+            .End()
+        .Build();
+
+        return moveTree;
+    }   
+
+    private IBehaviourTreeNode EndTurnTree()
+    {
+        BehaviourTreeBuilder builder = new BehaviourTreeBuilder();
+        IBehaviourTreeNode endTurnTree = builder
+            .Sequence("End Turn")
+                .Do("Reset parameters", t => ResetParameters())
+            .End()
+        .Build();
+
+        return endTurnTree;
+    }
+
+    private bool IsIdle()
+    {
+        bool isIdle = current.IsIdle;
+        return isIdle;
+    }
+
+    private BehaviourTreeStatus ResetParameters()
+    {
+        BehaviourTreeStatus result = BehaviourTreeStatus.Success;
+
+        // Reset behaviour tree variables
+        target = null;
+        path = null;
+        abilityIndex = 0;
+        moveOrderGiven = false;
+        abilityOrderGiven = false;
+
+        return result;
+    }
+
+    private BehaviourTreeStatus SelectHighestPriorityAbility()
+    {
+        BehaviourTreeStatus result = BehaviourTreeStatus.Success;
+
+        abilityIndex = 0;
+
+        return result;
+    }
+
+    private BehaviourTreeStatus PrioritizeAbilities()
+    {
+        BehaviourTreeStatus result = BehaviourTreeStatus.Success;
+
+        // Order abilities by damage, then cost
+        prioritizedAbilites = current.Abilities.OrderByDescending(a => a.Damage)
+                                               .ThenBy(a => a.Cost).ToList();
+
+        // Return success
+        return result;
+    }
+
+    private BehaviourTreeStatus GetNextAbility()
     {
         BehaviourTreeStatus result = BehaviourTreeStatus.Failure;
 
-        // If the current character has atleast one attack, use the first one
-        if (current.Abilities.Length > 0)
-        {
-            ability = current.Abilities[0];
-            result = BehaviourTreeStatus.Success;
-        }
+        // Proceed to next ability in list
+        abilityIndex++;
 
-        // Successful if the current character has atleast one attack
+        if (abilityIndex < prioritizedAbilites.Count)
+            result = BehaviourTreeStatus.Success;
+
         return result;
     }
 
@@ -116,7 +187,7 @@ public class AggressiveBehaviour : IBehaviourStrategy
     /// <returns>True if the attack is currently in range</returns>
     private bool InRange()
     {
-        bool inRange = ability.InRange(current.Cell, target.Cell);
+        bool inRange = ChosenAbility.InRange(current.Tile, target.Tile);
         return inRange;
     }
 
@@ -130,11 +201,11 @@ public class AggressiveBehaviour : IBehaviourStrategy
         BehaviourTreeStatus result = BehaviourTreeStatus.Failure;
 
         // Get area around target which would put AI character in range for attack
-        ICollection<PathStep> area = Pathfind.Area(target.Cell, ability.MaximumRange, ability.Traverser);
+        ICollection<PathStep> area = Pathfind.Area(target.Tile, ChosenAbility.MaximumRange, ChosenAbility.Traverser);
 
         // Find a path from the current characters cell to the quickest to reach cell that is in range of the target for 
         // the given attack
-        path = Pathfind.ToArea(current.Cell, area.Select(s => s.Node), current.Stats.Traverser);
+        path = Pathfind.ToArea(current.Tile, area.Select(s => s.Node), current.Stats.Traverser);
 
         // Is the path legit?
         if (path != null && path.Count >= 2)
@@ -144,12 +215,26 @@ public class AggressiveBehaviour : IBehaviourStrategy
     }
 
     /// <summary>
-    /// Checks if the current character has enough time units to traverse the path AND then perform the chosen attack
+    /// Checks if the current character has TU greater than or equal to the given amount
     /// </summary>
-    /// <returns>True if the current character has enough time units to move and attack</returns>
-    private bool WithinCost()
+    //private bool WithinCost(float cost)
+    //{
+    //    float timeUnits = current.Stats.CurrentTimeUnits;
+    //    bool withinCost = timeUnits >= cost;
+    //    return withinCost;
+    //}
+
+    private bool AbilityWithinCost()
     {
-        bool withinCost = current.Stats.CurrentTimeUnits >= path.Cost;
+        float timeUnits = current.Stats.CurrentTimeUnits;
+        bool withinCost = timeUnits >= ChosenAbility.Cost;
+        return withinCost;
+    }
+
+    private bool MoveAndAbilityWithinCost()
+    {
+        float timeUnits = current.Stats.CurrentTimeUnits;
+        bool withinCost = timeUnits >= ChosenAbility.Cost + path.Cost;
         return withinCost;
     }
 
@@ -162,43 +247,41 @@ public class AggressiveBehaviour : IBehaviourStrategy
         // Result by default is RUNNING rather than failure
         BehaviourTreeStatus result = BehaviourTreeStatus.Running;
 
-        // If character hasn't been told to move yet...
-        if (!setAlongPath)
+        if (moveOrderGiven
+            && IsIdle())
         {
-            // Move character
-            current.Move(path.Truncate(current.Stats.CurrentTimeUnits));
-            setAlongPath = true;
+            moveOrderGiven = false;
+            result = BehaviourTreeStatus.Success;
         }
 
-        // Has character finished moving?
-        else if (!current.IsMoving)
+        else
         {
-            setAlongPath = false;
-            result = BehaviourTreeStatus.Success;
+            current.Move(path.Truncate(current.Stats.CurrentTimeUnits));
+            moveOrderGiven = true;
         }
 
         return result;
     }
 
     /// <summary>
-    /// Orders the current character to attack the chosen target with the chosen spell
+    /// Orders the current character to attack the chosen target with the chosen ability
     /// </summary>
-    /// <returns>Success when the character has finished attacking the target, RUNNING otherwise</returns>
-    private BehaviourTreeStatus Cast()
+    private BehaviourTreeStatus UseAbility()
     {
         // Result by default is RUNNING rather than failure
         BehaviourTreeStatus result = BehaviourTreeStatus.Running;
 
-        if (!toldToAttack)
+        if (abilityOrderGiven
+            && IsIdle())
         {
-            current.UseAbility(ability, target.Cell);
-            toldToAttack = true;
+            abilityOrderGiven = false;
+            result = BehaviourTreeStatus.Success;
         }
 
-        else if (!current.IsUsingAbility)
+        else
         {
-            toldToAttack = false;
-            result = BehaviourTreeStatus.Success;
+            current.UseAbility(ChosenAbility, target.Tile);
+            abilityOrderGiven = true;
         }
 
         return result;

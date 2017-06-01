@@ -1,7 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using Pathfinding;
 
 public class Stats : MonoBehaviour
 {
@@ -26,7 +25,7 @@ public class Stats : MonoBehaviour
     private float maxTimeUnits;
 
     [Tooltip("Which cells can be crossed by this character and the cost of doing so")]
-    public HexMapTraverser Traverser = HexMapTraverser.Walking();
+    public HexGridTraverser Traverser = HexGridTraverser.Walking();
 
     [Header("Events")]
     public ResourceEvent HealthChanged;
@@ -70,5 +69,26 @@ public class Stats : MonoBehaviour
     {
         get { return initiative; }
         set { initiative = value; }
+    }
+
+    /// <summary>
+    /// Reduces currentHP by the given amount. Returns true if currentHP is above zero after the reduction.
+    /// </summary>
+    /// <param name="amount">The amount to reduce HP by.</param>
+    public bool ReceiveDamage(float amount)
+    {
+        bool alive = true;
+
+        // TODO: damage calculation including armour and such things
+        float change = -amount;
+
+        currentHP -= amount;
+        HealthChanged.Invoke(this, change);
+
+        // Still have some HP remaining?
+        if (currentHP <= 0)
+            alive = false;
+
+        return alive;
     }
 }

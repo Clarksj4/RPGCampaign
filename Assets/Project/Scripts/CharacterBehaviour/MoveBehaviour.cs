@@ -4,6 +4,8 @@ using Pathfinding;
 
 public class MoveBehaviour : CharacterBehaviour
 {
+    private HexGrid grid;
+
     private Path path;
     private Vector3[] points;
     private float distance;
@@ -16,6 +18,7 @@ public class MoveBehaviour : CharacterBehaviour
     {
         this.path = path;
         points = path.GetPoints();
+        grid = GameObject.FindObjectOfType<HexGrid>();
     }
 
     public override void Init()
@@ -83,38 +86,16 @@ public class MoveBehaviour : CharacterBehaviour
     private void UpdateOccupiedCellFinal()
     {
         // Has the character entered a new cell?
-        HexCell newCell = HexGrid.GetCell(Transform.position);
+
+        HexCell newCell = grid.GetCell(character.transform.position);
 
         // Can't occupy a cell thats already occupied
-        if (newCell.Occupant != null)
+        if (newCell.Contents != null)
             throw new NotImplementedException("Cannot currently occupy cells that are already occupied");
 
         // Update ref to which cell is occupied
-        Cell.Occupant = null;
-        Cell = newCell;
-        Cell.Occupant = character;
+        character.Tile.Contents = null;
+        character.Tile = newCell;
+        newCell.Contents = character;
     }
-
-    //private void UpdateOccupiedCell()
-    //{
-    //    // Has the character entered a new cell?
-    //    HexCell newCell = HexGrid.GetCell(Transform.position);
-    //    if (newCell != Cell)
-    //    {
-    //        // Calculate direction moved and cost to do so, subtract from time units
-    //        HexDirection directionMoved = Cell.GetDirection(newCell);
-    //        float moveCost = character.TraverseCost(directionMoved);
-    //        character.Stats.CurrentTimeUnits -= moveCost;
-
-    //        // Update ref to which cell is occupied
-    //        Cell.Occupant = null;
-    //        Cell = newCell;
-
-    //        // Can't move through an occupied cell
-    //        if (Cell.Occupant != null && Cell.Occupant != character)
-    //            throw new NotImplementedException("Cannot currently traverse cells that are already occupied");
-
-    //        Cell.Occupant = character;
-    //    }
-    //}
 }

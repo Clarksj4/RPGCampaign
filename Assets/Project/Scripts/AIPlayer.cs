@@ -26,7 +26,7 @@ public class AIPlayer : Player
         this.behaviour = behaviour;
     }
 
-    public override void PawnStart(IPawn<float> pawn)
+    public override void PawnStart(ITurnBased<float> pawn)
     {
         base.PawnStart(pawn);
 
@@ -35,6 +35,22 @@ public class AIPlayer : Player
 
         // Traverse tree until tree fails or succeeds
         StartCoroutine(ProcessTurn());
+    }
+
+    public override void PawnDie(Character pawn)
+    {
+        // Fade out
+        pawn.Model.Fade(() => CleanUpPawn(pawn));
+    }
+
+    private void CleanUpPawn(Character pawn)
+    {
+        turnSystem.Remove(pawn);
+        Destroy(pawn.gameObject);
+
+        // If it was the pawns turn, go to next turn 
+        if (Current == pawn)
+            turnSystem.EndTurn();
     }
 
     IEnumerator ProcessTurn()
@@ -46,7 +62,7 @@ public class AIPlayer : Player
         BehaviourTreeStatus status = behaviour.Update();
 
         // Continuously update the behaviour tree until it reports that it is done
-        while (status == BehaviourTreeStatus.Running)
+        while (status != BehaviourTreeStatus.Success)
         {
             yield return null;
 

@@ -23,6 +23,11 @@ public class TurnSystem : MonoBehaviour
         Order.MoveNext();
     }
 
+    public void Remove(Character character)
+    {
+        Order.Remove(character);
+    }
+
     public void EndTurn()
     {
         bool isMore = Order.MoveNext();

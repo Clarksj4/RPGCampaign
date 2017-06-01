@@ -19,6 +19,7 @@ public class FloatingText : MonoBehaviour
     public void Display(string text, Color colour)
     {
         FloatingText instance = Instantiate(this, transform);
+        instance.transform.localScale = Vector3.one;
         instance.Text = text;
         instance.TextComponent.color = colour;
         instance.gameObject.SetActive(true);

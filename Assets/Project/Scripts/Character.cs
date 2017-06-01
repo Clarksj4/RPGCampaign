@@ -5,14 +5,13 @@ using System.Linq;
 using System;
 using Pathfinding;
 using TurnBased;
+using TileMap;
 
 [RequireComponent(typeof(Stats))]
-public class Character : MonoBehaviour, IPawn<float>
+public class Character : MonoBehaviour, ITurnBased<float>
 {
     public HexDirection Facing;
-    public HexCell Cell;
-    [Tooltip("The hex grid this character exists upon")]
-    public HexGrid HexGrid;
+    public ITile<Character> Tile;
     [Tooltip("The abilities this character can use")]
     public Ability[] Abilities;
 
@@ -36,14 +35,6 @@ public class Character : MonoBehaviour, IPawn<float>
 
     private void Start()
     {
-        if (HexGrid != null)
-        {
-            Cell = HexGrid.GetCell(transform.position);
-            Cell.Occupant = this;
-            transform.position = Cell.Position;
-            transform.LookAt(Facing);
-        }
-
         SetState(new IdleBehaviour(this));
     }
 
@@ -63,15 +54,11 @@ public class Character : MonoBehaviour, IPawn<float>
             oldState.Closing();
     }
 
-    public void UseAbility(Ability ability, HexCell target)
+    public void UseAbility(Ability ability, ITile<Character> target)
     {
         SetState(new AbilityBehaviour(this, target, ability));
     }
 
-    /// <summary>
-    /// Moves the character along the given path regardless of its time units. Returns true if the character moves atleast one cell along
-    /// the path
-    /// </summary>
     public void Move(Path path)
     {
         SetState(new MoveBehaviour(this, path));
@@ -79,13 +66,17 @@ public class Character : MonoBehaviour, IPawn<float>
 
     public void Hurt(float damage, Action hurtComplete = null)
     {
-        Model.Hurt(hurtComplete);
-        Stats.CurrentHP -= damage;
+        bool alive = Stats.ReceiveDamage(damage);
+        if (alive)
+            Model.Hurt(hurtComplete);
+
+        else
+            Model.Die(() => Controller.PawnDie(this));
     }
 
-    public void TurnTowards(HexCell target)
+    public void TurnTowards(ITile<Character> target)
     {
-        Vector3 lookPosition = target.transform.position;
+        Vector3 lookPosition = target.Position;
         lookPosition.y = transform.position.y;
         transform.LookAt(lookPosition);
     }

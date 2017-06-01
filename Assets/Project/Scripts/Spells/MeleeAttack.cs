@@ -1,10 +1,10 @@
 ﻿using System;
+using Pathfinding;
+using TileMap;
 
 public class MeleeAttack : Ability
 {
-    public float Damage;
-
-    public override void Activate(Character user, HexCell target)
+    public override void Activate(Character user, ITile<Character> target)
     {
         base.Activate(user, target);
 
@@ -15,7 +15,7 @@ public class MeleeAttack : Ability
     private void AttackApex()
     {
         // Deal damage to target
-        target.Occupant.Hurt(Damage);
+        target.Contents.Hurt(Damage);
     }
 
     private void AttackComplete()

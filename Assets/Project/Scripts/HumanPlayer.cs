@@ -3,8 +3,10 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using TurnBased;
 using FluentBehaviourTree;
+using TileMap;
 
 using Pathfinding;
+using System;
 
 public class HumanPlayer : Player
 {
@@ -12,8 +14,8 @@ public class HumanPlayer : Player
     private HexHighlighter highlighter;
 
     // Behaviour tree variables
-    private HexCell previousCell;
-    private HexCell targetCell;
+    private ITile<Character> previousCell;
+    private ITile<Character> targetCell;
     private ICollection<PathStep> movementRange;
     private Path movementPath;
     private Ability Ability { get { return Current.Abilities[abilityIndex]; } }
@@ -22,11 +24,28 @@ public class HumanPlayer : Player
     private int abilityIndex = 0;
     private bool endTurn = false;
 
+    public void SetAbility(int index)
+    {
+        abilityIndex = index;
+    }
+
+    public void EndTurn()
+    {
+        if (IsCurrentCharactersTurn())
+            endTurn = true;
+    }
+
+    public override void PawnDie(Character pawn)
+    {
+        throw new NotImplementedException();
+    }
+
     protected override void Awake()
     {
         base.Awake();
 
         highlighter = GetComponent<HexHighlighter>();
+        Current = Allies[0];
 
         // Input behaviour tree
         BehaviourTreeBuilder builder = new BehaviourTreeBuilder();
@@ -50,6 +69,7 @@ public class HumanPlayer : Player
 
         IBehaviourTreeNode tree = builder
             .Sequence("End turn")
+                .Condition("Is current character's turn?", t => IsCurrentCharactersTurn())
                 .Condition("End turn button clicked?", t => endTurn)
                 .Condition("Is current character idle?", t => IsCurrentCharacterIdle())
                 .Do("End turn", t => DoEndTurn())
@@ -153,34 +173,24 @@ public class HumanPlayer : Player
         behaviourTree.Tick(new TimeData(Time.deltaTime));
     }
 
-    public void SetAbility(int index)
-    {
-        abilityIndex = index;
-    }
-
-    public void EndTurn()
-    {
-        endTurn = true;
-    }
-
     /// <summary>
-    /// Get the hex cell the mouse is currently over
+    /// Get the tile cell the mouse is currently over
     /// </summary>
-    private HexCell GetCell()
+    private ITile<Character> GetCell()
     {
         // If mouse not over UI
         if (!EventSystem.current.IsPointerOverGameObject())
         {
-            // Raycast onto hexmesh (because it's the only thing in the scene
+            // Raycast onto tileMap (because it's the only thing with a collider in the scene)
             Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
             RaycastHit hitInfo;
 
-            // If there's a hit it must be the hexmesh
+            // If there's a hit it must be the tileMap
             if (Physics.Raycast(ray, out hitInfo))
-                return grid.GetCell(hitInfo.point);
+                return grid.GetTile(hitInfo.point);
         }
 
-        // No cell clicked
+        // No tile clicked
         return null;
     }
 
@@ -204,13 +214,13 @@ public class HumanPlayer : Player
 
     private bool IsTargetCellOccupied()
     {
-        bool occupied = targetCell.Occupant != null;
+        bool occupied = targetCell.Contents != null;
         return occupied;
     }
 
     private bool IsTargetedCellOccupantStationary()
     {
-        bool stationary = !targetCell.Occupant.IsMoving;
+        bool stationary = !targetCell.Contents.IsMoving;
         return stationary;
     }
 
@@ -218,7 +228,7 @@ public class HumanPlayer : Player
     {
         BehaviourTreeStatus result = BehaviourTreeStatus.Failure;
 
-        Character occupant = targetCell.Occupant;
+        Character occupant = targetCell.Contents;
         movementRange = Pathfind.Area(targetCell, occupant.Stats.CurrentTimeUnits, occupant.Stats.Traverser);
 
         if (movementRange.Count > 0)
@@ -244,7 +254,7 @@ public class HumanPlayer : Player
     {
         BehaviourTreeStatus result = BehaviourTreeStatus.Failure;
 
-        movementPath = Pathfind.Between(Current.Cell, targetCell, -1, Current.Stats.Traverser);
+        movementPath = Pathfind.Between(Current.Tile, targetCell, -1, Current.Stats.Traverser);
 
         if (movementPath != null)
             result = BehaviourTreeStatus.Success;
@@ -326,7 +336,7 @@ public class HumanPlayer : Player
 
     private bool InRangeForAbility()
     {
-        bool inRange = Ability.InRange(Current.Cell, targetCell);
+        bool inRange = Ability.InRange(Current.Tile, targetCell);
         return inRange;
     }
 
