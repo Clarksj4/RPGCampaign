@@ -159,11 +159,6 @@ namespace TurnBased
             return isMore;
         }
 
-        public bool Contains(ITurnBased<T> pawn)
-        {
-            return pawns.Contains(pawn);
-        }
-
         public IEnumerator<ITurnBased<T>> GetEnumerator()
         {
             // Don't return the node that is marked for removal
