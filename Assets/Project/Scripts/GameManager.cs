@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.SceneManagement;
 
 public class GameManager : MonoBehaviour
 {
@@ -34,7 +35,7 @@ public class GameManager : MonoBehaviour
 
     public void Restart()
     {
-
+        SceneManager.LoadScene("AutoLoadHexMap");
     }
 
     bool AllCharactersDead(Player controller)
