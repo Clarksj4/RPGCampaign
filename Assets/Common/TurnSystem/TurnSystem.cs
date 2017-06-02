@@ -7,6 +7,7 @@ using UnityEngine.Events;
 [AddComponentMenu("Turn Based/Turn System")]
 public class TurnSystem : MonoBehaviour
 {
+    [Tooltip("Should the first turn begin once the turn system has loaded?")]
     public bool BeginOnLoad;
 
     [SerializeField]
@@ -18,13 +19,21 @@ public class TurnSystem : MonoBehaviour
     [SerializeField]
     public TurnEvent OrderChanged;
 
+    /// <summary>
+    /// The entity whose turn it currently is
+    /// </summary>
     public TurnBasedEntity Current { get { return order.Current as TurnBasedEntity; } }
+
+    /// <summary>
+    /// Iterates over each entity in this turn system
+    /// </summary>
     public IEnumerable<TurnBasedEntity> Order { get { return order.Select(i => i as TurnBasedEntity); } }
 
     private TurnOrder<float> order = new TurnOrder<float>();
 
     void Start()
     {
+        // Start the first turn
         if (BeginOnLoad)
             EndTurn();
     }
@@ -57,6 +66,9 @@ public class TurnSystem : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Does this turn order contain the given entity?
+    /// </summary>
     public bool Contains(TurnBasedEntity entity)
     {
         return order.Contains(entity);
@@ -72,25 +84,6 @@ public class TurnSystem : MonoBehaviour
 
         // Notify that an object has been inserted
         OrderChanged.Invoke(entity);
-    }
-
-    // [PLACHOLDER]: TODO remove this test code
-    public void Add()
-    {
-        GameObject primitive = GameObject.CreatePrimitive(PrimitiveType.Cube);
-        primitive.transform.SetParent(transform);
-        var entity = primitive.AddComponent<TurnBasedEntity>();
-    }
-
-    // [PLACHOLDER]: TODO remove this test code
-    public void Remove()
-    {
-        TurnBasedEntity obj = FindObjectOfType<TurnBasedEntity>();
-        if (obj != null)
-        {
-            Remove(obj);
-            Destroy(obj.gameObject);
-        }
     }
 
     /// <summary>
