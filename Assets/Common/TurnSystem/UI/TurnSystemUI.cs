@@ -42,7 +42,7 @@ public class TurnSystemUI : MonoBehaviour
 
         // Order them, and scroll to the current entity
         PositionItems();
-        ScrollToCurrent();
+        ScrollToCurrent(true);
     }
 
     /// <summary>
@@ -113,7 +113,7 @@ public class TurnSystemUI : MonoBehaviour
     /// <summary>
     /// Scrolls to the current entity over time
     /// </summary>
-    void ScrollToCurrent()
+    void ScrollToCurrent(bool immediate = false)
     {
         int index = -1;
 
@@ -124,16 +124,22 @@ public class TurnSystemUI : MonoBehaviour
             index = associatedRect.GetSiblingIndex();
         }
 
-        ScrollTo(index);
+        ScrollTo(index, immediate);
     }
 
     /// <summary>
     /// Scrolls nth entity in the order over times
     /// </summary>
-    void ScrollTo(int index)
+    void ScrollTo(int index, bool immediate = false)
     {
-        StopAllCoroutines();
-        StartCoroutine(DoScroll(index, ScrollDuration));
+        if (immediate)
+            ContentPanel.anchoredPosition = IndexPosition(index);
+
+        else
+        {
+            StopAllCoroutines();
+            StartCoroutine(DoScroll(index, ScrollDuration));
+        }
     }
 
     /// <summary>
