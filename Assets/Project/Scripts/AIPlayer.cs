@@ -26,12 +26,12 @@ public class AIPlayer : Player
         this.behaviour = behaviour;
     }
 
-    public override void PawnStart(ITurnBased<float> pawn)
+    public override void PawnStart(Character pawn)
     {
         base.PawnStart(pawn);
 
         // Behaviour handler is notified that it's its turn
-        behaviour.PawnStart((Character)pawn);
+        behaviour.PawnStart(pawn);
 
         // Traverse tree until tree fails or succeeds
         StartCoroutine(ProcessTurn());
@@ -45,7 +45,7 @@ public class AIPlayer : Player
 
     private void CleanUpPawn(Character pawn)
     {
-        turnSystem.Remove(pawn);
+        turnSystem.Remove(pawn.GetComponent<TurnBasedEntity>());
         Destroy(pawn.gameObject);
 
         // If it was the pawns turn, go to next turn 

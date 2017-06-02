@@ -26,6 +26,11 @@ namespace TurnBased
             }
         }
 
+        /// <summary>
+        /// The number of pawns in this turn order.
+        /// </summary>
+        public int Count { get; private set; }
+
         private LinkedList<ITurnBased<T>> pawns;
         private LinkedListNode<ITurnBased<T>> currentNode;
         private bool currentToBeRemoved;
@@ -38,6 +43,7 @@ namespace TurnBased
             pawns = new LinkedList<ITurnBased<T>>();
             currentNode = null;
             currentToBeRemoved = false;
+            Count = 0;
         }
 
         /// <summary>
@@ -62,7 +68,7 @@ namespace TurnBased
                 var walker = pawns.First;
 
                 // Walk until finding a smaller node
-                while (walker != null &&
+                while (walker != null && 
                        pawn.Priority.CompareTo(walker.Value.Priority) < 0)
                     walker = walker.Next;
 
@@ -74,6 +80,8 @@ namespace TurnBased
                 else
                     pawns.AddBefore(walker, pawn);
             }
+
+            Count++;
         }
 
         /// <summary>
@@ -98,6 +106,7 @@ namespace TurnBased
                 pawns.Remove(node);
 
             // Pawn successfully removed
+            Count--;
             return true;
         }
 
@@ -134,17 +143,25 @@ namespace TurnBased
             // Notify current of turn end
             EndCurrent();
 
-            // Remove current node if its been marked
-            DeferredRecycle();
+            // Remember current node so it can be recycled if necessary
+            var node = currentNode;
 
             // Move to next pawn in order
             bool isMore = Cycle();
+
+            // Remove previous node if it was marked
+            DeferredRecycle(node);
 
             // Notify current of turn start
             StartCurrent();
 
             // True if there are more pawns in the order who have not had their turn during this cycle
             return isMore;
+        }
+
+        public bool Contains(ITurnBased<T> pawn)
+        {
+            return pawns.Contains(pawn);
         }
 
         public IEnumerator<ITurnBased<T>> GetEnumerator()
@@ -167,11 +184,11 @@ namespace TurnBased
                 Current.TurnEnd();
         }
 
-        void DeferredRecycle()
+        void DeferredRecycle(LinkedListNode<ITurnBased<T>> node)
         {
             // Remove current node if its been marked
             if (currentToBeRemoved)
-                pawns.Remove(currentNode);
+                pawns.Remove(node);
 
             // Update mark
             currentToBeRemoved = false;
