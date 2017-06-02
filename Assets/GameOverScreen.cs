@@ -23,35 +23,28 @@ public class GameOverScreen : MonoBehaviour
         animator.SetFloat("Time", time);
 
         if (Duration < 0)
-            time = Duration;
+            time = 0;
         else
             time = Mathf.Clamp(time - Time.deltaTime, -1f, Duration);
     }
 
-    public void CheckGameOver()
+    public void Victory()
     {
-        // Game is over if all AI characters are dead
-        if (AllCharactersDead(FindObjectOfType<AIPlayer>()))
-        {
-            Text.text = "Victory!";
-            Play();
-        }
+        Text.text = "Victory!";
+        Play();
+    }
 
-        // Or all human characters are dead
-        else if (AllCharactersDead(FindObjectOfType<HumanPlayer>()))
-        {
-            Text.text = "Deafeat!";
-            Play();
-        }
+    public void Defeat()
+    {
+        Text.text = "Deafeat!";
+        Play();
     }
 
     /// <summary>
     /// Shows the notification animation
     /// </summary>
     public void Play()
-    {
-        RestartButton.interactable = true;
-        RestartButton.GetComponent<Image>().raycastTarget = true;
+    { 
         time = Duration;
 
         animator.SetBool("Show", true);
@@ -63,7 +56,6 @@ public class GameOverScreen : MonoBehaviour
     /// </summary>
     public void Stop()
     {
-        RestartButton.interactable = false;
         RestartButton.GetComponent<Image>().raycastTarget = false;
         time = -1;
     }
@@ -71,23 +63,5 @@ public class GameOverScreen : MonoBehaviour
     public void Clicked()
     {
         print("Clicked");
-    }
-
-    bool AllCharactersDead(Player controller)
-    {
-        bool charactersAllDead = true;
-
-        Character[] characters = FindObjectsOfType<Character>();
-        foreach (Character character in characters)
-        {
-            if (character.Controller == controller &&
-                character.Stats.CurrentHP > 0)
-            {
-                charactersAllDead = false;
-                break;
-            }
-        }
-
-        return charactersAllDead;
     }
 }
