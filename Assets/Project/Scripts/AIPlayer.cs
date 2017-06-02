@@ -47,10 +47,6 @@ public class AIPlayer : Player
     {
         turnSystem.Remove(pawn.GetComponent<TurnBasedEntity>());
         Destroy(pawn.gameObject);
-
-        // If it was the pawns turn, go to next turn 
-        if (Current == pawn)
-            turnSystem.EndTurn();
     }
 
     IEnumerator ProcessTurn()
