@@ -172,11 +172,13 @@ public class AggressiveBehaviour : IBehaviourStrategy
         // Find a character that is not one of this player's characters
         Character[] characters = GameObject.FindObjectsOfType<Character>();
         Character[] enemies = characters.Where(c => c.Controller != current.Controller).ToArray();
-        target = enemies[0];
 
-        // If found an enemey
-        if (target != null)
+        // If there is an enemy
+        if (enemies.Length > 0)
+        {
+            target = enemies[0];
             result = BehaviourTreeStatus.Success;
+        }
 
         return result;
     }
@@ -200,16 +202,19 @@ public class AggressiveBehaviour : IBehaviourStrategy
     {
         BehaviourTreeStatus result = BehaviourTreeStatus.Failure;
 
-        // Get area around target which would put AI character in range for attack
-        ICollection<PathStep> area = Pathfind.Area(target.Tile, ChosenAbility.MaximumRange, ChosenAbility.Traverser);
+        if (target != null)
+        {
+            // Get area around target which would put AI character in range for attack
+            ICollection<PathStep> area = Pathfind.Area(target.Tile, ChosenAbility.MaximumRange, ChosenAbility.Traverser);
 
-        // Find a path from the current characters cell to the quickest to reach cell that is in range of the target for 
-        // the given attack
-        path = Pathfind.ToArea(current.Tile, area.Select(s => s.Node), current.Stats.Traverser);
+            // Find a path from the current characters cell to the quickest to reach cell that is in range of the target for 
+            // the given attack
+            path = Pathfind.ToArea(current.Tile, area.Select(s => s.Node), current.Stats.Traverser);
 
-        // Is the path legit?
-        if (path != null && path.Count >= 2)
-            result = BehaviourTreeStatus.Success;
+            // Is the path legit?
+            if (path != null && path.Count >= 2)
+                result = BehaviourTreeStatus.Success;
+        }
 
         return result;
     }
