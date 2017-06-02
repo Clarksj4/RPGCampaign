@@ -9,6 +9,7 @@ public class TurnSystem : MonoBehaviour
 {
     [Tooltip("Should the first turn begin once the turn system has loaded?")]
     public bool BeginOnLoad;
+    public bool Paused = false;
 
     [SerializeField]
     public TurnEvent TurnEnding;
@@ -44,7 +45,7 @@ public class TurnSystem : MonoBehaviour
     public void EndTurn()
     {
         // Only do a thing if the order is not empty
-        if (order.Count > 0)
+        if (!Paused && order.Count > 0)
         {
             // Notify current object's turn has ended
             if (Current != null)
