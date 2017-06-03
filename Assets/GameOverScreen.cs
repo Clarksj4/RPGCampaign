@@ -5,6 +5,8 @@ using UnityEngine.UI;
 
 public class GameOverScreen : MonoBehaviour
 {
+    public string WinText = "Victory!";
+    public string LoseText = "Defeat!";
     public float Duration;
     public Button RestartButton;
     public Text Text;
@@ -30,13 +32,13 @@ public class GameOverScreen : MonoBehaviour
 
     public void Victory()
     {
-        Text.text = "Victory!";
+        Text.text = WinText;
         Play();
     }
 
     public void Defeat()
     {
-        Text.text = "Deafeat!";
+        Text.text = LoseText;
         Play();
     }
 
