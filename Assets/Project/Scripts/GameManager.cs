@@ -9,7 +9,7 @@ public class GameManager : MonoBehaviour
     public UnityEvent Victory;
     public UnityEvent Defeat;
 
-    public TurnSystem turnSystem;
+    private TurnSystem turnSystem;
 
     void Awake()
     {
@@ -36,6 +36,11 @@ public class GameManager : MonoBehaviour
     public void Restart()
     {
         SceneManager.LoadScene("AutoLoadHexMap");
+    }
+
+    public void Quit()
+    {
+        Application.Quit();
     }
 
     bool AllCharactersDead(Player controller)

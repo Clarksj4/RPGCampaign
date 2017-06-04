@@ -68,10 +68,10 @@ public class Character : MonoBehaviour
     {
         bool alive = Stats.ReceiveDamage(damage);
         if (alive)
-            Model.Hurt(hurtComplete);
+            Model.Hurt(() => HurtComplete(false, hurtComplete));
 
         else
-            Model.Die(() => Controller.PawnDie(this));
+            Model.Die(() => HurtComplete(true, hurtComplete));
     }
 
     public void TurnTowards(ITile<Character> target)
@@ -97,5 +97,13 @@ public class Character : MonoBehaviour
         IsTurn = false;
 
         state.EndTurn();
+    }
+
+    private void HurtComplete(bool dead, Action hurtComplete = null)
+    {
+        hurtComplete();
+
+        if (dead)
+            Controller.PawnDie(this);
     }
 }

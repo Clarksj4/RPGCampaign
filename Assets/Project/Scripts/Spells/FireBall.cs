@@ -14,9 +14,6 @@ public class FireBall : Ability
     private GameObject kneadingInstance;
     private FireBallParticle projectileInstance;
 
-    private bool castComplete = false;
-    private bool moveComplete = false;
-
     public override void Activate(Character user, ITile<Character> target)
     {
         base.Activate(user, target);
@@ -46,27 +43,16 @@ public class FireBall : Ability
 
     private void CastComplete()
     {
-        castComplete = true;
-        CheckExpired();
+        
     }
 
     private void OnMoveComplete()
     {
-        target.Contents.Hurt(Damage);
-
-        moveComplete = true;
-        CheckExpired();
+        target.Contents.Hurt(Damage, OnHurtComplete);
     }
 
-    private void CheckExpired()
+    private void OnHurtComplete()
     {
-        // Don't destroy until cast animation is complete AND fireball has reached destination
-        if (castComplete && moveComplete)
-        {
-            castComplete = false;
-            moveComplete = false;
-
-            Deactivate();
-        }
+        Deactivate();
     }
 }

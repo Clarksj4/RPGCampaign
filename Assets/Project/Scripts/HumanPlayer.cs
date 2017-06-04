@@ -37,6 +37,8 @@ public class HumanPlayer : Player
 
     public override void PawnDie(Character pawn)
     {
+        turnSystem.Paused = true;
+
         // Fade out
         pawn.Model.Fade(() => CleanUpPawn(pawn));
     }
