@@ -37,7 +37,16 @@ public class HumanPlayer : Player
 
     public override void PawnDie(Character pawn)
     {
-        throw new NotImplementedException();
+        // Fade out
+        pawn.Model.Fade(() => CleanUpPawn(pawn));
+    }
+
+    private void CleanUpPawn(Character pawn)
+    {
+        bool progressToNextTurn = Allies.Count > 1;
+
+        turnSystem.Remove(pawn.GetComponent<TurnBasedEntity>(), progressToNextTurn);
+        Destroy(pawn.gameObject);
     }
 
     protected override void Awake()

@@ -8,14 +8,13 @@ public abstract class Player : MonoBehaviour
 {
     public Character Current { get; protected set; }
     public List<Character> Allies { get; protected set;}
-    public bool IsTurn { get { return turnSystem.Current.Controller == this; } }
 
     protected TurnSystem turnSystem;
     protected ITileMap<Character> grid;
 
     protected virtual void Awake()
     {
-        turnSystem = FindObjectOfType<TurnSystem>();
+        turnSystem = GetComponentInParent<TurnSystem>();
         grid = FindObjectOfType<HexGrid>();
 
         // Get list of all characters this player controls
@@ -34,9 +33,9 @@ public abstract class Player : MonoBehaviour
         Allies.Remove(actor);
     }
 
-    public virtual void PawnStart(ITurnBased<float> pawn)
+    public virtual void PawnStart(Character pawn)
     {
-        Current = (Character)pawn;
+        Current = pawn;
     }
 
     public abstract void PawnDie(Character pawn);

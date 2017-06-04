@@ -8,7 +8,7 @@ using TurnBased;
 using TileMap;
 
 [RequireComponent(typeof(Stats))]
-public class Character : MonoBehaviour, ITurnBased<float>
+public class Character : MonoBehaviour
 {
     public HexDirection Facing;
     public ITile<Character> Tile;
