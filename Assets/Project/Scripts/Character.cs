@@ -91,22 +91,28 @@ public class Character : MonoBehaviour
         transform.LookAt(lookPosition);
     }
 
+    /// <summary>
+    /// Notifies this character that it is its turn to act.
+    /// </summary>
     public void TurnStart()
     {
+        // Its your turn
         IsTurn = true;
 
-        state.BeginTurn();
-
+        // Refill time units so character is able to perform actions
         Stats.RefillTimeUnits();
 
+        // Tell controller this character is able to act
         Controller.PawnStart(this);
     }
 
+    /// <summary>
+    /// Notifies this character that it is no longer its turn to act
+    /// </summary>
     public void TurnEnd()
     {
+        // No longer this character's turn
         IsTurn = false;
-
-        state.EndTurn();
     }
 
     private void HurtComplete(bool dead, Action hurtComplete = null)
