@@ -64,12 +64,22 @@ public class Character : MonoBehaviour
         SetState(new MoveBehaviour(this, path));
     }
 
+    /// <summary>
+    /// Deals damage to this character. The character will play a hurt or death animation depending on
+    /// whether they survive the damage. The callback is executed at the conclusion of the animation,
+    /// </summary>
+    /// <param name="damage">The amount of damage to deal this character</param>
+    /// <param name="hurtComplete">The callback to be raised when the animation is complete</param>
     public void Hurt(float damage, Action hurtComplete = null)
     {
+        // Reduce HP, check whether the character will survive the attack
         bool alive = Stats.ReceiveDamage(damage);
+
+        // If the character will survive, play the hurt animation
         if (alive)
             Model.Hurt(() => HurtComplete(false, hurtComplete));
 
+        // Otherwise, play the character's death animation
         else
             Model.Die(() => HurtComplete(true, hurtComplete));
     }
@@ -87,7 +97,7 @@ public class Character : MonoBehaviour
 
         state.BeginTurn();
 
-        Stats.CurrentTimeUnits = Stats.MaxTimeUnits;
+        Stats.RefillTimeUnits();
 
         Controller.PawnStart(this);
     }

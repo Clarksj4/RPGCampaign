@@ -31,7 +31,7 @@ public class MoveBehaviour : CharacterBehaviour
         else
         {
             // Pay for movement
-            character.Stats.CurrentTimeUnits -= path.Cost;
+            character.Stats.SpendTimeUnits(path.Cost);
 
             distance = iTween.PathLength(points);
             time = 0;
