@@ -89,8 +89,9 @@ public class TurnSystemUI : MonoBehaviour
         RectTransform entityUI = Instantiate(UIPrefab, ContentPanel.transform);
         entityCatalogue.Add(entity, entityUI);
 
-        // [PLACHOLDER] TODO: Get portrait
-        entityUI.GetComponentInChildren<Text>().text = entity.name;
+        // Load portrait from Resources
+        Sprite portrait = Resources.Load<Sprite>("Portraits/" + entity.name);
+        entityUI.GetChild(0).GetComponent<Image>().sprite = portrait;
     }
 
     /// <summary>
