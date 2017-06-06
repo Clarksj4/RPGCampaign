@@ -14,12 +14,12 @@ public class FireBall : Ability
     private GameObject kneadingInstance;
     private FireBallParticle projectileInstance;
 
-    public override void Activate(Character user, ITile<Character> target)
+    public override void Activate(Character user, ITile<Character> target, Action abilityComplete)
     {
-        base.Activate(user, target);
+        base.Activate(user, target, abilityComplete);
 
         // Tell model to do casting animation
-        user.Model.KneadingCast(KneadingBegun, KneadingComplete, CastApex, CastComplete);
+        user.Model.KneadingCast(KneadingBegun, KneadingComplete, CastApex, null);
     }
 
     private void KneadingBegun()
@@ -39,11 +39,6 @@ public class FireBall : Ability
         // Create projectile, move towards target
         projectileInstance = Instantiate(ProjectileParticleEffect, user.Model.CastSpawn.position, Quaternion.identity);
         projectileInstance.MoveToDetonate(target.Contents.Model.Torso, Speed, OnMoveComplete);
-    }
-
-    private void CastComplete()
-    {
-        
     }
 
     private void OnMoveComplete()

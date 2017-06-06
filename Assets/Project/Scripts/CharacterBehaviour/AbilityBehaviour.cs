@@ -20,13 +20,10 @@ public class AbilityBehaviour : CharacterBehaviour
 
         // Use
         instance = GameObject.Instantiate(abilityPrefab, character.Tile.Position, abilityPrefab.transform.rotation) as Ability;
-        instance.Activate(character, target);
-
-        // Listen for ability finished
-        instance.AbilityComplete += Ability_AbilityComplete;
+        instance.Activate(character, target, AbilityComplete);
     }
 
-    private void Ability_AbilityComplete(object sender, EventArgs e)
+    private void AbilityComplete()
     {
         GameObject.Destroy(instance.gameObject);
 

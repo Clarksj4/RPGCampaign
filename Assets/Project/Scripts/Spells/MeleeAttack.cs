@@ -4,21 +4,21 @@ using TileMap;
 
 public class MeleeAttack : Ability
 {
-    public override void Activate(Character user, ITile<Character> target)
+    public override void Activate(Character user, ITile<Character> target, Action abilityComplete)
     {
-        base.Activate(user, target);
+        base.Activate(user, target, abilityComplete);
 
         // Tell user to do attack animation
-        user.Model.MeleeAttack(AttackApex, AttackComplete);
+        user.Model.MeleeAttack(AttackApex, null);
     }
 
     private void AttackApex()
     {
         // Deal damage to target
-        target.Contents.Hurt(Damage);
+        target.Contents.Hurt(Damage, HurtComplete);
     }
 
-    private void AttackComplete()
+    private void HurtComplete()
     {
         Deactivate();
     }

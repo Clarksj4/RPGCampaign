@@ -6,8 +6,6 @@ using TileMap;
 
 public abstract class Ability : MonoBehaviour
 {
-    public event EventHandler AbilityComplete;
-
     public float Damage;
     public float Cost;
     public int MinimumRange;
@@ -16,6 +14,7 @@ public abstract class Ability : MonoBehaviour
 
     protected Character user;
     protected ITile<Character> target;
+    protected Action abilityComplete;
 
     public virtual bool InRange(ITile<Character> origin, ITile<Character> target)
     {
@@ -24,15 +23,16 @@ public abstract class Ability : MonoBehaviour
                 Pathfind.InRange(origin, target, MaximumRange, Traverser);
     }
 
-    public virtual void Activate(Character user, ITile<Character> target)
+    public virtual void Activate(Character user, ITile<Character> target, Action abilityComplete)
     {
         this.user = user;
         this.target = target;
+        this.abilityComplete = abilityComplete;
     }
 
     protected virtual void Deactivate()
     {
-        if (AbilityComplete != null)
-            AbilityComplete(this, new EventArgs());
+        if (abilityComplete != null)
+            abilityComplete();
     }
 }

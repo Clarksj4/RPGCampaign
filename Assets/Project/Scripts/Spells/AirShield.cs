@@ -9,9 +9,9 @@ public class AirShield : Ability
 {
     private HexDirection direction;
 
-    public override void Activate(Character user, ITile<Character> target)
+    public override void Activate(Character user, ITile<Character> target, Action abilityComplete)
     {
-        base.Activate(user, target);
+        base.Activate(user, target, abilityComplete);
 
         transform.LookAt(target.Position);
     }
