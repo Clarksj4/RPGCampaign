@@ -4,10 +4,6 @@ using UnityEngine;
 
 public class Stats : MonoBehaviour
 {
-    [Tooltip("The element that this character is spec'd in. Determines the capacity this character has for each of the elements, as well " +
-         "as which elements are strong against this character.")]
-    public ElementType Element;
-
     [Tooltip("Determines how quickly this character acts in combat")]
     [SerializeField]
     private float initiative = 25;
@@ -30,9 +26,6 @@ public class Stats : MonoBehaviour
     [Tooltip("The maximum amount this characters Time Units can reach. The character's time units are refilled to this amount each turn")]
     [SerializeField]
     private float maxTimeUnits = 10;
-
-    [Tooltip("Which cells can be crossed by this character and the cost of doing so")]
-    public HexGridTraverser Traverser = HexGridTraverser.Walking();
 
     [Header("Events")]
     public ResourceEvent HealthChanged;

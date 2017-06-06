@@ -14,6 +14,8 @@ public class Character : MonoBehaviour
     public ITile<Character> Tile;
     [Tooltip("The abilities this character can use")]
     public Ability[] Abilities;
+    [Tooltip("Which cells can be crossed by this character and the cost of doing so")]
+    public HexGridTraverser Traverser = HexGridTraverser.Walking();
 
     private CharacterBehaviour state;
 
@@ -41,6 +43,11 @@ public class Character : MonoBehaviour
     private void Update()
     {
         state.Update();
+    }
+
+    private void OnDestroy()
+    {
+        Controller.RemoveAlly(this);
     }
 
     public void SetState(CharacterBehaviour newState)

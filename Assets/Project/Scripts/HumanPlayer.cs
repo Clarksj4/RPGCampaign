@@ -240,7 +240,7 @@ public class HumanPlayer : Player
         BehaviourTreeStatus result = BehaviourTreeStatus.Failure;
 
         Character occupant = targetCell.Contents;
-        movementRange = Pathfind.Area(targetCell, occupant.Stats.CurrentTimeUnits, occupant.Stats.Traverser);
+        movementRange = Pathfind.Area(targetCell, occupant.Stats.CurrentTimeUnits, occupant.Traverser);
 
         if (movementRange.Count > 0)
             result = BehaviourTreeStatus.Success;
@@ -265,7 +265,7 @@ public class HumanPlayer : Player
     {
         BehaviourTreeStatus result = BehaviourTreeStatus.Failure;
 
-        movementPath = Pathfind.Between(Current.Tile, targetCell, -1, Current.Stats.Traverser);
+        movementPath = Pathfind.Between(Current.Tile, targetCell, -1, Current.Traverser);
 
         if (movementPath != null)
             result = BehaviourTreeStatus.Success;

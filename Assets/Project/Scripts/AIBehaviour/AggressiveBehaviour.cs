@@ -209,7 +209,7 @@ public class AggressiveBehaviour : IBehaviourStrategy
 
             // Find a path from the current characters cell to the quickest to reach cell that is in range of the target for 
             // the given attack
-            path = Pathfind.ToArea(current.Tile, area.Select(s => s.Node), current.Stats.Traverser);
+            path = Pathfind.ToArea(current.Tile, area.Select(s => s.Node), current.Traverser);
 
             // Is the path legit?
             if (path != null && path.Count >= 2)
