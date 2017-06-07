@@ -10,7 +10,7 @@ public abstract class Ability : MonoBehaviour
     public float Cost;
     public int MinimumRange;
     public int MaximumRange;
-    public ITraversable Traverser = HexGridTraverser.RangedAttack();
+    public HexGridTraverser Traverser = HexGridTraverser.RangedAttack();
 
     protected Character user;
     protected ITile<Character> target;
