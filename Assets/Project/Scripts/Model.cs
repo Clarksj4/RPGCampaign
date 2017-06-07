@@ -100,8 +100,11 @@ public class Model : MonoBehaviour
 
     private void NotifyAnimationEvent(string eventName)
     {
-        eventActions[eventName]();
-        eventActions.Remove(eventName);
+        if (eventActions.ContainsKey(eventName))
+        {
+            eventActions[eventName]();
+            eventActions.Remove(eventName);
+        }
     }
 
     private IEnumerator DoFade()

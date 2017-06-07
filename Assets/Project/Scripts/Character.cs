@@ -14,6 +14,8 @@ public class Character : MonoBehaviour
     public ITile<Character> Tile;
     [Tooltip("The abilities this character can use")]
     public Ability[] Abilities;
+    [Tooltip("Which cells can be crossed by this character and the cost of doing so")]
+    public HexGridTraverser Traverser = HexGridTraverser.Walking();
 
     private CharacterBehaviour state;
 
@@ -43,6 +45,11 @@ public class Character : MonoBehaviour
         state.Update();
     }
 
+    private void OnDestroy()
+    {
+        Controller.RemoveAlly(this);
+    }
+
     public void SetState(CharacterBehaviour newState)
     {
         CharacterBehaviour oldState = state;
@@ -64,14 +71,24 @@ public class Character : MonoBehaviour
         SetState(new MoveBehaviour(this, path));
     }
 
+    /// <summary>
+    /// Deals damage to this character. The character will play a hurt or death animation depending on
+    /// whether they survive the damage. The callback is executed at the conclusion of the animation,
+    /// </summary>
+    /// <param name="damage">The amount of damage to deal this character</param>
+    /// <param name="hurtComplete">The callback to be raised when the animation is complete</param>
     public void Hurt(float damage, Action hurtComplete = null)
     {
+        // Reduce HP, check whether the character will survive the attack
         bool alive = Stats.ReceiveDamage(damage);
-        if (alive)
-            Model.Hurt(hurtComplete);
 
+        // If the character will survive, play the hurt animation
+        if (alive)
+            Model.Hurt(() => HurtComplete(false, hurtComplete));
+
+        // Otherwise, play the character's death animation
         else
-            Model.Die(() => Controller.PawnDie(this));
+            Model.Die(() => HurtComplete(true, hurtComplete));
     }
 
     public void TurnTowards(ITile<Character> target)
@@ -81,21 +98,35 @@ public class Character : MonoBehaviour
         transform.LookAt(lookPosition);
     }
 
+    /// <summary>
+    /// Notifies this character that it is its turn to act.
+    /// </summary>
     public void TurnStart()
     {
+        // Its your turn
         IsTurn = true;
 
-        state.BeginTurn();
+        // Refill time units so character is able to perform actions
+        Stats.RefillTimeUnits();
 
-        Stats.CurrentTimeUnits = Stats.MaxTimeUnits;
-
+        // Tell controller this character is able to act
         Controller.PawnStart(this);
     }
 
+    /// <summary>
+    /// Notifies this character that it is no longer its turn to act
+    /// </summary>
     public void TurnEnd()
     {
+        // No longer this character's turn
         IsTurn = false;
+    }
 
-        state.EndTurn();
+    private void HurtComplete(bool dead, Action hurtComplete = null)
+    {
+        hurtComplete();
+
+        if (dead)
+            Controller.PawnDie(this);
     }
 }

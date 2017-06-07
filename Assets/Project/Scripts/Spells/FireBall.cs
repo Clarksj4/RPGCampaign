@@ -14,15 +14,12 @@ public class FireBall : Ability
     private GameObject kneadingInstance;
     private FireBallParticle projectileInstance;
 
-    private bool castComplete = false;
-    private bool moveComplete = false;
-
-    public override void Activate(Character user, ITile<Character> target)
+    public override void Activate(Character user, ITile<Character> target, Action abilityComplete)
     {
-        base.Activate(user, target);
+        base.Activate(user, target, abilityComplete);
 
         // Tell model to do casting animation
-        user.Model.KneadingCast(KneadingBegun, KneadingComplete, CastApex, CastComplete);
+        user.Model.KneadingCast(KneadingBegun, KneadingComplete, CastApex, null);
     }
 
     private void KneadingBegun()
@@ -44,29 +41,13 @@ public class FireBall : Ability
         projectileInstance.MoveToDetonate(target.Contents.Model.Torso, Speed, OnMoveComplete);
     }
 
-    private void CastComplete()
-    {
-        castComplete = true;
-        CheckExpired();
-    }
-
     private void OnMoveComplete()
     {
-        target.Contents.Hurt(Damage);
-
-        moveComplete = true;
-        CheckExpired();
+        target.Contents.Hurt(Damage, OnHurtComplete);
     }
 
-    private void CheckExpired()
+    private void OnHurtComplete()
     {
-        // Don't destroy until cast animation is complete AND fireball has reached destination
-        if (castComplete && moveComplete)
-        {
-            castComplete = false;
-            moveComplete = false;
-
-            Deactivate();
-        }
+        Deactivate();
     }
 }

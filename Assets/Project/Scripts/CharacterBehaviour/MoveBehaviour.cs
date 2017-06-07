@@ -19,23 +19,27 @@ public class MoveBehaviour : CharacterBehaviour
         this.path = path;
         points = path.GetPoints();
         grid = GameObject.FindObjectOfType<HexGrid>();
+
+        time = 0;
+        t = 0;
     }
 
     public override void Init()
     {
         base.Init();
 
+        // Check path is a legitimate length
         if (path.Count <= 1)
             SetState(new IdleBehaviour(character));
+            
 
         else
         {
-            // Pay for movement
-            character.Stats.CurrentTimeUnits -= path.Cost;
-
+            // Path is legitimate, can measure distance
             distance = iTween.PathLength(points);
-            time = 0;
-            t = 0;
+
+            // Pay for movement
+            character.Stats.SpendTimeUnits(path.Cost);
 
             if (path.Count > 4)
             {

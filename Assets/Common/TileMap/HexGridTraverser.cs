@@ -35,11 +35,11 @@ public class HexGridTraverser : ITraversable
         traverser.maximumAscendingStep = 1;
         traverser.maximumDescendingStep = 1;
 
-        traverser.roadCost = 0.5f;
-        traverser.riverCrossingCost = 2f;
-        traverser.uphillCost = 2f;
+        traverser.roadCost = 1f;
+        traverser.riverCrossingCost = 3f;
+        traverser.uphillCost = 3f;
         traverser.downhillCost = 1f;
-        traverser.defaultCost = 1f;
+        traverser.defaultCost = 2f;
 
         return traverser;
     }

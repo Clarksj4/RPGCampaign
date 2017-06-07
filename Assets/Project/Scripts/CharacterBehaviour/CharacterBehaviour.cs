@@ -18,10 +18,6 @@ public class CharacterBehaviour
 
     public virtual void Update() { }
 
-    public virtual void BeginTurn() { }
-    public virtual void EndTurn() { }
-
-
     protected void SetState(CharacterBehaviour newState)
     {
         character.SetState(newState);

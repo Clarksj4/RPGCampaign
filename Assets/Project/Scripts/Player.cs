@@ -19,8 +19,6 @@ public abstract class Player : MonoBehaviour
 
         // Get list of all characters this player controls
         Allies = GetComponentsInChildren<Character>().ToList();
-
-        //Current = Allies[0];
     }
 
     public void AddAlly(Character actor)
