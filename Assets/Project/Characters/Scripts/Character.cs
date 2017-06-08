@@ -47,7 +47,8 @@ public class Character : MonoBehaviour
 
     private void OnDestroy()
     {
-        Controller.RemoveAlly(this);
+        if (Controller != null)
+            Controller.RemoveAlly(this);
     }
 
     public void SetState(CharacterBehaviour newState)

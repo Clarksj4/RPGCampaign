@@ -170,11 +170,10 @@ public class AggressiveBehaviour : IBehaviourStrategy
         BehaviourTreeStatus result = BehaviourTreeStatus.Failure;
 
         // Find a character that is not one of this player's characters
-        Character[] characters = GameObject.FindObjectsOfType<Character>();
-        Character[] enemies = characters.Where(c => c.Controller != current.Controller).ToArray();
+        List<Character> enemies = Player.TargetPlayer.Allies;
 
         // If there is an enemy
-        if (enemies.Length > 0)
+        if (enemies.Count > 0)
         {
             target = enemies[0];
             result = BehaviourTreeStatus.Success;

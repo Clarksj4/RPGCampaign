@@ -1,20 +1,17 @@
-﻿using System;
-using System.Linq;
-using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections;
 using UnityEngine;
 using FluentBehaviourTree;
-using TurnBased;
 
 public class AIPlayer : Player
 {
+    public Player TargetPlayer;
+
     private IBehaviourStrategy behaviour;
 
     protected override void Awake()
     {
         base.Awake();
 
-        // [PLACEHOLDER] TODO: Behaviour factory assembles behaviour trees and instantiates behaviour classes
         SetBehaviour(new AggressiveBehaviour());
     }
 
@@ -64,9 +61,6 @@ public class AIPlayer : Player
 
             status = behaviour.Update();
         }
-
-        // Same as above logic, but condensed to one line; therefore, harder to debug
-        //yield return new WaitUntil(() => behaviour.Update() != BehaviourTreeStatus.Running);
 
         // End turn once the behaviour tree has completed its actions 
         turnSystem.EndTurn();
