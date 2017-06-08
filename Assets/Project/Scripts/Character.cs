@@ -82,13 +82,19 @@ public class Character : MonoBehaviour
         // Reduce HP, check whether the character will survive the attack
         bool alive = Stats.ReceiveDamage(damage);
 
-        // If the character will survive, play the hurt animation
-        if (alive)
-            Model.Hurt(() => HurtComplete(false, hurtComplete));
+        if (Model != null)
+        {
+            // If the character will survive, play the hurt animation
+            if (alive)
+                Model.Hurt(() => HurtComplete(false, hurtComplete));
 
-        // Otherwise, play the character's death animation
-        else
-            Model.Die(() => HurtComplete(true, hurtComplete));
+            // Otherwise, play the character's death animation
+            else
+                Model.Die(() => HurtComplete(true, hurtComplete));
+        }
+
+        else if (hurtComplete != null)
+            hurtComplete();
     }
 
     public void TurnTowards(ITile<Character> target)

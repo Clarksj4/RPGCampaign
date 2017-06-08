@@ -38,7 +38,14 @@ public class FireBall : Ability
     {
         // Create projectile, move towards target
         projectileInstance = Instantiate(ProjectileParticleEffect, user.Model.CastSpawn.position, Quaternion.identity);
-        projectileInstance.MoveToDetonate(target.Contents.Model.Torso, Speed, OnMoveComplete);
+
+        Transform targetTrans = target.Contents.transform;
+
+        // Check if character HAS a model
+        if (target.Contents.Model != null)
+            targetTrans = target.Contents.Model.Torso;
+
+        projectileInstance.MoveToDetonate(targetTrans, Speed, OnMoveComplete);
     }
 
     private void OnMoveComplete()
